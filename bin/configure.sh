@@ -4,11 +4,14 @@
 WORKING_DIR=$(dirname $PWD)
 BIN_DIR=$WORKING_DIR/bin
 
+SRC_DIR=$WORKING_DIR/src
 BUILD_DIR=$WORKING_DIR/build
 
 DOWNLOADS_DIR=$BUILD_DIR/downloads
 KERNEL_SOURCE=$BUILD_DIR/linux-toradex
 MODULES_DIR=$BUILD_DIR/modules
+TFTP_DIR=/srv/tftp/imx8mp
+NFS_DIR=/srv/nfs/imx8mp
 
 RECOVERY_DIR=$BUILD_DIR/recovery
 TEZI_RECOVER_URL=https://artifacts.toradex.com:443/artifactory/tdxref-oe-prod-frankfurt/dunfell-5.x.y/release/7/verdin-imx8mp/tdx-xwayland/tdx-reference-multimedia-image/oedeploy
@@ -19,3 +22,8 @@ export DTC_FLAGS="-@"
 export ARCH=arm64
 
 TTY=/dev/ttyUSB3
+
+TARGET_IP=192.168.10.2
+TARGET_NAME=verdin-imx8mp
+TARGET_USER=root
+TARGET_SHELL="ssh $TARGET_USER@$TARGET_IP"
