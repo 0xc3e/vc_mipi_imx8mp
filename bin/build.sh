@@ -22,6 +22,12 @@ if [[ $CMD == "b" ]]; then
         exit 0
 fi
 
+if [[ $CMD == "y" ]]; then
+        cd $BUILD_DIR/yavta
+        make all
+        exit 0
+fi
+
 cd $KERNEL_SOURCE
 make defconfig
 

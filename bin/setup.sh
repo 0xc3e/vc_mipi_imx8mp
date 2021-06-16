@@ -11,34 +11,46 @@ if [[ $CMD == "host" ]]; then
         mkdir -p $BUILD_DIR
         cd $BUILD_DIR
 
+        rm -Rf gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu
         wget -O gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz "https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz?revision=61c3be5d-5175-4db6-9030-b565aae9f766&la=en&hash=0A37024B42028A9616F56A51C2D20755C5EBBCD7"
         tar xvf gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
         rm gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
 
+        cd $BUILD_DIR
+        rm -Rf linux
+        git clone git-iob-com@git.ideasonboard.com:toradex/linux.git
+        cd linux
+        git checkout de253e624badb22f32b9e276c4f2b58ce56de24b
+
+        cd $BUILD_DIR
         rm -Rf $KERNEL_SOURCE
         git clone -b toradex_5.4-2.3.x-imx git://git.toradex.com/linux-toradex.git $KERNEL_SOURCE
-        git clone git-iob-com@git.ideasonboard.com:toradex/linux.git
-
         cd $KERNEL_SOURCE
-        git checkout fc386214b3bc1bfaacf684edfe939bd6e1deb31
-        git apply ../linux/linux-5.4-2.3.x-imx/*.patch
+        git checkout bb33b94f1466399a995a0d052dca7b9224e3bd45
 
-        # build/linux-toradex/drivers/staging/media/imx/imx8-common.h
-        #define MXC_MIPI_CSI2_VC0_PAD_SINK		0
-        #define MXC_MIPI_CSI2_VC1_PAD_SINK		1
-        #define MXC_MIPI_CSI2_VC2_PAD_SINK		2
-        #define MXC_MIPI_CSI2_VC3_PAD_SINK		3
-        
-        #define MXC_MIPI_CSI2_VC0_PAD_SOURCE		4
-        #define MXC_MIPI_CSI2_VC1_PAD_SOURCE		5
-        #define MXC_MIPI_CSI2_VC2_PAD_SOURCE		6
-        #define MXC_MIPI_CSI2_VC3_PAD_SOURCE		7
-        #define MXC_MIPI_CSI2_VCX_PADS_NUM		8
+        git apply ../linux/linux-5.4-2.3.x-imx/*.patch
+        git apply ../../src/*.patch
+
+        cd $BUILD_DIR
+        rm -Rf yavta
+        git clone git://git.ideasonboard.org/yavta.git
+        cd yavta
+        git checkout 65f740aa1758531fd810339bc1b7d1d33666e28a
 
         # build/linux-toradex/arch/arm64/configs/defconfig
         # CONFIG_VIDEO_IMX290=y
         # CONFIG_VIDEO_VC_MIPI=y
         # Added many other options from defconfig from laurant
+fi
+
+if [[ $CMD == "296" ]]; then
+        cd $KERNEL_SOURCE
+        git apply ../linux/linux-5.4-2.3.x-imx/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
+fi
+
+if [[ $CMD == "327" ]]; then
+        cd $KERNEL_SOURCE
+        git apply -R ../linux/linux-5.4-2.3.x-imx/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
 fi
 
 if [[ $CMD == "netboot" ]]; then
