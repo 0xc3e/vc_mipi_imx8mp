@@ -16,13 +16,13 @@ create_modules() {
         rm -Rf $MODULES_DIR    
 }
 
-if [[ $CMD == "b" ]]; then
-        cd $SRC_DIR
+if [[ $CMD == "boot" ]]; then
+        cd $SRC_DIR/linux
         mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Distro Boot Script" -d boot.cmd boot.scr
         exit 0
 fi
 
-if [[ $CMD == "y" ]]; then
+if [[ $CMD == "yavta" ]]; then
         cd $BUILD_DIR/yavta
         make all
         exit 0
@@ -47,4 +47,13 @@ if [[ $CMD == "all" || $CMD == "d" ]]; then
         echo "Build device tree ..."
         cd $KERNEL_SOURCE
         make -j$(nproc) freescale/imx8mp-verdin-nonwifi-dahlia.dtb
+fi
+
+if [[ $CMD  == "test" ]]; then 
+    cd $WORKING_DIR/src/vcmipidemo/linux
+    make clean
+    make
+    mkdir -p $WORKING_DIR/test
+    mv -f vcmipidemo $WORKING_DIR/test
+    mv -f vcimgnetsrv $WORKING_DIR/test
 fi

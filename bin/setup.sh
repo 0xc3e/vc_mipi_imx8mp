@@ -29,7 +29,7 @@ if [[ $CMD == "host" ]]; then
         git checkout bb33b94f1466399a995a0d052dca7b9224e3bd45
 
         git apply ../linux/linux-5.4-2.3.x-imx/*.patch
-        git apply ../../src/*.patch
+        git apply ../../src/linux/linux-5.4-2.3.x-imx/*.patch
 
         cd $BUILD_DIR
         rm -Rf yavta

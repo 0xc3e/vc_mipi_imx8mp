@@ -25,6 +25,13 @@ if [[ $CMD == "all" || $CMD == "d" ]]; then
         sudo cp $KERNEL_SOURCE/arch/arm64/boot/dts/freescale/imx8mp-verdin-nonwifi-dahlia.dtb $TFTP_DIR/imx8mp-verdin-wifi-dev.dtb
 fi
 
+if [[ $CMD == "test" ]]; then
+        echo "Netboot test ..."
+        sudo mkdir -p $NFS_DIR/home/root/test
+        sudo cp $WORKING_DIR/test/* $NFS_DIR/home/root/test
+        sudo cp $BUILD_DIR/linux/scripts/* $NFS_DIR/home/root/test
+fi
+
 if [[ $CMD == "recover" ]]; then
         sudo rm -Rf $NFS_DIR/*
         sudo cp -R $BUILD_DIR/backup/rootfs/* $NFS_DIR

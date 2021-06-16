@@ -2,4 +2,5 @@
 .vscode-ctags.next
 build/
 temp/
-src/boot.scr
+test/
+boot.scr
