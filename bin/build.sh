@@ -1,6 +1,6 @@
 #/bin/bash
 #
-. ./configure.sh
+. config/configure.sh
 
 CMD=$1
 
@@ -29,7 +29,7 @@ if [[ $CMD == "yavta" ]]; then
 fi
 
 cd $KERNEL_SOURCE
-make defconfig
+make toradex_defconfig
 
 if [[ $CMD == "all" || $CMD == "k" ]]; then
         echo "Build kernel ..."

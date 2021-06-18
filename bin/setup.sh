@@ -1,6 +1,6 @@
 #/bin/bash
 #
-. ./configure.sh
+. config/configure.sh
 
 CMD=$1
 
@@ -23,6 +23,14 @@ if [[ $CMD == "host" ]]; then
         git checkout de253e624badb22f32b9e276c4f2b58ce56de24b
 
         cd $BUILD_DIR
+        rm -Rf yavta
+        git clone git://git.ideasonboard.org/yavta.git
+        cd yavta
+        git checkout 65f740aa1758531fd810339bc1b7d1d33666e28a
+fi
+
+if [[ $CMD == "host" || $CMD == "kernel" ]]; then
+        cd $BUILD_DIR
         rm -Rf $KERNEL_SOURCE
         git clone -b toradex_5.4-2.3.x-imx git://git.toradex.com/linux-toradex.git $KERNEL_SOURCE
         cd $KERNEL_SOURCE
@@ -30,18 +38,22 @@ if [[ $CMD == "host" ]]; then
 
         git apply ../linux/linux-5.4-2.3.x-imx/*.patch
         git apply ../../src/linux/linux-5.4-2.3.x-imx/*.patch
-
-        cd $BUILD_DIR
-        rm -Rf yavta
-        git clone git://git.ideasonboard.org/yavta.git
-        cd yavta
-        git checkout 65f740aa1758531fd810339bc1b7d1d33666e28a
-
-        # build/linux-toradex/arch/arm64/configs/defconfig
-        # CONFIG_VIDEO_IMX290=y
-        # CONFIG_VIDEO_VC_MIPI=y
-        # Added many other options from defconfig from laurant
 fi
+
+# /boot/overlays.txt
+# fdt_overlays=verdin-imx8mp_lt8912_overlay.dtbo
+
+# setenv vidargs video=HDMI-A-1:1280x720-16@60D video=HDMI-A-2:1280x720-16@60D
+# saveenv
+
+# rm -R /var/log
+# mkdir /var/log
+
+# systemctl disable wayland-app-launch.service
+
+# git diff arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+# git diff arch/arm64/boot/dts/freescale/imx8mp.dtsi
+
 
 if [[ $CMD == "296" ]]; then
         cd $KERNEL_SOURCE
@@ -85,5 +97,12 @@ if [[ $CMD == "netboot" ]]; then
         # setenv devtype dhcp
         # setenv boot_devtype tftp
         # setenv root_devtype nfs-dhcp
+        # saveenv
+
+        # U-Boot
+        #
+        # setenv devtype mmc
+        # setenv boot_devtype mmc
+        # setenv root_devtype mmc
         # saveenv
 fi

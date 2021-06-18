@@ -1,6 +1,6 @@
 #/bin/bash
 #
-. ./configure.sh
+. config/configure.sh
 
 CMD=$1
 
