@@ -1,0 +1,67 @@
+From b0d1e3ef8dbdb75bface8a6a3bda8f63f61aae1a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:26 +0100
+Subject: [PATCH 095/302] media: imx: Move dependency on VIDEO_DEV to common
+ Kconfig symbol
+
+All the i.MX staging media drivers depend on VIDEO_DEV. Move the
+dependency to the common VIDEO_IMX_MEDIA symbol to avoid repeating it.
+
+While at it, sort the dependencies and selections alphabetically.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 8ab63c4cc3bd380c09b0cbe2eb18903ff65563eb)
+---
+ drivers/staging/media/imx/Kconfig | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index c23a722c60a7..d475aedf6c3a 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -2,13 +2,14 @@
+ config VIDEO_IMX_MEDIA
+ 	tristate "i.MX5/6 V4L2 media core driver"
+ 	depends on ARCH_MXC || COMPILE_TEST
++	depends on HAS_DMA
++	depends on VIDEO_DEV
+ 	depends on VIDEO_V4L2
+ 	select MEDIA_CONTROLLER
++	select V4L2_FWNODE
++	select V4L2_MEM2MEM_DEV
++	select VIDEOBUF2_DMA_CONTIG
+ 	select VIDEO_V4L2_SUBDEV_API
+-	depends on HAS_DMA
+-	select VIDEOBUF2_DMA_CONTIG
+-	select V4L2_FWNODE
+-	select V4L2_MEM2MEM_DEV
+ 	help
+ 	  Say yes here to enable support for video4linux media controller
+ 	  driver for the i.MX5/6 SOC.
+@@ -18,7 +19,7 @@ menu "i.MX5/6/7/8 Media Sub devices"
+ 
+ config VIDEO_IMX_CSI
+ 	tristate "i.MX5/6 Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA && VIDEO_DEV
++	depends on VIDEO_IMX_MEDIA
+ 	depends on IMX_IPUV3_CORE
+ 	default y
+ 	help
+@@ -26,7 +27,7 @@ config VIDEO_IMX_CSI
+ 
+ config VIDEO_IMX7_CSI
+ 	tristate "i.MX6UL/L / i.MX7 / i.MX8M Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA && VIDEO_DEV
++	depends on VIDEO_IMX_MEDIA
+ 	default y
+ 	help
+ 	  Enable support for video4linux camera sensor interface driver for
+-- 
+Regards,
+
+Laurent Pinchart
+

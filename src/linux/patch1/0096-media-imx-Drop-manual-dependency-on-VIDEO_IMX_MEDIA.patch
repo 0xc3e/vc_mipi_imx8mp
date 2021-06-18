@@ -1,0 +1,44 @@
+From 1a5471ebe793a7d83714a5c4ac21ebbe0480ab05 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:27 +0100
+Subject: [PATCH 096/302] media: imx: Drop manual dependency on VIDEO_IMX_MEDIA
+
+The VIDEO_IMX_CSI and VIDEO_IMX7_CSI symbols are defined in a section
+guarded by VIDEO_IMX_MEDIA. There's no need to duplicate that with a
+"depends on" statement. Drop it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 34632e762325529f35dfd03878bb449ad917248a)
+---
+ drivers/staging/media/imx/Kconfig | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index d475aedf6c3a..d12dc6a9ec53 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -19,7 +19,6 @@ menu "i.MX5/6/7/8 Media Sub devices"
+ 
+ config VIDEO_IMX_CSI
+ 	tristate "i.MX5/6 Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA
+ 	depends on IMX_IPUV3_CORE
+ 	default y
+ 	help
+@@ -27,7 +26,6 @@ config VIDEO_IMX_CSI
+ 
+ config VIDEO_IMX7_CSI
+ 	tristate "i.MX6UL/L / i.MX7 / i.MX8M Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA
+ 	default y
+ 	help
+ 	  Enable support for video4linux camera sensor interface driver for
+-- 
+Regards,
+
+Laurent Pinchart
+

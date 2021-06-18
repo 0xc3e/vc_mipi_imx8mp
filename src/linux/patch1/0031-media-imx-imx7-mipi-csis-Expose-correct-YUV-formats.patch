@@ -1,0 +1,45 @@
+From 36ca80eb15618b0f251da04bc86c6d496ec75f60 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:12 +0100
+Subject: [PATCH 031/302] media: imx: imx7-mipi-csis: Expose correct YUV
+ formats
+
+The imx7-mipi-csis driver claims to support MEDIA_BUS_FMT_VYUY8_2X8 and
+MEDIA_BUS_FMT_YUYV8_2X8, but this is not correct. When receiving
+YUV 4:2:2 data on the CSI-2 bus, the output format is
+MEDIA_BUS_FMT_UYVY8_2X8. Fix this.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 0aa09e57b0f6bd46a7e8e4d88ba0045e317d43f9
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index d1a67aff10f0..2afa04650503 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -267,11 +267,7 @@ struct csis_pix_format {
+ static const struct csis_pix_format mipi_csis_formats[] = {
+ 	/* YUV formats. */
+ 	{
+-		.code = MEDIA_BUS_FMT_VYUY8_2X8,
+-		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+-		.data_alignment = 16,
+-	}, {
+-		.code = MEDIA_BUS_FMT_YUYV8_2X8,
++		.code = MEDIA_BUS_FMT_UYVY8_2X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+ 		.data_alignment = 16,
+ 	},
+-- 
+Regards,
+
+Laurent Pinchart
+

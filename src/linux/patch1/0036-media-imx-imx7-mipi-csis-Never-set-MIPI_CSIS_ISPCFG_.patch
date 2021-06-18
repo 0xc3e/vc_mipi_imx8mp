@@ -1,0 +1,57 @@
+From 2dc9c2c798900818bb131b79ae0cf323b25e0692 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:17 +0100
+Subject: [PATCH 036/302] media: imx: imx7-mipi-csis: Never set
+ MIPI_CSIS_ISPCFG_ALIGN_32BIT
+
+The MIPI_CSIS_ISPCFG_ALIGN_32BIT bit enables output of 32-bit data. The
+driver sets it based on the select format, but no format uses a 32-bit
+bus width, so the bit is never set in practice. This isn't likely to
+change any time soon, as the CSI IP core connected at the output of the
+CSIS doesn't support 32-bit data width. Hardcode the bit to 0.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: eeea9ac2d2a966655868d04ae95c72a353cddc0b
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 44873a0ceb78..6d0662c042c0 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -464,7 +464,8 @@ static void __mipi_csis_set_format(struct csi_state *state)
+ 
+ 	/* Color format */
+ 	val = mipi_csis_read(state, MIPI_CSIS_ISPCONFIG_CH0);
+-	val = (val & ~MIPI_CSIS_ISPCFG_FMT_MASK) | state->csis_fmt->fmt_reg;
++	val &= ~(MIPI_CSIS_ISPCFG_ALIGN_32BIT | MIPI_CSIS_ISPCFG_FMT_MASK);
++	val |= state->csis_fmt->fmt_reg;
+ 	mipi_csis_write(state, MIPI_CSIS_ISPCONFIG_CH0, val);
+ 
+ 	/* Pixel resolution */
+@@ -496,13 +497,6 @@ static void mipi_csis_set_params(struct csi_state *state)
+ 
+ 	mipi_csis_set_hsync_settle(state, state->hs_settle);
+ 
+-	val = mipi_csis_read(state, MIPI_CSIS_ISPCONFIG_CH0);
+-	if (state->csis_fmt->width == 32)
+-		val |= MIPI_CSIS_ISPCFG_ALIGN_32BIT;
+-	else
+-		val &= ~MIPI_CSIS_ISPCFG_ALIGN_32BIT;
+-	mipi_csis_write(state, MIPI_CSIS_ISPCONFIG_CH0, val);
+-
+ 	val = (0 << MIPI_CSIS_ISPSYNC_HSYNC_LINTV_OFFSET) |
+ 		(0 << MIPI_CSIS_ISPSYNC_VSYNC_SINTV_OFFSET) |
+ 		(0 << MIPI_CSIS_ISPSYNC_VSYNC_EINTV_OFFSET);
+-- 
+Regards,
+
+Laurent Pinchart
+

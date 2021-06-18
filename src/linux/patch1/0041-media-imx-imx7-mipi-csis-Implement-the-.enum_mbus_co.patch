@@ -1,0 +1,77 @@
+From 8824bee714f3fa4873209d4a83e46df4f6d7c46b Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:22 +0100
+Subject: [PATCH 041/302] media: imx: imx7-mipi-csis: Implement the
+ .enum_mbus_code() operation
+
+Implement the subdev pad .enum_mbus_code() operation to enumerate media
+bus codes on the sink and source pads.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 4b7126a7894849aaf239dad71b9286534d8c1719
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 33 ++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 1ccbea2567ee..e2403b448b6d 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -752,6 +752,38 @@ static int mipi_csis_get_fmt(struct v4l2_subdev *mipi_sd,
+ 	return 0;
+ }
+ 
++static int mipi_csis_enum_mbus_code(struct v4l2_subdev *mipi_sd,
++				    struct v4l2_subdev_pad_config *cfg,
++				    struct v4l2_subdev_mbus_code_enum *code)
++{
++	struct csi_state *state = mipi_sd_to_csis_state(mipi_sd);
++
++	/*
++	 * The CSIS can't transcode in any way, the source format is identical
++	 * to the sink format.
++	 */
++	if (code->pad == CSIS_PAD_SOURCE) {
++		struct v4l2_mbus_framefmt *fmt;
++
++		if (code->index > 0)
++			return -EINVAL;
++
++		fmt = mipi_csis_get_format(state, cfg, code->which, code->pad);
++		code->code = fmt->code;
++		return 0;
++	}
++
++	if (code->pad != CSIS_PAD_SINK)
++		return -EINVAL;
++
++	if (code->index >= ARRAY_SIZE(mipi_csis_formats))
++		return -EINVAL;
++
++	code->code = mipi_csis_formats[code->index].code;
++
++	return 0;
++}
++
+ static int mipi_csis_set_fmt(struct v4l2_subdev *mipi_sd,
+ 			     struct v4l2_subdev_pad_config *cfg,
+ 			     struct v4l2_subdev_format *sdformat)
+@@ -881,6 +913,7 @@ static const struct v4l2_subdev_video_ops mipi_csis_video_ops = {
+ 
+ static const struct v4l2_subdev_pad_ops mipi_csis_pad_ops = {
+ 	.init_cfg		= mipi_csis_init_cfg,
++	.enum_mbus_code		= mipi_csis_enum_mbus_code,
+ 	.get_fmt		= mipi_csis_get_fmt,
+ 	.set_fmt		= mipi_csis_set_fmt,
+ };
+-- 
+Regards,
+
+Laurent Pinchart
+

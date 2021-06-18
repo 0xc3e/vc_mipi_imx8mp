@@ -1,0 +1,48 @@
+From f6f5551c2b97a764eea19d09724fc4a048c2ae7e Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 30 May 2021 21:46:34 +0300
+Subject: [PATCH 246/302] media: i2c: imx296: Create controls for fwnode
+ properties
+
+Create the V4L2_CID_ORIENTATION and V4L2_CID_ROTATION controls to
+expose the corresponding fwnode properties.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx296.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/imx296.c b/drivers/media/i2c/imx296.c
+index 9ea375775ae7..db5a5c293feb 100644
+--- a/drivers/media/i2c/imx296.c
++++ b/drivers/media/i2c/imx296.c
+@@ -327,7 +327,14 @@ static const struct v4l2_ctrl_ops imx296_ctrl_ops = {
+ 
+ static int imx296_ctrls_init(struct imx296 *imx)
+ {
+-	v4l2_ctrl_handler_init(&imx->ctrls, 5);
++	struct v4l2_fwnode_device_properties props;
++	int ret;
++
++	ret = v4l2_fwnode_device_parse(imx->dev, &props);
++	if (ret < 0)
++		return ret;
++
++	v4l2_ctrl_handler_init(&imx->ctrls, 7);
+ 
+ 	v4l2_ctrl_new_std(&imx->ctrls, &imx296_ctrl_ops,
+ 			  V4L2_CID_EXPOSURE, 1, 1048575, 1, 1104);
+@@ -352,6 +359,8 @@ static int imx296_ctrls_init(struct imx296 *imx)
+ 				     ARRAY_SIZE(imx296_test_pattern_menu) - 1,
+ 				     0, 0, imx296_test_pattern_menu);
+ 
++	v4l2_ctrl_new_fwnode_properties(&imx->ctrls, &imx296_ctrl_ops, &props);
++
+ 	if (imx->ctrls.error) {
+ 		dev_err(imx->dev, "failed to add controls (%d)\n",
+ 			imx->ctrls.error);
+-- 
+Regards,
+
+Laurent Pinchart
+

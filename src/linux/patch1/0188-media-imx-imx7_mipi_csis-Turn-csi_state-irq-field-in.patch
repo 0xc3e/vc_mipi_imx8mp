@@ -1,0 +1,67 @@
+From da4ff7dc5b5f362ab7ae333a74cf30925af58b02 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:30:05 +0200
+Subject: [PATCH 188/302] media: imx: imx7_mipi_csis: Turn csi_state irq field
+ into local variable
+
+The irq field of the csi_state structure is only used in
+mipi_csis_probe(). Turn it into a local variable.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit e71bcbe65f67abdcc144729c9bad957424043b81)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index a8e0a5c487a0..89e9a2cc7784 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -305,7 +305,6 @@ struct csi_state {
+ 	u8 index;
+ 	struct platform_device *pdev;
+ 	void __iomem *regs;
+-	int irq;
+ 	u32 state;
+ 
+ 	struct dentry *debugfs_root;
+@@ -1304,6 +1303,7 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+ 	struct csi_state *state;
++	int irq;
+ 	int ret;
+ 
+ 	state = devm_kzalloc(dev, sizeof(*state), GFP_KERNEL);
+@@ -1331,9 +1331,9 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 	if (IS_ERR(state->regs))
+ 		return PTR_ERR(state->regs);
+ 
+-	state->irq = platform_get_irq(pdev, 0);
+-	if (state->irq < 0)
+-		return state->irq;
++	irq = platform_get_irq(pdev, 0);
++	if (irq < 0)
++		return irq;
+ 
+ 	ret = mipi_csis_clk_get(state);
+ 	if (ret < 0)
+@@ -1345,8 +1345,8 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 		return ret;
+ 	}
+ 
+-	ret = devm_request_irq(dev, state->irq, mipi_csis_irq_handler,
+-			       0, dev_name(dev), state);
++	ret = devm_request_irq(dev, irq, mipi_csis_irq_handler, 0,
++			       dev_name(dev), state);
+ 	if (ret) {
+ 		dev_err(dev, "Interrupt request failed\n");
+ 		goto disable_clock;
+-- 
+Regards,
+
+Laurent Pinchart
+

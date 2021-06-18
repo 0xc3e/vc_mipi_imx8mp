@@ -1,0 +1,320 @@
+From 0517014db78337d87908a884d472e652a2fc0d8b Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 6 Apr 2020 18:39:02 +0200
+Subject: [PATCH 049/302] media: imx: utils: Make imx_media_pixfmt handle
+ variable number of codes
+
+The imx_media_pixfmt structures include a codes member that stores
+media bus codes as a fixed array of 4 integers. The functions dealing
+with the imx_media_pixfmt structures assume that the array of codes is
+terminated by a 0 element. This mechanism is fragile, as demonstrated
+by several instances of the structure containing 4 non-zero codes.
+
+Fix this by turning the array into a pointer, and providing an
+IMX_BUS_FMTS macro to initialize the codes member with a guaranteed 0
+element at the end.
+
+[Fixed a NULL deref of the codes pointer in a couple places]
+[Added more comments for the struct imx_media_pixfmt members,
+ including a bold NOTE! for future developers that codes pointer
+ is NULL for the in-memory-only formats]
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: c943b6947f459189419114682ac343fc1e22a954
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-capture.c |  4 +-
+ drivers/staging/media/imx/imx-media-utils.c   | 74 ++++++++++---------
+ drivers/staging/media/imx/imx-media.h         |  7 +-
+ 3 files changed, 46 insertions(+), 39 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 4b82add68c00..9609e04b32ec 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -95,7 +95,7 @@ static int capture_enum_framesizes(struct file *file, void *fh,
+ 	if (!cc)
+ 		return -EINVAL;
+ 
+-	fse.code = cc->codes[0];
++	fse.code = cc->codes ? cc->codes[0] : 0;
+ 
+ 	ret = v4l2_subdev_call(priv->src_sd, pad, enum_frame_size, NULL, &fse);
+ 	if (ret)
+@@ -137,7 +137,7 @@ static int capture_enum_frameintervals(struct file *file, void *fh,
+ 	if (!cc)
+ 		return -EINVAL;
+ 
+-	fie.code = cc->codes[0];
++	fie.code = cc->codes ? cc->codes[0] : 0;
+ 
+ 	ret = v4l2_subdev_call(priv->src_sd, pad, enum_frame_interval,
+ 			       NULL, &fie);
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 7566e0ae5e81..8d88c2a8df64 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -7,6 +7,8 @@
+ #include <linux/module.h>
+ #include "imx-media.h"
+ 
++#define IMX_BUS_FMTS(fmt...) (const u32[]) {fmt, 0}
++
+ /*
+  * List of supported pixel formats for the subdevs.
+  */
+@@ -14,18 +16,18 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 	/*** YUV formats start here ***/
+ 	{
+ 		.fourcc	= V4L2_PIX_FMT_UYVY,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_UYVY8_2X8,
+ 			MEDIA_BUS_FMT_UYVY8_1X16
+-		},
++		),
+ 		.cs     = IPUV3_COLORSPACE_YUV,
+ 		.bpp    = 16,
+ 	}, {
+ 		.fourcc	= V4L2_PIX_FMT_YUYV,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_YUYV8_2X8,
+ 			MEDIA_BUS_FMT_YUYV8_1X16
+-		},
++		),
+ 		.cs     = IPUV3_COLORSPACE_YUV,
+ 		.bpp    = 16,
+ 	}, {
+@@ -55,7 +57,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 		.planar = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_YUV32,
+-		.codes  = {MEDIA_BUS_FMT_AYUV8_1X32},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_AYUV8_1X32),
+ 		.cs     = IPUV3_COLORSPACE_YUV,
+ 		.bpp    = 32,
+ 		.ipufmt = true,
+@@ -63,16 +65,16 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 	/*** RGB formats start here ***/
+ 	{
+ 		.fourcc	= V4L2_PIX_FMT_RGB565,
+-		.codes  = {MEDIA_BUS_FMT_RGB565_2X8_LE},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_RGB565_2X8_LE),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.cycles = 2,
+ 	}, {
+ 		.fourcc	= V4L2_PIX_FMT_RGB24,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_RGB888_1X24,
+ 			MEDIA_BUS_FMT_RGB888_2X12_LE
+-		},
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 24,
+ 	}, {
+@@ -81,12 +83,12 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 		.bpp    = 24,
+ 	}, {
+ 		.fourcc	= V4L2_PIX_FMT_XRGB32,
+-		.codes  = {MEDIA_BUS_FMT_ARGB8888_1X32},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_ARGB8888_1X32),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 32,
+ 	}, {
+ 		.fourcc	= V4L2_PIX_FMT_XRGB32,
+-		.codes  = {MEDIA_BUS_FMT_ARGB8888_1X32},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_ARGB8888_1X32),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 32,
+ 		.ipufmt = true,
+@@ -106,91 +108,91 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 	/*** raw bayer and grayscale formats start here ***/
+ 	{
+ 		.fourcc = V4L2_PIX_FMT_SBGGR8,
+-		.codes  = {MEDIA_BUS_FMT_SBGGR8_1X8},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SBGGR8_1X8),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 8,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SGBRG8,
+-		.codes  = {MEDIA_BUS_FMT_SGBRG8_1X8},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SGBRG8_1X8),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 8,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SGRBG8,
+-		.codes  = {MEDIA_BUS_FMT_SGRBG8_1X8},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SGRBG8_1X8),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 8,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SRGGB8,
+-		.codes  = {MEDIA_BUS_FMT_SRGGB8_1X8},
++		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SRGGB8_1X8),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 8,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SBGGR16,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_SBGGR10_1X10,
+ 			MEDIA_BUS_FMT_SBGGR12_1X12,
+ 			MEDIA_BUS_FMT_SBGGR14_1X14,
+ 			MEDIA_BUS_FMT_SBGGR16_1X16
+-		},
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SGBRG16,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_SGBRG10_1X10,
+ 			MEDIA_BUS_FMT_SGBRG12_1X12,
+ 			MEDIA_BUS_FMT_SGBRG14_1X14,
+-			MEDIA_BUS_FMT_SGBRG16_1X16,
+-		},
++			MEDIA_BUS_FMT_SGBRG16_1X16
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SGRBG16,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_SGRBG10_1X10,
+ 			MEDIA_BUS_FMT_SGRBG12_1X12,
+ 			MEDIA_BUS_FMT_SGRBG14_1X14,
+-			MEDIA_BUS_FMT_SGRBG16_1X16,
+-		},
++			MEDIA_BUS_FMT_SGRBG16_1X16
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_SRGGB16,
+-		.codes  = {
++		.codes  = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_SRGGB10_1X10,
+ 			MEDIA_BUS_FMT_SRGGB12_1X12,
+ 			MEDIA_BUS_FMT_SRGGB14_1X14,
+-			MEDIA_BUS_FMT_SRGGB16_1X16,
+-		},
++			MEDIA_BUS_FMT_SRGGB16_1X16
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_GREY,
+-		.codes = {
++		.codes = IMX_BUS_FMTS(
+ 			MEDIA_BUS_FMT_Y8_1X8,
+ 			MEDIA_BUS_FMT_Y10_1X10,
+-			MEDIA_BUS_FMT_Y12_1X12,
+-		},
++			MEDIA_BUS_FMT_Y12_1X12
++		),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 8,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_Y10,
+-		.codes = {MEDIA_BUS_FMT_Y10_1X10},
++		.codes = IMX_BUS_FMTS(MEDIA_BUS_FMT_Y10_1X10),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+ 	}, {
+ 		.fourcc = V4L2_PIX_FMT_Y12,
+-		.codes = {MEDIA_BUS_FMT_Y12_1X12},
++		.codes = IMX_BUS_FMTS(MEDIA_BUS_FMT_Y12_1X12),
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 16,
+ 		.bayer  = true,
+@@ -220,16 +222,16 @@ static const struct imx_media_pixfmt *find_format(u32 fourcc,
+ 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
+ 
+ 		if (!(fmt_sel & sel) ||
+-		    (!allow_non_mbus && !fmt->codes[0]))
++		    (!allow_non_mbus && !fmt->codes))
+ 			continue;
+ 
+ 		if (fourcc && fmt->fourcc == fourcc)
+ 			return fmt;
+ 
+-		if (!code)
++		if (!code || !fmt->codes)
+ 			continue;
+ 
+-		for (j = 0; j < ARRAY_SIZE(fmt->codes) && fmt->codes[j]; j++) {
++		for (j = 0; fmt->codes[j]; j++) {
+ 			if (code == fmt->codes[j])
+ 				return fmt;
+ 		}
+@@ -260,7 +262,7 @@ static int enum_format(u32 *fourcc, u32 *code, u32 index,
+ 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
+ 
+ 		if (!(fmt_sel & sel) ||
+-		    (!allow_non_mbus && !fmt->codes[0]))
++		    (!allow_non_mbus && !fmt->codes))
+ 			continue;
+ 
+ 		if (fourcc && index == 0) {
+@@ -273,7 +275,7 @@ static int enum_format(u32 *fourcc, u32 *code, u32 index,
+ 			continue;
+ 		}
+ 
+-		for (j = 0; j < ARRAY_SIZE(fmt->codes) && fmt->codes[j]; j++) {
++		for (j = 0; fmt->codes[j]; j++) {
+ 			if (index == 0) {
+ 				*code = fmt->codes[j];
+ 				return 0;
+@@ -532,7 +534,7 @@ int imx_media_ipu_image_to_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+ 	const struct imx_media_pixfmt *fmt;
+ 
+ 	fmt = imx_media_find_format(image->pix.pixelformat, PIXFMT_SEL_ANY);
+-	if (!fmt)
++	if (!fmt || !fmt->codes || !fmt->codes[0])
+ 		return -EINVAL;
+ 
+ 	memset(mbus, 0, sizeof(*mbus));
+diff --git a/drivers/staging/media/imx/imx-media.h b/drivers/staging/media/imx/imx-media.h
+index c61592750729..459ec15bcdaf 100644
+--- a/drivers/staging/media/imx/imx-media.h
++++ b/drivers/staging/media/imx/imx-media.h
+@@ -68,8 +68,13 @@ enum {
+ #define IMX_MEDIA_EOF_TIMEOUT       1000
+ 
+ struct imx_media_pixfmt {
++	/* the in-memory FourCC pixel format */
+ 	u32     fourcc;
+-	u32     codes[4];
++	/*
++	 * the set of equivalent media bus codes for the fourcc.
++	 * NOTE! codes pointer is NULL for in-memory-only formats.
++	 */
++	const u32 *codes;
+ 	int     bpp;     /* total bpp */
+ 	/* cycles per pixel for generic (bayer) formats for the parallel bus */
+ 	int	cycles;
+-- 
+Regards,
+
+Laurent Pinchart
+

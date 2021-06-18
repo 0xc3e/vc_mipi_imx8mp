@@ -1,0 +1,113 @@
+From c231e65f8584134478a14dc536d39cc9de548304 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:09 +0100
+Subject: [PATCH 138/302] media: imx: imx7-media-csi: Set the MIPI data type
+ based on the bus code
+
+The MIPI CSI-2 data type depends solely on the media bus code on the
+sink pad. Deriving it from the pixel format is confusing. Simplify the
+code.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit f7134e4514a80ecc78a89dd905d11dee0cc5c548)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 64 +++++++++++++---------
+ 1 file changed, 39 insertions(+), 25 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index 0ad18885542b..b4bd161bec40 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -482,7 +482,6 @@ static void imx7_csi_configure(struct imx7_csi *csi)
+ {
+ 	struct imx_media_video_dev *vdev = csi->vdev;
+ 	struct v4l2_pix_format *out_pix = &vdev->fmt;
+-	__u32 in_code = csi->format_mbus[IMX7_CSI_PAD_SINK].code;
+ 	u32 cr1, cr18;
+ 	int width = out_pix->width;
+ 
+@@ -518,37 +517,52 @@ static void imx7_csi_configure(struct imx7_csi *csi)
+ 	cr18 &= BIT_MIPI_DATA_FORMAT_MASK;
+ 	cr18 |= BIT_DATA_FROM_MIPI;
+ 
+-	switch (out_pix->pixelformat) {
+-	case V4L2_PIX_FMT_UYVY:
+-	case V4L2_PIX_FMT_YUYV:
+-		cr18 |= BIT_MIPI_DATA_FORMAT_YUV422_8B;
++	switch (csi->format_mbus[IMX7_CSI_PAD_SINK].code) {
++	case MEDIA_BUS_FMT_Y8_1X8:
++	case MEDIA_BUS_FMT_SBGGR8_1X8:
++	case MEDIA_BUS_FMT_SGBRG8_1X8:
++	case MEDIA_BUS_FMT_SGRBG8_1X8:
++	case MEDIA_BUS_FMT_SRGGB8_1X8:
++		cr18 |= BIT_MIPI_DATA_FORMAT_RAW8;
+ 		break;
+-	case V4L2_PIX_FMT_GREY:
+-		if (in_code == MEDIA_BUS_FMT_Y8_1X8)
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW8;
+-		else if (in_code == MEDIA_BUS_FMT_Y10_1X10)
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
+-		else
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW12;
+-		break;
+-	case V4L2_PIX_FMT_Y10:
++	case MEDIA_BUS_FMT_Y10_1X10:
++	case MEDIA_BUS_FMT_SBGGR10_1X10:
++	case MEDIA_BUS_FMT_SGBRG10_1X10:
++	case MEDIA_BUS_FMT_SGRBG10_1X10:
++	case MEDIA_BUS_FMT_SRGGB10_1X10:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
+-		cr1 |= BIT_PIXEL_BIT;
+ 		break;
+-	case V4L2_PIX_FMT_Y12:
++	case MEDIA_BUS_FMT_Y12_1X12:
++	case MEDIA_BUS_FMT_SBGGR12_1X12:
++	case MEDIA_BUS_FMT_SGBRG12_1X12:
++	case MEDIA_BUS_FMT_SGRBG12_1X12:
++	case MEDIA_BUS_FMT_SRGGB12_1X12:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_RAW12;
+-		cr1 |= BIT_PIXEL_BIT;
+ 		break;
++	case MEDIA_BUS_FMT_Y14_1X14:
++	case MEDIA_BUS_FMT_SBGGR14_1X14:
++	case MEDIA_BUS_FMT_SGBRG14_1X14:
++	case MEDIA_BUS_FMT_SGRBG14_1X14:
++	case MEDIA_BUS_FMT_SRGGB14_1X14:
++		cr18 |= BIT_MIPI_DATA_FORMAT_RAW14;
++		break;
++	/*
++	 * CSI-2 sources are supposed to use the 1X16 formats, but not all of
++	 * them comply. Support both variants.
++	 */
++	case MEDIA_BUS_FMT_UYVY8_2X8:
++	case MEDIA_BUS_FMT_UYVY8_1X16:
++	case MEDIA_BUS_FMT_YUYV8_2X8:
++	case MEDIA_BUS_FMT_YUYV8_1X16:
++		cr18 |= BIT_MIPI_DATA_FORMAT_YUV422_8B;
++		break;
++	}
++
++	switch (out_pix->pixelformat) {
++	case V4L2_PIX_FMT_Y10:
++	case V4L2_PIX_FMT_Y12:
+ 	case V4L2_PIX_FMT_SBGGR8:
+-		cr18 |= BIT_MIPI_DATA_FORMAT_RAW8;
+-		break;
+ 	case V4L2_PIX_FMT_SBGGR16:
+-		if (in_code == MEDIA_BUS_FMT_SBGGR10_1X10)
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
+-		else if (in_code == MEDIA_BUS_FMT_SBGGR12_1X12)
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW12;
+-		else if (in_code == MEDIA_BUS_FMT_SBGGR14_1X14)
+-			cr18 |= BIT_MIPI_DATA_FORMAT_RAW14;
+ 		cr1 |= BIT_PIXEL_BIT;
+ 		break;
+ 	}
+-- 
+Regards,
+
+Laurent Pinchart
+

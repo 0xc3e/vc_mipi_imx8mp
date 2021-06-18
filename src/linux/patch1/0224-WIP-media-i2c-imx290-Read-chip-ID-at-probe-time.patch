@@ -1,0 +1,44 @@
+From 97021854cbb030351458ac6d5ce1fff9993cecd3 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 5 Apr 2021 23:31:24 +0300
+Subject: [PATCH 224/302] [WIP] media: i2c: imx290: Read chip ID at probe time
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx290.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/media/i2c/imx290.c b/drivers/media/i2c/imx290.c
+index 6319a42057d2..be6c0c6ad273 100644
+--- a/drivers/media/i2c/imx290.c
++++ b/drivers/media/i2c/imx290.c
+@@ -939,6 +939,7 @@ static int imx290_probe(struct i2c_client *client)
+ 	struct imx290 *imx290;
+ 	u32 xclk_freq;
+ 	s64 fq;
++	u8 id_low, id_high;
+ 	int ret;
+ 
+ 	imx290 = devm_kzalloc(dev, sizeof(*imx290), GFP_KERNEL);
+@@ -1102,6 +1103,16 @@ static int imx290_probe(struct i2c_client *client)
+ 		goto free_entity;
+ 	}
+ 
++	ret = imx290_read_reg(imx290, 0x319a, &id_low);
++	ret |= imx290_read_reg(imx290, 0x319b, &id_high);
++	if (ret) {
++		dev_err(dev, "Could not read chip ID: %d\n", ret);
++		imx290_power_off(dev);
++		goto free_entity;
++	}
++
++	dev_info(dev, "chip ID 0x%04x\n", (id_high << 8) | id_low);
++
+ 	pm_runtime_set_active(dev);
+ 	pm_runtime_enable(dev);
+ 	pm_runtime_idle(dev);
+-- 
+Regards,
+
+Laurent Pinchart
+

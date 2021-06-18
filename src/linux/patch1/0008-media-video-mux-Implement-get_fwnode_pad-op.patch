@@ -1,0 +1,36 @@
+From 96637e8e8f6acc581c8560a0b1f58e81a168d2cb Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:42 +0200
+Subject: [PATCH 008/302] media: video-mux: Implement get_fwnode_pad op
+
+Use v4l2_subdev_get_fwnode_pad_1_to_1() as the get_fwnode_pad operation.
+The video mux maps fwnode port numbers and pad indexes 1:1.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 318cd36542801caecfc3eaa1fd733f59574ac0a9
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/platform/video-mux.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/media/platform/video-mux.c b/drivers/media/platform/video-mux.c
+index 7b6c96a29aa5..9f148f403603 100644
+--- a/drivers/media/platform/video-mux.c
++++ b/drivers/media/platform/video-mux.c
+@@ -97,6 +97,7 @@ static int video_mux_link_setup(struct media_entity *entity,
+ static const struct media_entity_operations video_mux_ops = {
+ 	.link_setup = video_mux_link_setup,
+ 	.link_validate = v4l2_subdev_link_validate,
++	.get_fwnode_pad = v4l2_subdev_get_fwnode_pad_1_to_1,
+ };
+ 
+ static int video_mux_s_stream(struct v4l2_subdev *sd, int enable)
+-- 
+Regards,
+
+Laurent Pinchart
+

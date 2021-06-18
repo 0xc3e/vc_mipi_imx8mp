@@ -1,0 +1,40 @@
+From 89e9ea40ab3a751bce9eeeb0a7410e83391c4557 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:29:54 +0200
+Subject: [PATCH 177/302] media: imx: imx7_mipi_csis: Update ISP_CONFIG macros
+ for quad pixel mode
+
+The i.MX8MM expands the DOUBLE_CMPNT bit in the ISP_CONFIG register into
+a two bits field that support quad pixel mode in addition to the single
+and double modes. Update the ISP_CONFIG register macros to support this.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit ca403b37cd9548115e2aeed61f6d147cc6f0d507)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 4d1ac228eb59..fe6aa1d0afa1 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -166,7 +166,9 @@
+ #define MIPI_CSIS_ISP_CONFIG_CH(n)		(0x40 + (n) * 0x10)
+ #define MIPI_CSIS_ISPCFG_MEM_FULL_GAP_MSK	(0xff << 24)
+ #define MIPI_CSIS_ISPCFG_MEM_FULL_GAP(x)	((x) << 24)
+-#define MIPI_CSIS_ISPCFG_DOUBLE_CMPNT		BIT(12)
++#define MIPI_CSIS_ISPCFG_PIXEL_MODE_SINGLE	(0 << 12)
++#define MIPI_CSIS_ISPCFG_PIXEL_MODE_DUAL	(1 << 12)
++#define MIPI_CSIS_ISPCFG_PIXEL_MODE_QUAD	(2 << 12)	/* i.MX8M[MNP] only */
+ #define MIPI_CSIS_ISPCFG_ALIGN_32BIT		BIT(11)
+ #define MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT	(0x1e << 2)
+ #define MIPI_CSIS_ISPCFG_FMT_RAW8		(0x2a << 2)
+-- 
+Regards,
+
+Laurent Pinchart
+

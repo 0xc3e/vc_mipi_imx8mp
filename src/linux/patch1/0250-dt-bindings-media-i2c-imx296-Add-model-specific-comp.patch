@@ -1,0 +1,48 @@
+From ab6ea4a01b8efd3b0e4f8bfdcbe2c00425933eb5 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 10 Jun 2021 03:49:57 +0300
+Subject: [PATCH 250/302] dt-bindings: media: i2c: imx296: Add model-specific
+ compatible strings
+
+The IMX296 sensor exists in two different models, a colour variant
+(IMX296LQ) and a monochrome variant (IMX296LL). The device exposes the
+model through registers, allowing for auto-detection with a common
+"sony,imx296" compatible string. However, some camera modules disable
+the ability to read the sensor model register, which disables this
+feature. In those cases, the exact model needs to be specified as
+"sony,imx296ll" or "sony,imx296lq".
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ .../devicetree/bindings/media/i2c/imx296.yaml       | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/media/i2c/imx296.yaml b/Documentation/devicetree/bindings/media/i2c/imx296.yaml
+index c04ec2203268..e1a07a84a13b 100644
+--- a/Documentation/devicetree/bindings/media/i2c/imx296.yaml
++++ b/Documentation/devicetree/bindings/media/i2c/imx296.yaml
+@@ -18,7 +18,18 @@ description: |-
+ 
+ properties:
+   compatible:
+-    const: sony,imx296
++    enum:
++      - sony,imx296
++      - sony,imx296ll
++      - sony,imx296lq
++    description:
++      The IMX296 sensor exists in two different models, a colour variant
++      (IMX296LQ) and a monochrome variant (IMX296LL). The device exposes the
++      model through registers, allowing for auto-detection with a common
++      "sony,imx296" compatible string. However, some camera modules disable the
++      ability to read the sensor model register, which disables this feature.
++      In those cases, the exact model needs to be specified as "sony,imx296ll"
++      or "sony,imx296lq".
+ 
+   reg:
+     maxItems: 1
+-- 
+Regards,
+
+Laurent Pinchart
+

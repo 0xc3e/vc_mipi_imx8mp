@@ -1,0 +1,43 @@
+From 3b37fa8cc7cd139c03ee98b295867884e9069698 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 20 Apr 2021 07:44:03 +0300
+Subject: [PATCH 256/302] Revert "MLK-24494-4: staging: media: imx8: work
+ around to support isi + isp dual camera"
+
+This reverts commit 07da4e8fb89520ebed768ca7de867338d4670293.
+---
+ drivers/media/i2c/ov5640.c               | 3 ++-
+ drivers/staging/media/imx/imx8-isi-cap.c | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/ov5640.c b/drivers/media/i2c/ov5640.c
+index 730133216c9f..5c4e9c4afb19 100644
+--- a/drivers/media/i2c/ov5640.c
++++ b/drivers/media/i2c/ov5640.c
+@@ -3164,7 +3164,8 @@ static int ov5640_probe(struct i2c_client *client)
+ 
+ 	v4l2_i2c_subdev_init(&sensor->sd, client, &ov5640_subdev_ops);
+ 
+-	sensor->sd.flags |= V4L2_SUBDEV_FL_HAS_EVENTS;
++	sensor->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE |
++			    V4L2_SUBDEV_FL_HAS_EVENTS;
+ 	sensor->pad.flags = MEDIA_PAD_FL_SOURCE;
+ 	sensor->sd.entity.ops = &ov5640_sd_media_ops;
+ 	sensor->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 6ba5b3a86f49..b28b3f759f85 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1721,6 +1721,7 @@ static int isi_cap_probe(struct platform_device *pdev)
+ 
+ 	sd = &isi_cap->sd;
+ 	v4l2_subdev_init(sd, &mxc_isi_subdev_ops);
++	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+ 	snprintf(sd->name, sizeof(sd->name), "mxc_isi.%d", isi_cap->id);
+ 
+ 	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
+-- 
+Regards,
+
+Laurent Pinchart
+

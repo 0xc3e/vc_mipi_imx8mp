@@ -1,0 +1,48 @@
+From 0cabd240c5c877f5592145d87cb048eb4b891454 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:42 +0100
+Subject: [PATCH 111/302] media: imx: capture: Rename querycap handler to
+ capture_querycap
+
+For consistency with all the other ioctl handlers, rename
+vidioc_querycap() to capture_querycap().
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 300852e3cc13c52a5ffda734701f588b5d94c491)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index a5160eaf2759..ff422dfed77f 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -56,8 +56,8 @@ struct capture_priv {
+  * Video ioctls follow
+  */
+ 
+-static int vidioc_querycap(struct file *file, void *fh,
+-			   struct v4l2_capability *cap)
++static int capture_querycap(struct file *file, void *fh,
++			    struct v4l2_capability *cap)
+ {
+ 	struct capture_priv *priv = video_drvdata(file);
+ 
+@@ -414,7 +414,7 @@ static int capture_subscribe_event(struct v4l2_fh *fh,
+ }
+ 
+ static const struct v4l2_ioctl_ops capture_ioctl_ops = {
+-	.vidioc_querycap	= vidioc_querycap,
++	.vidioc_querycap	= capture_querycap,
+ 
+ 	.vidioc_enum_framesizes = capture_enum_framesizes,
+ 	.vidioc_enum_frameintervals = capture_enum_frameintervals,
+-- 
+Regards,
+
+Laurent Pinchart
+

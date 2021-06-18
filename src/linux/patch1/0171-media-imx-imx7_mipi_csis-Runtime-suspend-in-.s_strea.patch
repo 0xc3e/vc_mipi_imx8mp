@@ -1,0 +1,60 @@
+From 2ebc4f1d6d8a37660c440d29175c95cb71e38ba5 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 8 Jan 2021 01:05:19 +0100
+Subject: [PATCH 171/302] media: imx: imx7_mipi_csis: Runtime suspend in
+ .s_stream() error path
+
+If the .s_stream() handler fails after calling pm_runtime_get_sync(),
+call pm_runtime_put() in the error path.
+
+While at it add a few blank lines to make the code more readable.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 8f5586dc2d1829d16f602b3d3237b9415ca95cce)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index bd587e550d99..c6cd60896969 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -694,6 +694,7 @@ static int mipi_csis_s_stream(struct v4l2_subdev *mipi_sd, int enable)
+ 			return ret;
+ 
+ 		mipi_csis_clear_counters(state);
++
+ 		ret = pm_runtime_get_sync(&state->pdev->dev);
+ 		if (ret < 0) {
+ 			pm_runtime_put_noidle(&state->pdev->dev);
+@@ -701,10 +702,11 @@ static int mipi_csis_s_stream(struct v4l2_subdev *mipi_sd, int enable)
+ 		}
+ 		ret = v4l2_subdev_call(state->src_sd, core, s_power, 1);
+ 		if (ret < 0 && ret != -ENOIOCTLCMD)
+-			return ret;
++			goto done;
+ 	}
+ 
+ 	mutex_lock(&state->lock);
++
+ 	if (enable) {
+ 		if (state->flags & ST_SUSPENDED) {
+ 			ret = -EBUSY;
+@@ -732,7 +734,9 @@ static int mipi_csis_s_stream(struct v4l2_subdev *mipi_sd, int enable)
+ 
+ unlock:
+ 	mutex_unlock(&state->lock);
+-	if (!enable)
++
++done:
++	if (!enable || ret < 0)
+ 		pm_runtime_put(&state->pdev->dev);
+ 
+ 	return ret;
+-- 
+Regards,
+
+Laurent Pinchart
+

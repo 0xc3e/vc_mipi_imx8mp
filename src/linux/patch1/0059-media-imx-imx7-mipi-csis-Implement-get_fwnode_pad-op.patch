@@ -1,0 +1,38 @@
+From e72ada9cc5075f59b4a6b3cbf69828f81edadd75 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:44 +0200
+Subject: [PATCH 059/302] media: imx: imx7-mipi-csis: Implement get_fwnode_pad
+ op
+
+Use v4l2_subdev_get_fwnode_pad_1_to_1() as the get_fwnode_pad operation.
+The imx7-mipi-csis maps port numbers and pad indexes 1:1.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: eff218f2418094a8dd45a4ec8cf239d669123a4d
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 0be232f98193..2da59d298ccf 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -906,6 +906,7 @@ static const struct v4l2_subdev_core_ops mipi_csis_core_ops = {
+ static const struct media_entity_operations mipi_csis_entity_ops = {
+ 	.link_setup	= mipi_csis_link_setup,
+ 	.link_validate	= v4l2_subdev_link_validate,
++	.get_fwnode_pad = v4l2_subdev_get_fwnode_pad_1_to_1,
+ };
+ 
+ static const struct v4l2_subdev_video_ops mipi_csis_video_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

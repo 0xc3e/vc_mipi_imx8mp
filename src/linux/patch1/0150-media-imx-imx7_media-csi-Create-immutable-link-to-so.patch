@@ -1,0 +1,88 @@
+From cfed079af7deeb88892d5e6ce99ac32df69e4857 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:21 +0100
+Subject: [PATCH 150/302] media: imx: imx7_media-csi: Create immutable link to
+ source device
+
+The CSI subdev has a single source, the input video mux. There's thus a
+single link between the source and the CSI, which can be made immutable
+and enabled to simplify configuration.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 43664fa55c59192d60b9ee14d3a9f607bbe4141c)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 45 ++--------------------
+ 1 file changed, 4 insertions(+), 41 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index 69eac1cb4599..f85a2f5f1413 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -1065,47 +1065,7 @@ static const struct v4l2_subdev_internal_ops imx7_csi_internal_ops = {
+  * Media Entity Operations
+  */
+ 
+-static int imx7_csi_link_setup(struct media_entity *entity,
+-			       const struct media_pad *local,
+-			       const struct media_pad *remote, u32 flags)
+-{
+-	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+-	struct imx7_csi *csi = v4l2_get_subdevdata(sd);
+-	struct v4l2_subdev *remote_sd;
+-	int ret = 0;
+-
+-	dev_dbg(csi->dev, "link setup %s -> %s\n", remote->entity->name,
+-		local->entity->name);
+-
+-	mutex_lock(&csi->lock);
+-
+-	if (local->flags & MEDIA_PAD_FL_SINK) {
+-		if (!is_media_entity_v4l2_subdev(remote->entity)) {
+-			ret = -EINVAL;
+-			goto unlock;
+-		}
+-
+-		remote_sd = media_entity_to_v4l2_subdev(remote->entity);
+-
+-		if (flags & MEDIA_LNK_FL_ENABLED) {
+-			if (csi->src_sd) {
+-				ret = -EBUSY;
+-				goto unlock;
+-			}
+-			csi->src_sd = remote_sd;
+-		} else {
+-			csi->src_sd = NULL;
+-		}
+-	}
+-
+-unlock:
+-	mutex_unlock(&csi->lock);
+-
+-	return ret;
+-}
+-
+ static const struct media_entity_operations imx7_csi_entity_ops = {
+-	.link_setup	= imx7_csi_link_setup,
+ 	.link_validate	= v4l2_subdev_link_validate,
+ 	.get_fwnode_pad = v4l2_subdev_get_fwnode_pad_1_to_1,
+ };
+@@ -1128,7 +1088,10 @@ static int imx7_csi_notify_bound(struct v4l2_async_notifier *notifier,
+ 	if (sd->entity.function == MEDIA_ENT_F_VID_MUX)
+ 		sd->grp_id = IMX_MEDIA_GRP_ID_CSI_MUX;
+ 
+-	return v4l2_create_fwnode_links_to_pad(sd, sink, 0);
++	csi->src_sd = sd;
++
++	return v4l2_create_fwnode_links_to_pad(sd, sink, MEDIA_LNK_FL_ENABLED |
++					       MEDIA_LNK_FL_IMMUTABLE);
+ }
+ 
+ static const struct v4l2_async_notifier_operations imx7_csi_notify_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

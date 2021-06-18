@@ -1,0 +1,40 @@
+From d7f4ae590a3f88b3a4505a26f3778d61c59a36eb Mon Sep 17 00:00:00 2001
+From: Fabio Estevam <festevam@gmail.com>
+Date: Fri, 27 Nov 2020 17:09:45 +0100
+Subject: [PATCH 078/302] media: staging/imx: Increase IMX_MEDIA_EOF_TIMEOUT
+
+When trying to capture video on a imx6dl-based board with an ADV7280,
+the following timeout error is observed:
+
+v4l2-ctl --stream-mmap -d /dev/video2
+[   22.792049] ipu1_csi1: EOF timeout
+VIDIOC_DQBUF: failed: Input/output error
+
+Increase the IMX_MEDIA_EOF_TIMEOUT to avoid such problem.
+
+Signed-off-by: Fabio Estevam <festevam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 9fe46e7946fca0e9444c1481fec01e7bdcf636ea)
+---
+ drivers/staging/media/imx/imx-media.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx-media.h b/drivers/staging/media/imx/imx-media.h
+index f17135158029..c8b6a43d0d7c 100644
+--- a/drivers/staging/media/imx/imx-media.h
++++ b/drivers/staging/media/imx/imx-media.h
+@@ -65,7 +65,7 @@ enum {
+ };
+ 
+ /* How long to wait for EOF interrupts in the buffer-capture subdevs */
+-#define IMX_MEDIA_EOF_TIMEOUT       1000
++#define IMX_MEDIA_EOF_TIMEOUT       2000
+ 
+ struct imx_media_pixfmt {
+ 	/* the in-memory FourCC pixel format */
+-- 
+Regards,
+
+Laurent Pinchart
+

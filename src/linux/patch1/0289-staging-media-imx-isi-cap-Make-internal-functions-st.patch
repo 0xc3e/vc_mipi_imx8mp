@@ -1,0 +1,76 @@
+From 715d9d3f5963fd10bfdd2e73ad45f2781f8bccb5 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 289/302] staging: media: imx: isi: cap: Make internal
+ functions static
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index e6c8327da992..6e00dd21af2c 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -31,7 +31,7 @@
+ 
+ #define sd_to_cap_dev(ptr)	container_of(ptr, struct mxc_isi_cap_dev, sd)
+ 
+-const struct mxc_isi_fmt mxc_isi_out_formats[] = {
++static const struct mxc_isi_fmt mxc_isi_out_formats[] = {
+ 	{
+ 		.name		= "Y8-RAW",
+ 		.fourcc		= V4L2_PIX_FMT_GREY,
+@@ -230,7 +230,7 @@ const struct mxc_isi_fmt mxc_isi_out_formats[] = {
+ /*
+  * Pixel link input format
+  */
+-const struct mxc_isi_fmt mxc_isi_src_formats[] = {
++static const struct mxc_isi_fmt mxc_isi_src_formats[] = {
+ 	{
+ 		.name		= "RGB32",
+ 		.fourcc		= V4L2_PIX_FMT_RGB32,
+@@ -249,7 +249,8 @@ const struct mxc_isi_fmt mxc_isi_src_formats[] = {
+ /*
+  * lookup mxc_isi color format by fourcc or media bus format
+  */
+-const struct mxc_isi_fmt *mxc_isi_find_format(const u32 *pixelformat, int index)
++static const struct mxc_isi_fmt *
++mxc_isi_find_format(const u32 *pixelformat, int index)
+ {
+ 	const struct mxc_isi_fmt *fmt, *def_fmt = NULL;
+ 	unsigned int i;
+@@ -269,7 +270,8 @@ const struct mxc_isi_fmt *mxc_isi_find_format(const u32 *pixelformat, int index)
+ 	return def_fmt;
+ }
+ 
+-const struct mxc_isi_fmt *mxc_isi_get_src_fmt(struct v4l2_subdev_format *sd_fmt)
++static const struct mxc_isi_fmt *
++mxc_isi_get_src_fmt(struct v4l2_subdev_format *sd_fmt)
+ {
+ 	u32 index;
+ 
+@@ -693,7 +695,7 @@ static const struct v4l2_ctrl_ops mxc_isi_ctrl_ops = {
+ 	.s_ctrl = mxc_isi_s_ctrl,
+ };
+ 
+-int mxc_isi_ctrls_create(struct mxc_isi_cap_dev *isi_cap)
++static int mxc_isi_ctrls_create(struct mxc_isi_cap_dev *isi_cap)
+ {
+ 	struct mxc_isi_ctrls *ctrls = &isi_cap->ctrls;
+ 	struct v4l2_ctrl_handler *handler = &ctrls->handler;
+@@ -713,7 +715,7 @@ int mxc_isi_ctrls_create(struct mxc_isi_cap_dev *isi_cap)
+ 	return handler->error;
+ }
+ 
+-void mxc_isi_ctrls_delete(struct mxc_isi_cap_dev *isi_cap)
++static void mxc_isi_ctrls_delete(struct mxc_isi_cap_dev *isi_cap)
+ {
+ 	struct mxc_isi_ctrls *ctrls = &isi_cap->ctrls;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

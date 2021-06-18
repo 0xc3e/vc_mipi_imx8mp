@@ -1,0 +1,33 @@
+From 422d2bcd17d60347e47ba0880cd3ec872dcf6ae8 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 18 Apr 2021 22:14:06 +0200
+Subject: [PATCH 200/302] media: imx: imx7_mipi_csis: Update MAINTAINERS
+
+Given my recent contributions to the imx7-mipi-csis driver, I can as
+well be listed as a maintainer.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 2fb27551ba4053ae503ce6c3b7b5d87cd206b1fd)
+---
+ MAINTAINERS | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index c1f0195ebc22..252b4c939353 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -10091,6 +10091,7 @@ F:	drivers/media/platform/imx-pxp.[ch]
+ 
+ MEDIA DRIVERS FOR FREESCALE IMX7
+ M:	Rui Miguel Silva <rmfrfs@gmail.com>
++M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ L:	linux-media@vger.kernel.org
+ S:	Maintained
+ T:	git git://linuxtv.org/media_tree.git
+-- 
+Regards,
+
+Laurent Pinchart
+

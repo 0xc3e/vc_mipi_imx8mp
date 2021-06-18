@@ -1,0 +1,774 @@
+From 6221c667a125378cd1740c05eb44915ef39eda90 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 292/302] staging: media: imx: isi: Move media device to ISI
+ core
+
+The imx8-media-dev is a fake device that works around incorrect driver
+and DT bindings design. Drop it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/Kconfig          |   8 -
+ drivers/staging/media/imx/Makefile         |   1 -
+ drivers/staging/media/imx/imx8-common.h    |   1 +
+ drivers/staging/media/imx/imx8-isi-cap.c   |  53 ---
+ drivers/staging/media/imx/imx8-isi-core.c  | 182 ++++++++++
+ drivers/staging/media/imx/imx8-isi-core.h  |   6 +
+ drivers/staging/media/imx/imx8-media-dev.c | 378 ---------------------
+ 7 files changed, 189 insertions(+), 440 deletions(-)
+ delete mode 100644 drivers/staging/media/imx/imx8-media-dev.c
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index 863ff7de2d83..04cafb97f226 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -48,14 +48,6 @@ config VIDEO_IMX_CAPTURE
+ if VIDEO_IMX_CAPTURE
+ menu "i.MX8QXP/QM Camera ISI/MIPI Features support"
+ 
+-config IMX8_MEDIA_DEVICE
+-	tristate "IMX8 Media Device Driver"
+-	select V4L2_FWNODE
+-	default y
+-	help
+-	  This media device is a virtual device which used to manage
+-	  all modules in image subsystem of imx8qxp/qm platform.
+-
+ config IMX8_ISI_CORE
+ 	tristate "IMX8 Image Sensor Interface Core Driver"
+ 	depends on VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+diff --git a/drivers/staging/media/imx/Makefile b/drivers/staging/media/imx/Makefile
+index a4b2edad613b..cd87228e9cc6 100644
+--- a/drivers/staging/media/imx/Makefile
++++ b/drivers/staging/media/imx/Makefile
+@@ -18,7 +18,6 @@ obj-$(CONFIG_VIDEO_IMX_CSI) += imx6-mipi-csi2.o
+ 
+ obj-$(CONFIG_VIDEO_IMX7_CSI) += imx7-media-csi.o
+ obj-$(CONFIG_VIDEO_IMX7_CSI) += imx7-mipi-csis.o
+-obj-$(CONFIG_IMX8_MEDIA_DEVICE)   += imx8-media-dev.o
+ obj-$(CONFIG_IMX8_ISI_CORE) += imx8-capture.o
+ obj-$(CONFIG_IMX8_MIPI_CSI2) 	  += imx8-mipi-csi2.o
+ obj-$(CONFIG_IMX8_MIPI_CSI2_SAM)  += imx8-mipi-csi2-sam.o
+diff --git a/drivers/staging/media/imx/imx8-common.h b/drivers/staging/media/imx/imx8-common.h
+index d85f2a28e24a..b7127047f9a4 100644
+--- a/drivers/staging/media/imx/imx8-common.h
++++ b/drivers/staging/media/imx/imx8-common.h
+@@ -17,6 +17,7 @@
+ #define PARALLEL_OF_NODE_NAME   "pcsi"
+ 
+ #define MXC_ISI_MAX_DEVS	8
++#define MXC_ISI_NUM_PORTS	1
+ #define MXC_MIPI_CSI2_MAX_DEVS	2
+ #define MXC_MAX_SENSORS		3
+ 
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index abb509de497a..d96e11e1cf35 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1253,56 +1253,6 @@ static const struct v4l2_ioctl_ops mxc_isi_capture_ioctl_ops = {
+ 	.vidioc_enum_framesizes		= mxc_isi_cap_enum_framesizes,
+ };
+ 
+-/* Capture subdev media entity operations */
+-static int mxc_isi_link_setup(struct media_entity *entity,
+-			      const struct media_pad *local,
+-			      const struct media_pad *remote, u32 flags)
+-{
+-	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+-	struct mxc_isi_cap_dev *isi_cap = v4l2_get_subdevdata(sd);
+-
+-	if (WARN_ON(!isi_cap))
+-		return 0;
+-
+-	if (!(flags & MEDIA_LNK_FL_ENABLED))
+-		return 0;
+-
+-	/* Add ISI source and sink pad link configuration */
+-	if (local->flags & MEDIA_PAD_FL_SOURCE) {
+-		switch (local->index) {
+-		case MXC_ISI_SD_PAD_SOURCE_DC0:
+-		case MXC_ISI_SD_PAD_SOURCE_DC1:
+-			break;
+-		case MXC_ISI_SD_PAD_SOURCE_MEM:
+-			break;
+-		default:
+-			dev_err(&isi_cap->pdev->dev, "invalid source pad\n");
+-			return -EINVAL;
+-		}
+-	} else if (local->flags & MEDIA_PAD_FL_SINK) {
+-		switch (local->index) {
+-		case MXC_ISI_SD_PAD_SINK_MIPI0:
+-		case MXC_ISI_SD_PAD_SINK_MIPI1:
+-		case MXC_ISI_SD_PAD_SINK_HDMI:
+-		case MXC_ISI_SD_PAD_SINK_DC0:
+-		case MXC_ISI_SD_PAD_SINK_DC1:
+-		case MXC_ISI_SD_PAD_SINK_MEM:
+-		case MXC_ISI_SD_PAD_SINK_PARALLEL_CSI:
+-			break;
+-		default:
+-			dev_err(&isi_cap->pdev->dev,
+-				"%s invalid sink pad\n", __func__);
+-			return -EINVAL;
+-		}
+-	}
+-
+-	return 0;
+-}
+-
+-static const struct media_entity_operations mxc_isi_sd_media_ops = {
+-	.link_setup = mxc_isi_link_setup,
+-};
+-
+ static int mxc_isi_subdev_enum_mbus_code(struct v4l2_subdev *sd,
+ 					 struct v4l2_subdev_pad_config *cfg,
+ 					 struct v4l2_subdev_mbus_code_enum *code)
+@@ -1687,13 +1637,11 @@ int isi_cap_probe(struct mxc_isi_dev *mxc_isi)
+ 	if (ret)
+ 		return ret;
+ 
+-	sd->entity.ops   = &mxc_isi_sd_media_ops;
+ 	sd->internal_ops = &mxc_isi_capture_sd_internal_ops;
+ 
+ 	v4l2_set_subdevdata(sd, isi_cap);
+ 
+ 	sd->fwnode = of_fwnode_handle(pdev->dev.of_node);
+-	v4l2_async_register_subdev(sd);
+ 
+ 	return 0;
+ }
+@@ -1703,7 +1651,6 @@ void isi_cap_remove(struct mxc_isi_dev *mxc_isi)
+ 	struct mxc_isi_cap_dev *isi_cap = &mxc_isi->isi_cap;
+ 	struct v4l2_subdev *sd = &isi_cap->sd;
+ 
+-	v4l2_async_unregister_subdev(sd);
+ 	media_entity_cleanup(&sd->entity);
+ 	v4l2_set_subdevdata(sd, NULL);
+ }
+diff --git a/drivers/staging/media/imx/imx8-isi-core.c b/drivers/staging/media/imx/imx8-isi-core.c
+index 134852de2481..8755884fb72a 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.c
++++ b/drivers/staging/media/imx/imx8-isi-core.c
+@@ -4,6 +4,27 @@
+  *
+  */
+ 
++#include <linux/device.h>
++#include <linux/errno.h>
++#include <linux/kernel.h>
++#include <linux/list.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/of_device.h>
++#include <linux/of_graph.h>
++#include <linux/of_platform.h>
++#include <linux/platform_device.h>
++#include <linux/pm_runtime.h>
++#include <linux/slab.h>
++
++#include <media/media-device.h>
++#include <media/v4l2-async.h>
++#include <media/v4l2-device.h>
++#include <media/v4l2-fwnode.h>
++#include <media/v4l2-mc.h>
++#include <media/v4l2-subdev.h>
++
++#include "imx8-common.h"
+ #include "imx8-isi-hw.h"
+ 
+ static const struct soc_device_attribute imx8_soc[] = {
+@@ -423,6 +444,159 @@ static int mxc_isi_soc_match(struct mxc_isi_dev *mxc_isi,
+ 	return 0;
+ }
+ 
++/* -----------------------------------------------------------------------------
++ * V4L2 async subdevs
++ */
++
++struct mxc_isi_async_subdev {
++	struct v4l2_async_subdev asd;
++	unsigned int port;
++};
++
++static inline struct mxc_isi_async_subdev *
++asd_to_mxc_isi_async_subdev(struct v4l2_async_subdev *asd)
++{
++	return container_of(asd, struct mxc_isi_async_subdev, asd);
++};
++
++static inline struct mxc_isi_dev *
++notifier_to_mxc_isi_dev(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct mxc_isi_dev, notifier);
++};
++
++static int mxc_isi_async_notifier_bound(struct v4l2_async_notifier *notifier,
++					struct v4l2_subdev *sd,
++					struct v4l2_async_subdev *asd)
++{
++	const unsigned int link_flags = MEDIA_LNK_FL_IMMUTABLE
++				      | MEDIA_LNK_FL_ENABLED;
++	struct mxc_isi_dev *mxc_isi = notifier_to_mxc_isi_dev(notifier);
++	struct mxc_isi_async_subdev *masd = asd_to_mxc_isi_async_subdev(asd);
++	struct media_pad *pad = &mxc_isi->isi_cap.sd_pads[masd->port];
++
++	dev_dbg(&mxc_isi->pdev->dev, "Bound subdev %s\n", sd->name);
++	dev_info(&mxc_isi->pdev->dev, "Creating links %s -> ISI:%u\n",
++		 sd->name, masd->port);
++
++	return v4l2_create_fwnode_links_to_pad(sd, pad, link_flags);
++}
++
++static int mxc_isi_async_notifier_complete(struct v4l2_async_notifier *notifier)
++{
++	struct mxc_isi_dev *mxc_isi = notifier_to_mxc_isi_dev(notifier);
++	int ret;
++
++	dev_dbg(&mxc_isi->pdev->dev, "%s\n", __func__);
++
++	ret = v4l2_device_register_subdev_nodes(&mxc_isi->v4l2_dev);
++	if (ret < 0) {
++		dev_err(&mxc_isi->pdev->dev,
++			"Failed to register subdev nodes: %d\n", ret);
++		return ret;
++	}
++
++	return media_device_register(&mxc_isi->media_dev);
++}
++
++static const struct v4l2_async_notifier_operations mxc_isi_async_notifier_ops = {
++	.bound = mxc_isi_async_notifier_bound,
++	.complete = mxc_isi_async_notifier_complete,
++};
++
++static int mxc_isi_v4l2_init(struct mxc_isi_dev *mxc_isi)
++{
++	struct fwnode_handle *node = dev_fwnode(&mxc_isi->pdev->dev);
++	struct media_device *media_dev = &mxc_isi->media_dev;
++	struct v4l2_device *v4l2_dev = &mxc_isi->v4l2_dev;
++	unsigned int i;
++	int ret;
++
++	/* Initialize the media device. */
++	strlcpy(media_dev->model, "FSL Capture Media Device",
++		sizeof(media_dev->model));
++	media_dev->dev = &mxc_isi->pdev->dev;
++
++	media_device_init(media_dev);
++
++	/* Initialize and register the V4L2 device. */
++	v4l2_dev->mdev = media_dev;
++	strlcpy(v4l2_dev->name, "mx8-img-md", sizeof(v4l2_dev->name));
++
++	ret = v4l2_device_register(&mxc_isi->pdev->dev, v4l2_dev);
++	if (ret < 0) {
++		dev_err(&mxc_isi->pdev->dev,
++			"Failed to register V4L2 device: %d\n", ret);
++		goto err_media;
++	}
++
++	/* Register the ISI subdev. */
++	ret = v4l2_device_register_subdev(v4l2_dev, &mxc_isi->isi_cap.sd);
++	if (ret < 0) {
++		dev_err(&mxc_isi->pdev->dev,
++			"Failed to register ISI subdev: %d\n", ret);
++		goto err_v4l2;
++	}
++
++	/* Initialize, fill and register the async notifier. */
++	v4l2_async_notifier_init(&mxc_isi->notifier);
++	mxc_isi->notifier.ops = &mxc_isi_async_notifier_ops;
++
++	for (i = 0; i < MXC_ISI_NUM_PORTS; ++i) {
++		struct mxc_isi_async_subdev *masd;
++		struct fwnode_handle *ep;
++
++		ep = fwnode_graph_get_endpoint_by_id(node, i, 0,
++						     FWNODE_GRAPH_ENDPOINT_NEXT);
++
++		if (!ep)
++			continue;
++
++		masd = v4l2_async_notifier_add_fwnode_remote_subdev(
++				&mxc_isi->notifier, ep,
++				struct mxc_isi_async_subdev);
++		fwnode_handle_put(ep);
++
++		if (IS_ERR(masd)) {
++			ret = PTR_ERR(masd);
++			goto err_notifier;
++		}
++
++		masd->port = i;
++	}
++
++	ret = v4l2_async_notifier_register(v4l2_dev, &mxc_isi->notifier);
++	if (ret < 0) {
++		dev_err(&mxc_isi->pdev->dev,
++			"Failed to register async notifier: %d\n", ret);
++		goto err_notifier;
++	}
++
++	return 0;
++
++err_notifier:
++	v4l2_async_notifier_cleanup(&mxc_isi->notifier);
++err_v4l2:
++	v4l2_device_unregister(v4l2_dev);
++err_media:
++	media_device_cleanup(media_dev);
++	return ret;
++}
++
++static void mxc_isi_v4l2_cleanup(struct mxc_isi_dev *mxc_isi)
++{
++	v4l2_async_notifier_unregister(&mxc_isi->notifier);
++	v4l2_async_notifier_cleanup(&mxc_isi->notifier);
++
++	v4l2_device_unregister(&mxc_isi->v4l2_dev);
++	media_device_unregister(&mxc_isi->media_dev);
++	media_device_cleanup(&mxc_isi->media_dev);
++}
++
++/* -----------------------------------------------------------------------------
++ * Probe, remove & driver
++ */
++
+ static int mxc_isi_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+@@ -527,6 +701,12 @@ static int mxc_isi_probe(struct platform_device *pdev)
+ 		goto err;
+ 	}
+ 
++	ret = mxc_isi_v4l2_init(mxc_isi);
++	if (ret < 0) {
++		dev_err(dev, "Failed to initialize V4L2: %d\n", ret);
++		goto err;
++	}
++
+ 	dev_info(dev, "mxc_isi.%d registered successfully\n", mxc_isi->id);
+ 	return 0;
+ 
+@@ -543,6 +723,8 @@ static int mxc_isi_remove(struct platform_device *pdev)
+ 	struct device *dev = &pdev->dev;
+ 
+ 	isi_cap_remove(mxc_isi);
++	mxc_isi_v4l2_cleanup(mxc_isi);
++
+ 	pm_runtime_disable(dev);
+ 
+ 	return 0;
+diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
+index 46e2a305103c..85f9ce174d10 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.h
++++ b/drivers/staging/media/imx/imx8-isi-core.h
+@@ -28,6 +28,7 @@
+ 
+ #include <media/media-device.h>
+ #include <media/media-entity.h>
++#include <media/v4l2-async.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-ioctl.h>
+@@ -313,6 +314,11 @@ struct mxc_isi_dev {
+ 	u32 interface[MAX_PORTS];
+ 	int id;
+ 
++	struct media_device media_dev;
++	struct v4l2_device v4l2_dev;
++	struct v4l2_async_notifier notifier;
++	struct list_head asds;
++
+ 	unsigned int hflip:1;
+ 	unsigned int vflip:1;
+ 	unsigned int cscen:1;
+diff --git a/drivers/staging/media/imx/imx8-media-dev.c b/drivers/staging/media/imx/imx8-media-dev.c
+deleted file mode 100644
+index 84d5535625a9..000000000000
+--- a/drivers/staging/media/imx/imx8-media-dev.c
++++ /dev/null
+@@ -1,378 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * V4L2 Media Controller Driver for NXP IMX8QXP/QM SOC
+- *
+- * Copyright (c) 2019 NXP Semiconductor
+- *
+- */
+-
+-#include <linux/device.h>
+-#include <linux/errno.h>
+-#include <linux/kernel.h>
+-#include <linux/list.h>
+-#include <linux/module.h>
+-#include <linux/of.h>
+-#include <linux/of_device.h>
+-#include <linux/of_graph.h>
+-#include <linux/of_platform.h>
+-#include <linux/platform_device.h>
+-#include <linux/pm_runtime.h>
+-#include <linux/slab.h>
+-
+-#include <media/media-device.h>
+-#include <media/v4l2-async.h>
+-#include <media/v4l2-device.h>
+-#include <media/v4l2-fwnode.h>
+-#include <media/v4l2-subdev.h>
+-
+-#include "imx8-common.h"
+-
+-#define MXC_MD_DRIVER_NAME	"mxc-md"
+-
+-enum mxc_md_entity_type {
+-	MXC_MD_ENTITY_ISI,
+-	MXC_MD_ENTITY_MIPI_CSI2,
+-	MXC_MD_ENTITY_PARALLEL_CSI,
+-};
+-
+-struct mxc_md_async_subdev {
+-	struct v4l2_async_subdev asd;
+-	struct list_head list;
+-	struct v4l2_subdev *sd;
+-
+-	enum mxc_md_entity_type type;
+-	u32 interface[MAX_PORTS];
+-	int id;
+-};
+-
+-struct mxc_md {
+-	struct media_device media_dev;
+-	struct v4l2_device v4l2_dev;
+-	struct platform_device *pdev;
+-
+-	struct v4l2_async_notifier notifier;
+-	struct list_head asds;
+-};
+-
+-static inline struct mxc_md_async_subdev *
+-asd_to_mxc_md_async_subdev(struct v4l2_async_subdev *asd)
+-{
+-	return container_of(asd, struct mxc_md_async_subdev, asd);
+-};
+-
+-static inline struct mxc_md *notifier_to_mxc_md(struct v4l2_async_notifier *n)
+-{
+-	return container_of(n, struct mxc_md, notifier);
+-};
+-
+-static int mxc_md_create_links(struct mxc_md *mxc_md,
+-			       struct mxc_md_async_subdev *masd_isi)
+-{
+-	const unsigned int link_flags = MEDIA_LNK_FL_IMMUTABLE
+-				      | MEDIA_LNK_FL_ENABLED;
+-	struct mxc_md_async_subdev *masd;
+-	enum mxc_md_entity_type type;
+-	struct media_entity *source = NULL;
+-	struct media_entity *sink = &masd_isi->sd->entity;
+-	unsigned int source_pad;
+-	unsigned int sink_pad;
+-	int ret;
+-	int id;
+-
+-	/* Create the link between the ISI and its input. */
+-	switch (masd_isi->interface[IN_PORT]) {
+-	case ISI_INPUT_INTERFACE_MIPI0_CSI2:
+-		source_pad = MXC_MIPI_CSI2_PAD_SOURCE;
+-		sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0;
+-		type = MXC_MD_ENTITY_MIPI_CSI2;
+-		id = 0;
+-		break;
+-
+-	case ISI_INPUT_INTERFACE_MIPI1_CSI2:
+-		source_pad = MXC_MIPI_CSI2_PAD_SOURCE;
+-		sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1;
+-		type = MXC_MD_ENTITY_MIPI_CSI2;
+-		id = 1;
+-		break;
+-
+-	case ISI_INPUT_INTERFACE_PARALLEL_CSI:
+-		source_pad = MXC_PARALLEL_CSI_PAD_SOURCE;
+-		sink_pad = MXC_ISI_SD_PAD_SINK_PARALLEL_CSI;
+-		type = MXC_MD_ENTITY_PARALLEL_CSI;
+-		id = 0;
+-		break;
+-	}
+-
+-	list_for_each_entry(masd, &mxc_md->asds, list) {
+-		if (masd->type == type && masd->id == id) {
+-			source = &masd->sd->entity;
+-			break;
+-		}
+-	}
+-
+-	if (!source) {
+-		dev_err(&mxc_md->pdev->dev, "Failed to find source for %s\n",
+-			sink->name);
+-		return -ENODEV;
+-	}
+-
+-	ret = media_create_pad_link(source, source_pad, sink, sink_pad,
+-				    link_flags);
+-	if (ret < 0) {
+-		dev_err(&mxc_md->pdev->dev,
+-			"Failed to create link [%s] -> [%s]\n",
+-			source->name, sink->name);
+-		return ret;
+-	}
+-
+-	/* Notify the source and sink (ISI). */
+-	media_entity_call(source, link_setup, &source->pads[source_pad],
+-			  &sink->pads[sink_pad], link_flags);
+-	media_entity_call(sink, link_setup, &sink->pads[sink_pad],
+-			  &source->pads[source_pad], link_flags);
+-
+-	dev_dbg(&mxc_md->pdev->dev, "Created link [%s] -> [%s]\n",
+-		source->name, sink->name);
+-
+-	return 0;
+-}
+-
+-static int mxc_md_async_notifier_bound(struct v4l2_async_notifier *notifier,
+-				       struct v4l2_subdev *sd,
+-				       struct v4l2_async_subdev *asd)
+-{
+-	struct mxc_md *mxc_md = notifier_to_mxc_md(notifier);
+-	struct mxc_md_async_subdev *masd = asd_to_mxc_md_async_subdev(asd);
+-
+-	dev_dbg(&mxc_md->pdev->dev, "Bound subdev %s\n", sd->name);
+-
+-	masd->sd = sd;
+-
+-	return 0;
+-}
+-
+-static int mxc_md_async_notifier_complete(struct v4l2_async_notifier *notifier)
+-{
+-	struct mxc_md *mxc_md = notifier_to_mxc_md(notifier);
+-	struct mxc_md_async_subdev *masd;
+-	int ret;
+-
+-	dev_dbg(&mxc_md->pdev->dev, "%s\n", __func__);
+-
+-	list_for_each_entry(masd, &mxc_md->asds, list) {
+-		if (masd->type != MXC_MD_ENTITY_ISI)
+-			continue;
+-
+-		ret = mxc_md_create_links(mxc_md, masd);
+-		if (ret < 0) {
+-			dev_err(&mxc_md->pdev->dev,
+-				"Failed to create link for %s: %d\n",
+-				masd->sd->name, ret);
+-			return ret;
+-		}
+-	}
+-
+-	ret = v4l2_device_register_subdev_nodes(&mxc_md->v4l2_dev);
+-	if (ret < 0) {
+-		dev_err(&mxc_md->pdev->dev,
+-			"Failed to register subdev nodes: %d\n", ret);
+-		return ret;
+-	}
+-
+-	return media_device_register(&mxc_md->media_dev);
+-}
+-
+-static const struct v4l2_async_notifier_operations mxc_md_async_notifier_ops = {
+-	.bound = mxc_md_async_notifier_bound,
+-	.complete = mxc_md_async_notifier_complete,
+-};
+-
+-static int mxc_md_register_async_subdevs(struct mxc_md *mxc_md)
+-{
+-	const struct mxc_md_subdev_info {
+-		enum mxc_md_entity_type type;
+-		const char *node;
+-	} subdevs[] = {
+-		{ MXC_MD_ENTITY_ISI, "isi" },
+-		{ MXC_MD_ENTITY_MIPI_CSI2, "csi" },
+-		{ MXC_MD_ENTITY_PARALLEL_CSI, "pcsi" },
+-	};
+-
+-	struct device_node *node;
+-	int ret;
+-
+-	for_each_available_child_of_node(mxc_md->pdev->dev.of_node, node) {
+-		const struct mxc_md_subdev_info *info = NULL;
+-		struct mxc_md_async_subdev *masd;
+-		unsigned int i;
+-
+-		/* Skip disabled or unknown nodes. */
+-		if (!of_device_is_available(node))
+-			continue;
+-
+-		for (i = 0; i < ARRAY_SIZE(subdevs); ++i) {
+-			if (!strcmp(node->name, subdevs[i].node)) {
+-				info = &subdevs[i];
+-				break;
+-			}
+-		}
+-
+-		if (!info)
+-			continue;
+-
+-		/*
+-		 * Add an entry to the notifier and fill it with the type, the
+-		 * interface (for ISI only) and the instance ID (for CSI-2
+-		 * only).
+-		 */
+-		masd = v4l2_async_notifier_add_fwnode_subdev(&mxc_md->notifier,
+-							     of_fwnode_handle(node),
+-							     struct mxc_md_async_subdev);
+-		if (IS_ERR(masd)) {
+-			dev_err(&mxc_md->pdev->dev,
+-				"Failed to add node %pOF to subdev notifier: %d\n",
+-				node, ret);
+-			of_node_put(node);
+-			return PTR_ERR(masd);
+-		}
+-
+-		masd->type = info->type;
+-
+-		if (info->type == MXC_MD_ENTITY_ISI) {
+-			ret = of_property_read_u32_array(node, "interface",
+-							 masd->interface,
+-							 ARRAY_SIZE(masd->interface));
+-			if (ret < 0) {
+-				dev_err(&mxc_md->pdev->dev,
+-					"Failed to get %pOF interface: %d\n",
+-					node, ret);
+-				return -ENODEV;
+-			}
+-
+-			switch (masd->interface[IN_PORT]) {
+-			case ISI_INPUT_INTERFACE_MIPI0_CSI2:
+-			case ISI_INPUT_INTERFACE_MIPI1_CSI2:
+-			case ISI_INPUT_INTERFACE_PARALLEL_CSI:
+-				break;
+-
+-			case ISI_INPUT_INTERFACE_HDMI:
+-			case ISI_INPUT_INTERFACE_DC0:
+-			case ISI_INPUT_INTERFACE_DC1:
+-			case ISI_INPUT_INTERFACE_MEM:
+-			default:
+-				dev_err(&mxc_md->pdev->dev,
+-					"Unsupported input interface %u for %pOF\n",
+-					masd->interface[IN_PORT], node);
+-				return -EINVAL;
+-			}
+-		} else if (info->type == MXC_MD_ENTITY_MIPI_CSI2) {
+-			masd->id = of_alias_get_id(node, info->node);
+-			if (masd->id < 0) {
+-				dev_err(&mxc_md->pdev->dev,
+-					"Failed to get %pOF instance ID: %d\n",
+-					node, masd->id);
+-				return -EINVAL;
+-			}
+-		}
+-
+-		list_add_tail(&masd->list, &mxc_md->asds);
+-	}
+-
+-	return 0;
+-}
+-
+-static int mxc_md_probe(struct platform_device *pdev)
+-{
+-	struct device *dev = &pdev->dev;
+-	struct v4l2_device *v4l2_dev;
+-	struct mxc_md *mxc_md;
+-	int ret;
+-
+-	mxc_md = devm_kzalloc(dev, sizeof(*mxc_md), GFP_KERNEL);
+-	if (!mxc_md)
+-		return -ENOMEM;
+-
+-	INIT_LIST_HEAD(&mxc_md->asds);
+-	mxc_md->pdev = pdev;
+-	platform_set_drvdata(pdev, mxc_md);
+-
+-	/* register media device  */
+-	strlcpy(mxc_md->media_dev.model, "FSL Capture Media Device",
+-		sizeof(mxc_md->media_dev.model));
+-	mxc_md->media_dev.dev = dev;
+-
+-	media_device_init(&mxc_md->media_dev);
+-
+-	/* register v4l2 device */
+-	v4l2_dev = &mxc_md->v4l2_dev;
+-	v4l2_dev->mdev = &mxc_md->media_dev;
+-	strlcpy(v4l2_dev->name, "mx8-img-md", sizeof(v4l2_dev->name));
+-
+-	ret = v4l2_device_register(dev, &mxc_md->v4l2_dev);
+-	if (ret < 0) {
+-		v4l2_err(v4l2_dev, "Failed to register v4l2_device (%d)\n", ret);
+-		goto err_media;
+-	}
+-
+-	/* Initialize, fill and register the async notifier. */
+-	v4l2_async_notifier_init(&mxc_md->notifier);
+-	mxc_md->notifier.ops = &mxc_md_async_notifier_ops;
+-
+-	ret = mxc_md_register_async_subdevs(mxc_md);
+-	if (ret < 0) {
+-		dev_err(&mxc_md->pdev->dev,
+-			"Failed to register async subdevs: %d\n", ret);
+-		goto err_v4l2;
+-	}
+-
+-	ret = v4l2_async_notifier_register(&mxc_md->v4l2_dev,
+-					   &mxc_md->notifier);
+-	if (ret < 0) {
+-		dev_err(&mxc_md->pdev->dev,
+-			"Failed to register async notifier: %d\n", ret);
+-		goto err_v4l2;
+-	}
+-
+-	return 0;
+-
+-err_v4l2:
+-	v4l2_device_unregister(&mxc_md->v4l2_dev);
+-err_media:
+-	media_device_cleanup(&mxc_md->media_dev);
+-	return ret;
+-}
+-
+-static int mxc_md_remove(struct platform_device *pdev)
+-{
+-	struct mxc_md *mxc_md = platform_get_drvdata(pdev);
+-
+-	v4l2_async_notifier_unregister(&mxc_md->notifier);
+-
+-	v4l2_device_unregister(&mxc_md->v4l2_dev);
+-	media_device_unregister(&mxc_md->media_dev);
+-	media_device_cleanup(&mxc_md->media_dev);
+-
+-	return 0;
+-}
+-
+-static const struct of_device_id mxc_md_of_match[] = {
+-	{ .compatible = "fsl,mxc-md" },
+-	{ /* sentinel */ },
+-};
+-MODULE_DEVICE_TABLE(of, mxc_md_of_match);
+-
+-static struct platform_driver mxc_md_driver = {
+-	.driver = {
+-		.name = MXC_MD_DRIVER_NAME,
+-		.of_match_table	= mxc_md_of_match,
+-	},
+-	.probe = mxc_md_probe,
+-	.remove = mxc_md_remove,
+-};
+-
+-module_platform_driver(mxc_md_driver);
+-
+-MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+-MODULE_DESCRIPTION("MXC Media Device driver");
+-MODULE_LICENSE("GPL");
+-MODULE_ALIAS("platform:" MXC_MD_DRIVER_NAME);
+-- 
+Regards,
+
+Laurent Pinchart
+

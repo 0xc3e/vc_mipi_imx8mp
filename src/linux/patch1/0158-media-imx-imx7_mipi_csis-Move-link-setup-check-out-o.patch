@@ -1,0 +1,61 @@
+From cdfd8871019411c7d9dbdaf1c15ae19099cf89fe Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:33 +0100
+Subject: [PATCH 158/302] media: imx: imx7_mipi_csis: Move link setup check out
+ of locked section
+
+Checking if the link setup operation is called for the sink or source
+pad doesn't require any locking. Move it out of the section protected by
+the mutex.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit bef63005e3ad6d8be6f4fd0d7e6e6a83a7b4a351)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index a5f00983bd92..333ab3966b5b 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -668,20 +668,23 @@ static int mipi_csis_link_setup(struct media_entity *entity,
+ 	dev_dbg(state->dev, "link setup %s -> %s", remote_pad->entity->name,
+ 		local_pad->entity->name);
+ 
++	/* We only care about the link to the source. */
++	if (!(local_pad->flags & MEDIA_PAD_FL_SINK))
++		return 0;
++
+ 	remote_sd = media_entity_to_v4l2_subdev(remote_pad->entity);
+ 
+ 	mutex_lock(&state->lock);
+ 
+-	if (local_pad->flags & MEDIA_PAD_FL_SINK) {
+-		if (flags & MEDIA_LNK_FL_ENABLED) {
+-			if (state->src_sd) {
+-				ret = -EBUSY;
+-				goto out;
+-			}
+-			state->src_sd = remote_sd;
+-		} else {
+-			state->src_sd = NULL;
++	if (flags & MEDIA_LNK_FL_ENABLED) {
++		if (state->src_sd) {
++			ret = -EBUSY;
++			goto out;
+ 		}
++
++		state->src_sd = remote_sd;
++	} else {
++		state->src_sd = NULL;
+ 	}
+ 
+ out:
+-- 
+Regards,
+
+Laurent Pinchart
+

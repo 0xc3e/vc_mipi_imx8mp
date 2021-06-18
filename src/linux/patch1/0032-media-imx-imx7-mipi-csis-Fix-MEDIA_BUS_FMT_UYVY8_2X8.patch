@@ -1,0 +1,39 @@
+From fa353d9ca86186263e1cb93b0ca7643573f7e247 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:13 +0100
+Subject: [PATCH 032/302] media: imx: imx7-mipi-csis: Fix
+ MEDIA_BUS_FMT_UYVY8_2X8 data alignment
+
+The MEDIA_BUS_FMT_UYVY8_2X8 format reports a data alignment of 16 bits,
+which isn't correct as it is output on an 8-bit bus. Fix it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: cb373070bf7575e4cb0a15976702bcb415b2b6d4
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 2afa04650503..de3e4d02e094 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -269,7 +269,7 @@ static const struct csis_pix_format mipi_csis_formats[] = {
+ 	{
+ 		.code = MEDIA_BUS_FMT_UYVY8_2X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+-		.data_alignment = 16,
++		.data_alignment = 8,
+ 	},
+ 	/* RAW (Bayer and greyscale) formats. */
+ 	{
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,36 @@
+From 7c89175bb24728e104eb7ee52bbc45177a27dca8 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:53 +0100
+Subject: [PATCH 122/302] media: imx: imx7-media-csi: Disable legacy video node
+ API
+
+Support for the MC-centric API has been tested on the i.MX7. Enable it
+for that platform. i.MX6 should be converted next.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit c24ead998ed13de1cb90d6bbb855cf52abd226ec)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index a032d785746d..3bf2505de6a2 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -1100,7 +1100,7 @@ static int imx7_csi_registered(struct v4l2_subdev *sd)
+ 	}
+ 
+ 	csi->vdev = imx_media_capture_device_init(csi->sd.dev, &csi->sd,
+-						  IMX7_CSI_PAD_SRC, true);
++						  IMX7_CSI_PAD_SRC, false);
+ 	if (IS_ERR(csi->vdev))
+ 		return PTR_ERR(csi->vdev);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

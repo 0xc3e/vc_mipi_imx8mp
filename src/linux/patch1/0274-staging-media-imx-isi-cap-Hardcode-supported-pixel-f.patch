@@ -1,0 +1,64 @@
+From df4ee5758986a61be4c89c0a731551293e9f2849 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 274/302] staging: media: imx: isi: cap: Hardcode supported
+ pixel formats
+
+In a media controller-centric device, the video node operations must
+not depend on the connected subdevs. Report all the output formats
+supported by the ISI from the .vidioc_enum_fmt_vid_cap() operation.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 30 +-----------------------
+ 1 file changed, 1 insertion(+), 29 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 673b5695e5b9..2958fbe600fe 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -907,38 +907,10 @@ static int mxc_isi_cap_enum_fmt(struct file *file, void *priv,
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct mxc_isi_fmt *fmt;
+-	struct v4l2_subdev_format src_fmt;
+-	struct media_pad *source_pad;
+-	struct v4l2_subdev *src_sd;
+-	int ret;
+ 
+ 	dev_dbg(&isi_cap->pdev->dev, "%s\n", __func__);
+ 
+-	if (f->index > 0)
+-		return -EINVAL;
+-
+-	source_pad = mxc_isi_get_remote_source_pad(&isi_cap->sd);
+-	if (!source_pad) {
+-		v4l2_err(&isi_cap->sd,
+-			 "%s, No remote pad found!\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-	src_sd = mxc_get_source_subdev(&isi_cap->sd, __func__);
+-	if (!src_sd)
+-		return -EINVAL;
+-
+-	memset(&src_fmt, 0, sizeof(src_fmt));
+-
+-	src_fmt.pad = source_pad->index;
+-	src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+-	ret = v4l2_subdev_call(src_sd, pad, get_fmt, NULL, &src_fmt);
+-	if (ret < 0 && ret != -ENOIOCTLCMD) {
+-		v4l2_err(&isi_cap->sd, "get remote fmt fail!\n");
+-		return -EINVAL;
+-	}
+-
+-	fmt = mxc_isi_find_format(NULL, &src_fmt.format.code, 0);
++	fmt = mxc_isi_find_format(NULL, NULL, f->index);
+ 	if (!fmt)
+ 		return -EINVAL;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

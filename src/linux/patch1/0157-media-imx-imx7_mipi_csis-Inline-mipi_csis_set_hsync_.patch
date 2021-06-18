@@ -1,0 +1,68 @@
+From 2c0f98cee97229140c1cc534dfe2366010768050 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:32 +0100
+Subject: [PATCH 157/302] media: imx: imx7_mipi_csis: Inline
+ mipi_csis_set_hsync_settle()
+
+The mipi_csis_set_hsync_settle() is small, called from a single place,
+and misnamed (HS stands for high speed, not horizontal sync). Inline it
+in its only caller, and refactor the HSSETTLE register field macros
+while at it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 57b94933ebb8b2d31516d269e4eb11eb2c2833fb)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 18 ++++++------------
+ 1 file changed, 6 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index a705797559dd..a5f00983bd92 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -108,8 +108,8 @@
+ 
+ /* D-PHY common control */
+ #define MIPI_CSIS_DPHYCTRL			0x24
+-#define MIPI_CSIS_DPHYCTRL_HSS_MASK		(0xff << 24)
+-#define MIPI_CSIS_DPHYCTRL_HSS_OFFSET		24
++#define MIPI_CSIS_DPHYCTRL_HSSETTLE(n)		((n) << 24)
++#define MIPI_CSIS_DPHYCTRL_HSSETTLE_MASK	GENMASK(31, 24)
+ #define MIPI_CSIS_DPHYCTRL_SCLKS_MASK		(0x3 << 22)
+ #define MIPI_CSIS_DPHYCTRL_SCLKS_OFFSET		22
+ #define MIPI_CSIS_DPHYCTRL_DPDN_SWAP_CLK	BIT(6)
+@@ -482,15 +482,6 @@ static void __mipi_csis_set_format(struct csi_state *state)
+ 	mipi_csis_write(state, MIPI_CSIS_ISPRESOL_CH0, val);
+ }
+ 
+-static void mipi_csis_set_hsync_settle(struct csi_state *state, int hs_settle)
+-{
+-	u32 val = mipi_csis_read(state, MIPI_CSIS_DPHYCTRL);
+-
+-	val = (val & ~MIPI_CSIS_DPHYCTRL_HSS_MASK) | (hs_settle << 24);
+-
+-	mipi_csis_write(state, MIPI_CSIS_DPHYCTRL, val);
+-}
+-
+ static void mipi_csis_set_params(struct csi_state *state)
+ {
+ 	int lanes = state->bus.num_data_lanes;
+@@ -504,7 +495,10 @@ static void mipi_csis_set_params(struct csi_state *state)
+ 
+ 	__mipi_csis_set_format(state);
+ 
+-	mipi_csis_set_hsync_settle(state, state->hs_settle);
++	val = mipi_csis_read(state, MIPI_CSIS_DPHYCTRL);
++	val = (val & ~MIPI_CSIS_DPHYCTRL_HSSETTLE_MASK)
++	    | MIPI_CSIS_DPHYCTRL_HSSETTLE(state->hs_settle);
++	mipi_csis_write(state, MIPI_CSIS_DPHYCTRL, val);
+ 
+ 	val = (0 << MIPI_CSIS_ISPSYNC_HSYNC_LINTV_OFFSET) |
+ 		(0 << MIPI_CSIS_ISPSYNC_VSYNC_SINTV_OFFSET) |
+-- 
+Regards,
+
+Laurent Pinchart
+

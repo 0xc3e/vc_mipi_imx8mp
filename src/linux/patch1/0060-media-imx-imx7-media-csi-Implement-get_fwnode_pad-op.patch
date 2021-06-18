@@ -1,0 +1,38 @@
+From 916b2b9d814c1f692d850a27a864fcad40fa7f1d Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:45 +0200
+Subject: [PATCH 060/302] media: imx: imx7-media-csi: Implement get_fwnode_pad
+ op
+
+Use v4l2_subdev_get_fwnode_pad_1_to_1() as the get_fwnode_pad operation.
+The i.MX7 CSI maps port numbers and pad indexes 1:1.
+
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 400a9034c466358c7ae25a47f948648db8735b57
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index abef59dc22b6..c74455f65b3e 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -1179,6 +1179,7 @@ static int imx7_csi_init_cfg(struct v4l2_subdev *sd,
+ static const struct media_entity_operations imx7_csi_entity_ops = {
+ 	.link_setup	= imx7_csi_link_setup,
+ 	.link_validate	= v4l2_subdev_link_validate,
++	.get_fwnode_pad = v4l2_subdev_get_fwnode_pad_1_to_1,
+ };
+ 
+ static const struct v4l2_subdev_video_ops imx7_csi_video_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

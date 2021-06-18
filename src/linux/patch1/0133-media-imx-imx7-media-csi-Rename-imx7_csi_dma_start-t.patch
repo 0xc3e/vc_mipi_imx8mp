@@ -1,0 +1,45 @@
+From a8350b774d6d028ad0cebc43f25f4cc5ef3fbf21 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:04 +0100
+Subject: [PATCH 133/302] media: imx: imx7-media-csi: Rename
+ imx7_csi_dma_start() to *_setup()
+
+The imx7_csi_dma_start() doesn't start DMA. Rename it to
+imx7_csi_dma_setup() to avoid confusion.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit be1158f0f644bca4083d9255053f9bd4d5129dc4)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index dc25b593eaeb..af4119dc8fd6 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -441,7 +441,7 @@ static void imx7_csi_dma_unsetup_vb2_buf(struct imx7_csi *csi,
+ 	}
+ }
+ 
+-static int imx7_csi_dma_start(struct imx7_csi *csi)
++static int imx7_csi_dma_setup(struct imx7_csi *csi)
+ {
+ 	struct imx_media_video_dev *vdev = csi->vdev;
+ 	int ret;
+@@ -614,7 +614,7 @@ static int imx7_csi_streaming_start(struct imx7_csi *csi)
+ {
+ 	int ret;
+ 
+-	ret = imx7_csi_dma_start(csi);
++	ret = imx7_csi_dma_setup(csi);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

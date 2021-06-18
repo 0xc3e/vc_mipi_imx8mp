@@ -1,0 +1,111 @@
+From 5159dd8e311bb42caf44d8708fae5bceb1fea1c9 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:10 +0100
+Subject: [PATCH 029/302] media: imx: imx7-mipi-csis: Centralize initialization
+ of pad formats
+
+Pad formats for the active configuration are manually initialized in
+mipi_csis_subdev_init(), while pad formats for the TRY configurations
+are initialized by the subdev .init_cfg() operation. This creates a risk
+of the two configurations not being synchronized. Fix it by initializing
+formats in the .init_cfg() operation only, and calling it from
+mipi_csis_subdev_init().
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 45cde0aab78096d17e3ea2040854b3e95e3e197e
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 56 ++++++++++++----------
+ 1 file changed, 32 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 6318f0aebb4b..ff2e00723152 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -649,26 +649,6 @@ static int mipi_csis_link_setup(struct media_entity *entity,
+ 	return ret;
+ }
+ 
+-static int mipi_csis_init_cfg(struct v4l2_subdev *mipi_sd,
+-			      struct v4l2_subdev_pad_config *cfg)
+-{
+-	struct v4l2_mbus_framefmt *mf;
+-	unsigned int i;
+-	int ret;
+-
+-	for (i = 0; i < CSIS_PADS_NUM; i++) {
+-		mf = v4l2_subdev_get_try_format(mipi_sd, cfg, i);
+-
+-		ret = imx_media_init_mbus_fmt(mf, MIPI_CSIS_DEF_PIX_HEIGHT,
+-					      MIPI_CSIS_DEF_PIX_WIDTH, 0,
+-					      V4L2_FIELD_NONE, NULL);
+-		if (ret < 0)
+-			return ret;
+-	}
+-
+-	return 0;
+-}
+-
+ static struct v4l2_mbus_framefmt *
+ mipi_csis_get_format(struct csi_state *state,
+ 		     struct v4l2_subdev_pad_config *cfg,
+@@ -681,6 +661,37 @@ mipi_csis_get_format(struct csi_state *state,
+ 	return &state->format_mbus;
+ }
+ 
++static int mipi_csis_init_cfg(struct v4l2_subdev *mipi_sd,
++			      struct v4l2_subdev_pad_config *cfg)
++{
++	struct csi_state *state = mipi_sd_to_csis_state(mipi_sd);
++	struct v4l2_mbus_framefmt *fmt_sink;
++	struct v4l2_mbus_framefmt *fmt_source;
++	enum v4l2_subdev_format_whence which;
++	int ret;
++
++	which = cfg ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
++	fmt_sink = mipi_csis_get_format(state, cfg, which, CSIS_PAD_SINK);
++	ret = imx_media_init_mbus_fmt(fmt_sink, MIPI_CSIS_DEF_PIX_WIDTH,
++				      MIPI_CSIS_DEF_PIX_HEIGHT, 0,
++				      V4L2_FIELD_NONE, NULL);
++	if (ret < 0)
++		return ret;
++
++	/*
++	 * When called from mipi_csis_subdev_init() to initialize the active
++	 * configuration, cfg is NULL, which indicates there's no source pad
++	 * configuration to set.
++	 */
++	if (!cfg)
++		return 0;
++
++	fmt_source = mipi_csis_get_format(state, cfg, which, CSIS_PAD_SOURCE);
++	*fmt_source = *fmt_sink;
++
++	return 0;
++}
++
+ static int mipi_csis_get_fmt(struct v4l2_subdev *mipi_sd,
+ 			     struct v4l2_subdev_pad_config *cfg,
+ 			     struct v4l2_subdev_format *sdformat)
+@@ -875,10 +886,7 @@ static int mipi_csis_subdev_init(struct v4l2_subdev *mipi_sd,
+ 	mipi_sd->dev = &pdev->dev;
+ 
+ 	state->csis_fmt = &mipi_csis_formats[0];
+-	state->format_mbus.code = mipi_csis_formats[0].code;
+-	state->format_mbus.width = MIPI_CSIS_DEF_PIX_WIDTH;
+-	state->format_mbus.height = MIPI_CSIS_DEF_PIX_HEIGHT;
+-	state->format_mbus.field = V4L2_FIELD_NONE;
++	mipi_csis_init_cfg(mipi_sd, NULL);
+ 
+ 	v4l2_set_subdevdata(mipi_sd, &pdev->dev);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

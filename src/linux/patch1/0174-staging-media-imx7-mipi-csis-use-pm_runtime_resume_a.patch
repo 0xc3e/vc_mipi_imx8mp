@@ -1,0 +1,43 @@
+From 4f34a22eb3690524067661b5108d6c4f006aacf4 Mon Sep 17 00:00:00 2001
+From: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+Date: Fri, 23 Apr 2021 17:19:22 +0200
+Subject: [PATCH 174/302] staging: media: imx7-mipi-csis: use
+ pm_runtime_resume_and_get()
+
+Commit dd8088d5a896 ("PM: runtime: Add pm_runtime_resume_and_get to deal with usage counter")
+added pm_runtime_resume_and_get() in order to automatically handle
+dev->power.usage_count decrement on errors.
+
+Use the new API, in order to cleanup the error check logic.
+
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 75ecb9c83cf9d29eaa05bbdd0f84356ac22ed972)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 025fdc488bd6..1dc680d94a46 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -695,11 +695,10 @@ static int mipi_csis_s_stream(struct v4l2_subdev *mipi_sd, int enable)
+ 
+ 		mipi_csis_clear_counters(state);
+ 
+-		ret = pm_runtime_get_sync(&state->pdev->dev);
+-		if (ret < 0) {
+-			pm_runtime_put_noidle(&state->pdev->dev);
++		ret = pm_runtime_resume_and_get(&state->pdev->dev);
++		if (ret < 0)
+ 			return ret;
+-		}
++
+ 		ret = v4l2_subdev_call(state->src_sd, core, s_power, 1);
+ 		if (ret < 0 && ret != -ENOIOCTLCMD)
+ 			goto done;
+-- 
+Regards,
+
+Laurent Pinchart
+

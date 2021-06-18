@@ -1,0 +1,44 @@
+From 21812a644d8b9d227450a506da2c36185305b6b8 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 02:15:10 +0300
+Subject: [PATCH 300/302] arm64: dts: imx8mp-verdin: Drop removed nodes
+
+The ISI capture device and the mxc-md device nodes don't exist anymore.
+Drop them.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+index 07f145e7e1bb..a89772129ac7 100755
+--- a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+@@ -70,10 +70,6 @@
+ 	};
+ };
+ 
+-&cameradev {
+-	status = "okay";
+-};
+-
+ &backlight {
+ 	power-supply = <&reg_3p3v>;
+ };
+@@ -191,10 +187,6 @@
+ 
+ &isi_0 {
+ 	status = "okay";
+-
+-	cap_device {
+-		status = "okay";
+-	};
+ };
+ 
+ &mipi_csi_0 {
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,121 @@
+From 85b53204e2af35afefb316e152438b800a9f363b Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:56 +0100
+Subject: [PATCH 125/302] media: imx: imx7-media-csi: Move (de)init from link
+ setup to .s_stream()
+
+There's no need to initialize the CSI every time a link is enabled (and
+de-initialize it when a link is disabled). Move initialization to
+.s_stream() instead.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit fbd36bceb8160968e5edf796c449e962c6f311a5)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 30 ++++++++--------------
+ 1 file changed, 11 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index c64c5196939b..bc3324a30824 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -184,7 +184,6 @@ struct imx7_csi {
+ 	u32 frame_sequence;
+ 
+ 	bool last_eof;
+-	bool is_init;
+ 	bool is_streaming;
+ 	bool is_csi2;
+ 
+@@ -402,9 +401,6 @@ static int imx7_csi_init(struct imx7_csi *csi)
+ {
+ 	int ret;
+ 
+-	if (csi->is_init)
+-		return 0;
+-
+ 	ret = clk_prepare_enable(csi->mclk);
+ 	if (ret < 0)
+ 		return ret;
+@@ -412,22 +408,15 @@ static int imx7_csi_init(struct imx7_csi *csi)
+ 	imx7_csi_init_interface(csi);
+ 	imx7_csi_dmareq_rff_enable(csi);
+ 
+-	csi->is_init = true;
+-
+ 	return 0;
+ }
+ 
+ static void imx7_csi_deinit(struct imx7_csi *csi)
+ {
+-	if (!csi->is_init)
+-		return;
+-
+ 	imx7_csi_hw_reset(csi);
+ 	imx7_csi_init_interface(csi);
+ 	imx7_csi_dmareq_rff_disable(csi);
+ 	clk_disable_unprepare(csi->mclk);
+-
+-	csi->is_init = false;
+ }
+ 
+ static int imx7_csi_link_setup(struct media_entity *entity,
+@@ -462,7 +451,7 @@ static int imx7_csi_link_setup(struct media_entity *entity,
+ 			csi->src_sd = NULL;
+ 		}
+ 
+-		goto init;
++		goto unlock;
+ 	}
+ 
+ 	/* source pad */
+@@ -476,12 +465,6 @@ static int imx7_csi_link_setup(struct media_entity *entity,
+ 		csi->sink = NULL;
+ 	}
+ 
+-init:
+-	if (csi->sink || csi->src_sd)
+-		ret = imx7_csi_init(csi);
+-	else
+-		imx7_csi_deinit(csi);
+-
+ unlock:
+ 	mutex_unlock(&csi->lock);
+ 
+@@ -868,19 +851,28 @@ static int imx7_csi_s_stream(struct v4l2_subdev *sd, int enable)
+ 		goto out_unlock;
+ 
+ 	if (enable) {
++		ret = imx7_csi_init(csi);
++		if (ret < 0)
++			goto out_unlock;
++
+ 		ret = v4l2_subdev_call(csi->src_sd, video, s_stream, 1);
+-		if (ret < 0)
++		if (ret < 0) {
++			imx7_csi_deinit(csi);
+ 			goto out_unlock;
++		}
+ 
+ 		ret = imx7_csi_streaming_start(csi);
+ 		if (ret < 0) {
+ 			v4l2_subdev_call(csi->src_sd, video, s_stream, 0);
++			imx7_csi_deinit(csi);
+ 			goto out_unlock;
+ 		}
+ 	} else {
+ 		imx7_csi_streaming_stop(csi);
+ 
+ 		v4l2_subdev_call(csi->src_sd, video, s_stream, 0);
++
++		imx7_csi_deinit(csi);
+ 	}
+ 
+ 	csi->is_streaming = !!enable;
+-- 
+Regards,
+
+Laurent Pinchart
+

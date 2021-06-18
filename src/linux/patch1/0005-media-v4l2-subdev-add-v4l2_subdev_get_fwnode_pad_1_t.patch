@@ -1,0 +1,89 @@
+From 81d7d5e6b2960eb2252119ed374dba7e1f21f408 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:36 +0200
+Subject: [PATCH 005/302] media: v4l2-subdev: add
+ v4l2_subdev_get_fwnode_pad_1_to_1
+
+Add a convenience function that can be used as the .get_fwnode_pad
+operation for subdevices that map port numbers and pad indexes 1:1.
+The function verifies the endpoint is owned by the subdevice, and if
+so returns the endpoint port number.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 8fe784b9abb296124d0182eac35b96dbc29d049a
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/v4l2-core/v4l2-subdev.c | 22 ++++++++++++++++++++++
+ include/media/v4l2-subdev.h           | 17 +++++++++++++++++
+ 2 files changed, 39 insertions(+)
+
+diff --git a/drivers/media/v4l2-core/v4l2-subdev.c b/drivers/media/v4l2-core/v4l2-subdev.c
+index f725cd9b66b9..9d3f354ee183 100644
+--- a/drivers/media/v4l2-core/v4l2-subdev.c
++++ b/drivers/media/v4l2-core/v4l2-subdev.c
+@@ -672,6 +672,28 @@ const struct v4l2_file_operations v4l2_subdev_fops = {
+ };
+ 
+ #ifdef CONFIG_MEDIA_CONTROLLER
++
++int v4l2_subdev_get_fwnode_pad_1_to_1(struct media_entity *entity,
++				      struct fwnode_endpoint *endpoint)
++{
++	struct fwnode_handle *fwnode;
++	struct v4l2_subdev *sd;
++
++	if (!is_media_entity_v4l2_subdev(entity))
++		return -EINVAL;
++
++	sd = media_entity_to_v4l2_subdev(entity);
++
++	fwnode = fwnode_graph_get_port_parent(endpoint->local_fwnode);
++	fwnode_handle_put(fwnode);
++
++	if (dev_fwnode(sd->dev) == fwnode)
++		return endpoint->port;
++
++	return -ENXIO;
++}
++EXPORT_SYMBOL_GPL(v4l2_subdev_get_fwnode_pad_1_to_1);
++
+ int v4l2_subdev_link_validate_default(struct v4l2_subdev *sd,
+ 				      struct media_link *link,
+ 				      struct v4l2_subdev_format *source_fmt,
+diff --git a/include/media/v4l2-subdev.h b/include/media/v4l2-subdev.h
+index 67b4ecd4a727..2621cea9dbae 100644
+--- a/include/media/v4l2-subdev.h
++++ b/include/media/v4l2-subdev.h
+@@ -1044,6 +1044,23 @@ static inline void *v4l2_get_subdev_hostdata(const struct v4l2_subdev *sd)
+ 
+ #ifdef CONFIG_MEDIA_CONTROLLER
+ 
++/**
++ * v4l2_subdev_get_fwnode_pad_1_to_1 - Get pad number from a subdev fwnode
++ *                                     endpoint, assuming 1:1 port:pad
++ *
++ * @entity - Pointer to the subdev entity
++ * @endpoint - Pointer to a parsed fwnode endpoint
++ *
++ * This function can be used as the .get_fwnode_pad operation for
++ * subdevices that map port numbers and pad indexes 1:1. If the endpoint
++ * is owned by the subdevice, the function returns the endpoint port
++ * number.
++ *
++ * Returns the endpoint port number on success or a negative error code.
++ */
++int v4l2_subdev_get_fwnode_pad_1_to_1(struct media_entity *entity,
++				      struct fwnode_endpoint *endpoint);
++
+ /**
+  * v4l2_subdev_link_validate_default - validates a media link
+  *
+-- 
+Regards,
+
+Laurent Pinchart
+

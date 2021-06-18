@@ -1,0 +1,49 @@
+From deb45c628110f71de7ea36824d9513be7b56100e Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.king@canonical.com>
+Date: Fri, 6 Sep 2019 12:08:23 -0300
+Subject: [PATCH 016/302] media: imx7-mipi-csis: make array 'registers' static
+ const, makes object smaller
+
+Don't populate the array 'registers' on the stack but instead make it
+static const. Makes the object code smaller by 10 bytes.
+
+Before:
+   text	   data	    bss	    dec	    hex	filename
+  20138	   5196	    128	  25462	   6376	staging/media/imx/imx7-mipi-csis.o
+
+After:
+   text	   data	    bss	    dec	    hex	filename
+  20032	   5292	    128	  25452	   636c	staging/media/imx/imx7-mipi-csis.o
+
+(gcc version 9.2.1, amd64)
+
+Signed-off-by: Colin Ian King <colin.king@canonical.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@kernel.org>
+
+Upstream-commit: c7bc0434081f034beff22c7b2b179799285b00f2
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 7b0675faf370..488c2a4f6261 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -293,7 +293,7 @@ static int mipi_csis_dump_regs(struct csi_state *state)
+ 	struct device *dev = &state->pdev->dev;
+ 	unsigned int i;
+ 	u32 cfg;
+-	struct {
++	static const struct {
+ 		u32 offset;
+ 		const char * const name;
+ 	} registers[] = {
+-- 
+Regards,
+
+Laurent Pinchart
+

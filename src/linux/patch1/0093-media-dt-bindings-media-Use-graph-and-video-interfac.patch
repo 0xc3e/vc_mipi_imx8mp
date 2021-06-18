@@ -1,0 +1,111 @@
+From b832d924a98cfc08d28a7d5ab88fde4cc340b76e Mon Sep 17 00:00:00 2001
+From: Rob Herring <robh@kernel.org>
+Date: Mon, 4 Jan 2021 17:58:08 +0100
+Subject: [PATCH 093/302] media: dt-bindings: media: Use graph and
+ video-interfaces schemas
+
+Now that we have graph and video-interfaces schemas, rework the media
+related schemas to use them.
+
+Cc: Jacopo Mondi <jacopo@jmondi.org>
+Signed-off-by: Rob Herring <robh@kernel.org>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Maxime Ripard <mripard@kernel.org>
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 066a94e28a23e04c0e9cb293f9ead56d409d7e41)
+
+Partial backport, covering the NXP i.MX7 bindings only.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ .../bindings/media/nxp,imx7-csi.yaml          |  5 +--
+ .../bindings/media/nxp,imx7-mipi-csi2.yaml    | 32 ++++---------------
+ 2 files changed, 7 insertions(+), 30 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/media/nxp,imx7-csi.yaml b/Documentation/devicetree/bindings/media/nxp,imx7-csi.yaml
+index 4e81a47e60ac..d91575b8ebb9 100644
+--- a/Documentation/devicetree/bindings/media/nxp,imx7-csi.yaml
++++ b/Documentation/devicetree/bindings/media/nxp,imx7-csi.yaml
+@@ -33,10 +33,7 @@ properties:
+       - const: mclk
+ 
+   port:
+-    type: object
+-    description:
+-      A node containing input port nodes with endpoint definitions as documented
+-      in Documentation/devicetree/bindings/media/video-interfaces.txt
++    $ref: /schemas/graph.yaml#/properties/port
+ 
+ required:
+   - compatible
+diff --git a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+index 0668332959e7..be47a7b62ca9 100644
+--- a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
++++ b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+@@ -58,35 +58,22 @@ properties:
+       Differential receiver (HS-RX) settle time
+ 
+   ports:
+-    type: object
+-    description:
+-      A node containing input and output port nodes with endpoint definitions
+-      as documented in
+-      Documentation/devicetree/bindings/media/video-interfaces.txt
++    $ref: /schemas/graph.yaml#/properties/ports
+ 
+     properties:
+-      '#address-cells':
+-        const: 1
+-
+-      '#size-cells':
+-        const: 0
+-
+       port@0:
+-        type: object
++        $ref: /schemas/graph.yaml#/$defs/port-base
++        unevaluatedProperties: false
+         description:
+           Input port node, single endpoint describing the CSI-2 transmitter.
+ 
+         properties:
+-          reg:
+-            const: 0
+-
+           endpoint:
+-            type: object
++            $ref: video-interfaces.yaml#
++            unevaluatedProperties: false
+ 
+             properties:
+               data-lanes:
+-                $ref: /schemas/types.yaml#/definitions/uint32-array
+-                description: See ../video-interfaces.txt
+                 oneOf:
+                   - items:
+                       - const: 1
+@@ -94,18 +81,11 @@ properties:
+                       - const: 1
+                       - const: 2
+ 
+-              remote-endpoint: true
+-
+             required:
+               - data-lanes
+-              - remote-endpoint
+-
+-            additionalProperties: false
+-
+-        additionalProperties: false
+ 
+       port@1:
+-        type: object
++        $ref: /schemas/graph.yaml#/properties/port
+         description:
+           Output port node
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

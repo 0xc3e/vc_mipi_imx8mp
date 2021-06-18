@@ -1,0 +1,367 @@
+From 7f5cbe10ba99af74416c7af726870e285e8d5bef Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 285/302] staging: media: imx: isi: Move M2M-related code to
+ M2M driver
+
+Rather than dropping the code completely, move it to the M2M driver for
+reference during development.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c  |   1 -
+ drivers/staging/media/imx/imx8-isi-core.h |  56 -----------
+ drivers/staging/media/imx/imx8-isi-hw.c   |  69 +------------
+ drivers/staging/media/imx/imx8-isi-hw.h   |   6 --
+ drivers/staging/media/imx/imx8-isi-m2m.c  | 114 ++++++++++++++++++++++
+ 5 files changed, 116 insertions(+), 130 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 2852105a62d4..cc26fdd60d93 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -23,7 +23,6 @@
+ #include <linux/videodev2.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-ioctl.h>
+-#include <media/v4l2-mem2mem.h>
+ #include <media/videobuf2-core.h>
+ #include <media/videobuf2-dma-contig.h>
+ 
+diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
+index 5995d6db3350..0e5b0805aeac 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.h
++++ b/drivers/staging/media/imx/imx8-isi-core.h
+@@ -26,7 +26,6 @@
+ #include <media/media-entity.h>
+ #include <media/v4l2-subdev.h>
+ #include <media/v4l2-ioctl.h>
+-#include <media/v4l2-mem2mem.h>
+ #include <media/videobuf2-core.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-subdev.h>
+@@ -41,7 +40,6 @@
+ 
+ #define MXC_ISI_DRIVER_NAME	"mxc-isi"
+ #define MXC_ISI_CAPTURE		"mxc-isi-cap"
+-#define MXC_ISI_M2M		"mxc-isi-m2m"
+ #define MXC_MAX_PLANES		3
+ 
+ struct mxc_isi_dev;
+@@ -102,25 +100,6 @@ enum mxc_isi_in_fmt {
+ 	MXC_ISI_IN_FMT_BGR8P	= 0x0,
+ };
+ 
+-enum mxc_isi_m2m_in_fmt {
+-	MXC_ISI_M2M_IN_FMT_BGR8P	= 0x0,
+-	MXC_ISI_M2M_IN_FMT_RGB8P,
+-	MXC_ISI_M2M_IN_FMT_XRGB8,
+-	MXC_ISI_M2M_IN_FMT_RGBX8,
+-	MXC_ISI_M2M_IN_FMT_XBGR8,
+-	MXC_ISI_M2M_IN_FMT_RGB565,
+-	MXC_ISI_M2M_IN_FMT_A2BGR10,
+-	MXC_ISI_M2M_IN_FMT_A2RGB10,
+-	MXC_ISI_M2M_IN_FMT_YUV444_1P8P,
+-	MXC_ISI_M2M_IN_FMT_YUV444_1P10,
+-	MXC_ISI_M2M_IN_FMT_YUV444_1P10P,
+-	MXC_ISI_M2M_IN_FMT_YUV444_1P12,
+-	MXC_ISI_M2M_IN_FMT_YUV444_1P8,
+-	MXC_ISI_M2M_IN_FMT_YUV422_1P8P,
+-	MXC_ISI_M2M_IN_FMT_YUV422_1P10,
+-	MXC_ISI_M2M_IN_FMT_YUV422_1P10P,
+-};
+-
+ struct mxc_isi_fmt {
+ 	char	*name;
+ 	u32	mbus_code;
+@@ -197,38 +176,6 @@ struct mxc_isi_buffer {
+ 	bool discard;
+ };
+ 
+-struct mxc_isi_m2m_dev {
+-	struct platform_device	*pdev;
+-
+-	struct video_device vdev;
+-	struct v4l2_device  v4l2_dev;
+-	struct v4l2_m2m_dev *m2m_dev;
+-	struct v4l2_fh      fh;
+-	struct v4l2_pix_format_mplane pix;
+-
+-	struct list_head	out_active;
+-	struct mxc_isi_ctrls	ctrls;
+-
+-	struct mxc_isi_frame src_f;
+-	struct mxc_isi_frame dst_f;
+-
+-	struct mutex lock;
+-	spinlock_t   slock;
+-
+-	unsigned int aborting;
+-	unsigned int frame_count;
+-
+-	u32 req_cap_buf_num;
+-	u32 req_out_buf_num;
+-
+-	u8 id;
+-};
+-
+-struct mxc_isi_ctx {
+-	struct mxc_isi_m2m_dev *isi_m2m;
+-	struct v4l2_fh	    fh;
+-};
+-
+ struct mxc_isi_chan_src {
+ 	u32 src_dc0;
+ 	u32 src_dc1;
+@@ -325,9 +272,6 @@ struct mxc_isi_dev {
+ 	/* Pointer to isi capture child device driver data */
+ 	struct mxc_isi_cap_dev *isi_cap;
+ 
+-	/* Pointer to isi m2m child device driver data */
+-	struct mxc_isi_m2m_dev *isi_m2m;
+-
+ 	struct platform_device *pdev;
+ 
+ 	/* clk for imx8qxp/qm platform */
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.c b/drivers/staging/media/imx/imx8-isi-hw.c
+index 4e4ef516d506..0df4f18c0a59 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.c
++++ b/drivers/staging/media/imx/imx8-isi-hw.c
+@@ -251,18 +251,6 @@ void mxc_isi_channel_set_outbuf(struct mxc_isi_dev *mxc_isi,
+ }
+ EXPORT_SYMBOL_GPL(mxc_isi_channel_set_outbuf);
+ 
+-void mxc_isi_channel_set_m2m_src_addr(struct mxc_isi_dev *mxc_isi,
+-			struct mxc_isi_buffer *buf)
+-{
+-	struct vb2_buffer *vb2_buf = &buf->v4l2_buf.vb2_buf;
+-	struct frame_addr *paddr = &buf->paddr;
+-
+-	/* Only support one plane */
+-	paddr->y = vb2_dma_contig_plane_dma_addr(vb2_buf, 0);
+-	writel(paddr->y, mxc_isi->regs + CHNL_IN_BUF_ADDR);
+-}
+-EXPORT_SYMBOL_GPL(mxc_isi_channel_set_m2m_src_addr);
+-
+ void mxc_isi_channel_sw_reset(struct mxc_isi_dev *mxc_isi)
+ {
+ 	u32 val;
+@@ -709,10 +697,12 @@ void mxc_isi_channel_enable(struct mxc_isi_dev *mxc_isi, bool m2m_enabled)
+ 	mxc_isi_clean_registers(mxc_isi);
+ 	mxc_isi_enable_irq(mxc_isi);
+ 
++#if 0
+ 	if (m2m_enabled) {
+ 		mxc_isi_m2m_start_read(mxc_isi);
+ 		return;
+ 	}
++#endif
+ 
+ 	dump_isi_regs(mxc_isi);
+ 	msleep(300);
+@@ -779,58 +769,3 @@ void mxc_isi_clean_irq_status(struct mxc_isi_dev *mxc_isi, u32 val)
+ 	writel(val, mxc_isi->regs + CHNL_STS);
+ }
+ EXPORT_SYMBOL_GPL(mxc_isi_clean_irq_status);
+-
+-void mxc_isi_m2m_config_src(struct mxc_isi_dev *mxc_isi,
+-			    struct mxc_isi_frame *src_f)
+-{
+-	u32 val;
+-
+-	/* source format */
+-	val = readl(mxc_isi->regs + CHNL_MEM_RD_CTRL);
+-	val &= ~CHNL_MEM_RD_CTRL_IMG_TYPE_MASK;
+-	val |= src_f->fmt->color << CHNL_MEM_RD_CTRL_IMG_TYPE_OFFSET;
+-	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
+-
+-	/* source image width and height */
+-	val = (src_f->width << CHNL_IMG_CFG_WIDTH_OFFSET |
+-	       src_f->height << CHNL_IMG_CFG_HEIGHT_OFFSET);
+-	writel(val, mxc_isi->regs + CHNL_IMG_CFG);
+-
+-	/* source pitch */
+-	val = src_f->bytesperline[0] << CHNL_IN_BUF_PITCH_LINE_PITCH_OFFSET;
+-	writel(val, mxc_isi->regs + CHNL_IN_BUF_PITCH);
+-}
+-EXPORT_SYMBOL_GPL(mxc_isi_m2m_config_src);
+-
+-void mxc_isi_m2m_config_dst(struct mxc_isi_dev *mxc_isi,
+-			    struct mxc_isi_frame *dst_f)
+-{
+-	u32 val;
+-
+-	/* out format */
+-	val = readl(mxc_isi->regs + CHNL_IMG_CTRL);
+-	val &= ~CHNL_IMG_CTRL_FORMAT_MASK;
+-	val |= dst_f->fmt->color << CHNL_IMG_CTRL_FORMAT_OFFSET;
+-	writel(val, mxc_isi->regs + CHNL_IMG_CTRL);
+-
+-	/* out pitch */
+-	val = readl(mxc_isi->regs + CHNL_OUT_BUF_PITCH);
+-	val &= ~CHNL_IN_BUF_PITCH_LINE_PITCH_MASK;
+-	val |= dst_f->bytesperline[0] << CHNL_OUT_BUF_PITCH_LINE_PITCH_OFFSET;
+-	writel(val, mxc_isi->regs + CHNL_OUT_BUF_PITCH);
+-}
+-EXPORT_SYMBOL_GPL(mxc_isi_m2m_config_dst);
+-
+-void mxc_isi_m2m_start_read(struct mxc_isi_dev *mxc_isi)
+-{
+-	u32 val;
+-
+-	val = readl(mxc_isi->regs + CHNL_MEM_RD_CTRL);
+-	val &= ~ CHNL_MEM_RD_CTRL_READ_MEM_MASK;
+-	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
+-	udelay(300);
+-
+-	val |= CHNL_MEM_RD_CTRL_READ_MEM_ENABLE << CHNL_MEM_RD_CTRL_READ_MEM_OFFSET;
+-	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
+-}
+-EXPORT_SYMBOL_GPL(mxc_isi_m2m_start_read);
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.h b/drivers/staging/media/imx/imx8-isi-hw.h
+index 875280a276f2..17e115869913 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.h
++++ b/drivers/staging/media/imx/imx8-isi-hw.h
+@@ -462,12 +462,6 @@ void mxc_isi_channel_set_alpha_roi0(struct mxc_isi_dev *mxc_isi,
+ void mxc_isi_channel_set_m2m_src_addr(struct mxc_isi_dev *mxc_isi,
+ 			struct mxc_isi_buffer *buf);
+ 
+-void mxc_isi_m2m_config_src(struct mxc_isi_dev *mxc_isi,
+-			    struct mxc_isi_frame *src_f);
+-void mxc_isi_m2m_config_dst(struct mxc_isi_dev *mxc_isi,
+-			    struct mxc_isi_frame *dst_f);
+-
+-void mxc_isi_m2m_start_read(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_clean_irq_status(struct mxc_isi_dev *mxc_isi, u32 val);
+ void mxc_isi_clean_registers(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_enable_irq(struct mxc_isi_dev *mxc_isi);
+diff --git a/drivers/staging/media/imx/imx8-isi-m2m.c b/drivers/staging/media/imx/imx8-isi-m2m.c
+index 670d12d8aea0..32a3b68dccc8 100644
+--- a/drivers/staging/media/imx/imx8-isi-m2m.c
++++ b/drivers/staging/media/imx/imx8-isi-m2m.c
+@@ -30,6 +30,120 @@
+ #include "imx8-isi-hw.h"
+ #include "imx8-common.h"
+ 
++enum mxc_isi_m2m_in_fmt {
++	MXC_ISI_M2M_IN_FMT_BGR8P	= 0x0,
++	MXC_ISI_M2M_IN_FMT_RGB8P,
++	MXC_ISI_M2M_IN_FMT_XRGB8,
++	MXC_ISI_M2M_IN_FMT_RGBX8,
++	MXC_ISI_M2M_IN_FMT_XBGR8,
++	MXC_ISI_M2M_IN_FMT_RGB565,
++	MXC_ISI_M2M_IN_FMT_A2BGR10,
++	MXC_ISI_M2M_IN_FMT_A2RGB10,
++	MXC_ISI_M2M_IN_FMT_YUV444_1P8P,
++	MXC_ISI_M2M_IN_FMT_YUV444_1P10,
++	MXC_ISI_M2M_IN_FMT_YUV444_1P10P,
++	MXC_ISI_M2M_IN_FMT_YUV444_1P12,
++	MXC_ISI_M2M_IN_FMT_YUV444_1P8,
++	MXC_ISI_M2M_IN_FMT_YUV422_1P8P,
++	MXC_ISI_M2M_IN_FMT_YUV422_1P10,
++	MXC_ISI_M2M_IN_FMT_YUV422_1P10P,
++};
++
++struct mxc_isi_m2m_dev {
++	struct platform_device	*pdev;
++
++	struct video_device vdev;
++	struct v4l2_device  v4l2_dev;
++	struct v4l2_m2m_dev *m2m_dev;
++	struct v4l2_fh      fh;
++	struct v4l2_pix_format_mplane pix;
++
++	struct list_head	out_active;
++	struct mxc_isi_ctrls	ctrls;
++
++	struct mxc_isi_frame src_f;
++	struct mxc_isi_frame dst_f;
++
++	struct mutex lock;
++	spinlock_t   slock;
++
++	unsigned int aborting;
++	unsigned int frame_count;
++
++	u32 req_cap_buf_num;
++	u32 req_out_buf_num;
++
++	u8 id;
++};
++
++struct mxc_isi_ctx {
++	struct mxc_isi_m2m_dev *isi_m2m;
++	struct v4l2_fh	    fh;
++};
++
++void mxc_isi_channel_set_m2m_src_addr(struct mxc_isi_dev *mxc_isi,
++			struct mxc_isi_buffer *buf)
++{
++	struct vb2_buffer *vb2_buf = &buf->v4l2_buf.vb2_buf;
++	struct frame_addr *paddr = &buf->paddr;
++
++	/* Only support one plane */
++	paddr->y = vb2_dma_contig_plane_dma_addr(vb2_buf, 0);
++	writel(paddr->y, mxc_isi->regs + CHNL_IN_BUF_ADDR);
++}
++
++void mxc_isi_m2m_config_src(struct mxc_isi_dev *mxc_isi,
++			    struct mxc_isi_frame *src_f)
++{
++	u32 val;
++
++	/* source format */
++	val = readl(mxc_isi->regs + CHNL_MEM_RD_CTRL);
++	val &= ~CHNL_MEM_RD_CTRL_IMG_TYPE_MASK;
++	val |= src_f->fmt->color << CHNL_MEM_RD_CTRL_IMG_TYPE_OFFSET;
++	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
++
++	/* source image width and height */
++	val = (src_f->width << CHNL_IMG_CFG_WIDTH_OFFSET |
++	       src_f->height << CHNL_IMG_CFG_HEIGHT_OFFSET);
++	writel(val, mxc_isi->regs + CHNL_IMG_CFG);
++
++	/* source pitch */
++	val = src_f->bytesperline[0] << CHNL_IN_BUF_PITCH_LINE_PITCH_OFFSET;
++	writel(val, mxc_isi->regs + CHNL_IN_BUF_PITCH);
++}
++
++void mxc_isi_m2m_config_dst(struct mxc_isi_dev *mxc_isi,
++			    struct mxc_isi_frame *dst_f)
++{
++	u32 val;
++
++	/* out format */
++	val = readl(mxc_isi->regs + CHNL_IMG_CTRL);
++	val &= ~CHNL_IMG_CTRL_FORMAT_MASK;
++	val |= dst_f->fmt->color << CHNL_IMG_CTRL_FORMAT_OFFSET;
++	writel(val, mxc_isi->regs + CHNL_IMG_CTRL);
++
++	/* out pitch */
++	val = readl(mxc_isi->regs + CHNL_OUT_BUF_PITCH);
++	val &= ~CHNL_IN_BUF_PITCH_LINE_PITCH_MASK;
++	val |= dst_f->bytesperline[0] << CHNL_OUT_BUF_PITCH_LINE_PITCH_OFFSET;
++	writel(val, mxc_isi->regs + CHNL_OUT_BUF_PITCH);
++}
++
++void mxc_isi_m2m_start_read(struct mxc_isi_dev *mxc_isi)
++{
++	u32 val;
++
++	val = readl(mxc_isi->regs + CHNL_MEM_RD_CTRL);
++	val &= ~ CHNL_MEM_RD_CTRL_READ_MEM_MASK;
++	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
++	udelay(300);
++
++	val |= CHNL_MEM_RD_CTRL_READ_MEM_ENABLE << CHNL_MEM_RD_CTRL_READ_MEM_OFFSET;
++	writel(val, mxc_isi->regs + CHNL_MEM_RD_CTRL);
++}
++
+ #define to_isi_buffer(x)	\
+ 	container_of((x), struct mxc_isi_buffer, v4l2_buf)
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,46 @@
+From 862d32268f4be45ccbdb2ddebd9e873d712ccf10 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:34 +0100
+Subject: [PATCH 103/302] media: imx: capture: Handle errors from
+ v4l2_fh_open()
+
+If the call to v4l2_fh_open() fails, return the error code instead of
+proceeding normally as if nothing happened.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit e2c073c7d452118f789f0a4618fa5089e1824f1f)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 0d3fb811b30b..3bbb9db975df 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -643,13 +643,16 @@ static int capture_open(struct file *file)
+ 		return -ERESTARTSYS;
+ 
+ 	ret = v4l2_fh_open(file);
+-	if (ret)
++	if (ret) {
+ 		dev_err(priv->dev, "v4l2_fh_open failed\n");
++		goto out;
++	}
+ 
+ 	ret = v4l2_pipeline_pm_use(&vfd->entity, 1);
+ 	if (ret)
+ 		v4l2_fh_release(file);
+ 
++out:
+ 	mutex_unlock(&priv->mutex);
+ 	return ret;
+ }
+-- 
+Regards,
+
+Laurent Pinchart
+

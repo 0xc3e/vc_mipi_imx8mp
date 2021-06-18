@@ -1,0 +1,56 @@
+From cffbd86617d13b0052278f8715a97455979451d2 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:36 +0100
+Subject: [PATCH 105/302] media: imx: capture: Remove capture_priv stop field
+
+The stop field in the capture_priv structure is only set, never read.
+Drop it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit cf56ac08795a923cb2b30b0479e0a6a020dd7d72)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index ab0df42bb629..891767ebb7b8 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -45,8 +45,6 @@ struct capture_priv {
+ 	spinlock_t q_lock;			/* Protect ready_q */
+ 
+ 	struct v4l2_ctrl_handler ctrl_hdlr;	/* Controls inherited from subdevs */
+-
+-	bool stop;				/* streaming is stopping */
+ };
+ 
+ #define to_capture_priv(v) container_of(v, struct capture_priv, vdev)
+@@ -573,8 +571,6 @@ static int capture_start_streaming(struct vb2_queue *vq, unsigned int count)
+ 		goto return_bufs;
+ 	}
+ 
+-	priv->stop = false;
+-
+ 	return 0;
+ 
+ return_bufs:
+@@ -595,10 +591,6 @@ static void capture_stop_streaming(struct vb2_queue *vq)
+ 	unsigned long flags;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&priv->q_lock, flags);
+-	priv->stop = true;
+-	spin_unlock_irqrestore(&priv->q_lock, flags);
+-
+ 	ret = imx_media_pipeline_set_stream(priv->md, &priv->src_sd->entity,
+ 					    false);
+ 	if (ret)
+-- 
+Regards,
+
+Laurent Pinchart
+

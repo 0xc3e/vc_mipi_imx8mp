@@ -1,0 +1,33 @@
+From a2717be763f447881c52228266d66da844c1536f Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 04:34:10 +0300
+Subject: [PATCH 299/302] arm64: dts: imx8mp-verdin: Update to mipi-csis
+ upstream DT bindings
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+index 76e1414152c3..07f145e7e1bb 100755
+--- a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+@@ -206,11 +206,7 @@
+ 		reg = <0>;
+ 		mipi_csi0_ep: endpoint {
+ 			remote-endpoint = <&imx327_out>;
+-			/* FIXME: This should be <1 2 3 4> */
+-			data-lanes = <4>;
+-			csis-hs-settle = <13>;
+-			csis-clk-settle = <2>;
+-			csis-wclk;
++			data-lanes = <1 2 3 4>;
+ 		};
+ 	};
+ };
+-- 
+Regards,
+
+Laurent Pinchart
+

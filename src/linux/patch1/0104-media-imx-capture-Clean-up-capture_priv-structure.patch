@@ -1,0 +1,69 @@
+From 2a08d6d3c6e793cbec00ea9fae6eb9ae470cc39e Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:35 +0100
+Subject: [PATCH 104/302] media: imx: capture: Clean up capture_priv structure
+
+Document all the fields of the capture_priv structure and group them by
+purpose.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit b3a300996cbed69feccdf896f94911d08643bfe8)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 30 ++++++++-----------
+ 1 file changed, 12 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 3bbb9db975df..ab0df42bb629 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -29,30 +29,24 @@
+ #define IMX_CAPTURE_NAME "imx-capture"
+ 
+ struct capture_priv {
+-	struct imx_media_video_dev vdev;
++	struct imx_media_dev *md;		/* Media device */
++	struct device *dev;			/* Physical device */
+ 
+-	struct v4l2_subdev    *src_sd;
+-	int                   src_sd_pad;
+-	struct device         *dev;
++	struct imx_media_video_dev vdev;	/* Video device */
++	struct media_pad vdev_pad;		/* Video device pad */
+ 
+-	struct imx_media_dev  *md;
++	struct v4l2_subdev *src_sd;		/* Source subdev */
++	int src_sd_pad;				/* Source subdev pad */
+ 
+-	struct media_pad      vdev_pad;
++	struct mutex mutex;			/* Protect vdev operations */
+ 
+-	struct mutex          mutex;       /* capture device mutex */
++	struct vb2_queue q;			/* The videobuf2 queue */
++	struct list_head ready_q;		/* List of queued buffers */
++	spinlock_t q_lock;			/* Protect ready_q */
+ 
+-	/* the videobuf2 queue */
+-	struct vb2_queue       q;
+-	/* list of ready imx_media_buffer's from q */
+-	struct list_head       ready_q;
+-	/* protect ready_q */
+-	spinlock_t             q_lock;
++	struct v4l2_ctrl_handler ctrl_hdlr;	/* Controls inherited from subdevs */
+ 
+-	/* controls inherited from subdevs */
+-	struct v4l2_ctrl_handler ctrl_hdlr;
+-
+-	/* misc status */
+-	bool                  stop;          /* streaming is stopping */
++	bool stop;				/* streaming is stopping */
+ };
+ 
+ #define to_capture_priv(v) container_of(v, struct capture_priv, vdev)
+-- 
+Regards,
+
+Laurent Pinchart
+

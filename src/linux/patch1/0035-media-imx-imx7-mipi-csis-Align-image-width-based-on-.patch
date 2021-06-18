@@ -1,0 +1,84 @@
+From 0349b6e2fe56532a3b1472f7b825971af4c0aca9 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:16 +0100
+Subject: [PATCH 035/302] media: imx: imx7-mipi-csis: Align image width based
+ on format
+
+The total number of bits per line needs to be a multiple of 8, which
+requires aligning the image width based on the format width. The
+csis_pix_format structure contains a pix_width_alignment field that
+serves this purpose, but the field is never set. Instead of fixing that,
+calculate the alignment constraints based on the bus width for the
+format, and drop the unneeded pix_width_alignment field.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: b06bde9ac6836902f1fb50f69493d02d4191d5aa
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 29 +++++++++++++++++++---
+ 1 file changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 84d2eddcf952..44873a0ceb78 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -258,7 +258,6 @@ struct csi_state {
+ };
+ 
+ struct csis_pix_format {
+-	unsigned int pix_width_alignment;
+ 	u32 code;
+ 	u32 fmt_reg;
+ 	u8 width;
+@@ -774,6 +773,7 @@ static int mipi_csis_set_fmt(struct v4l2_subdev *mipi_sd,
+ 	struct csi_state *state = mipi_sd_to_csis_state(mipi_sd);
+ 	struct csis_pix_format const *csis_fmt;
+ 	struct v4l2_mbus_framefmt *fmt;
++	unsigned int align;
+ 
+ 	/*
+ 	 * The CSIS can't transcode in any way, the source format can't be
+@@ -798,8 +798,31 @@ static int mipi_csis_set_fmt(struct v4l2_subdev *mipi_sd,
+ 	fmt->width = sdformat->format.width;
+ 	fmt->height = sdformat->format.height;
+ 
+-	v4l_bound_align_image(&fmt->width, 1, CSIS_MAX_PIX_WIDTH,
+-			      csis_fmt->pix_width_alignment,
++	/*
++	 * The total number of bits per line must be a multiple of 8. We thus
++	 * need to align the width for formats that are not multiples of 8
++	 * bits.
++	 */
++	switch (csis_fmt->width % 8) {
++	case 0:
++		align = 1;
++		break;
++	case 4:
++		align = 2;
++		break;
++	case 2:
++	case 6:
++		align = 4;
++		break;
++	case 1:
++	case 3:
++	case 5:
++	case 7:
++		align = 8;
++		break;
++	}
++
++	v4l_bound_align_image(&fmt->width, 1, CSIS_MAX_PIX_WIDTH, align,
+ 			      &fmt->height, 1, CSIS_MAX_PIX_HEIGHT, 1, 0);
+ 
+ 	sdformat->format = *fmt;
+-- 
+Regards,
+
+Laurent Pinchart
+

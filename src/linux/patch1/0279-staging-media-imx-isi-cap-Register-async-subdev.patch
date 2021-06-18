@@ -1,0 +1,39 @@
+From edb43e52f2120cc3a9cdca05d590f823489e6449 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 279/302] staging: media: imx: isi: cap: Register async subdev
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index ac48fbcd1a0b..70544397f337 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1707,6 +1707,10 @@ static int isi_cap_probe(struct platform_device *pdev)
+ 	platform_set_drvdata(pdev, isi_cap);
+ 
+ 	pm_runtime_enable(dev);
++
++	sd->fwnode = of_fwnode_handle(dev->parent->of_node);
++	v4l2_async_register_subdev(sd);
++
+ 	return 0;
+ }
+ 
+@@ -1715,7 +1719,7 @@ static int isi_cap_remove(struct platform_device *pdev)
+ 	struct mxc_isi_cap_dev *isi_cap = platform_get_drvdata(pdev);
+ 	struct v4l2_subdev *sd = &isi_cap->sd;
+ 
+-	v4l2_device_unregister_subdev(sd);
++	v4l2_async_unregister_subdev(sd);
+ 	media_entity_cleanup(&sd->entity);
+ 	v4l2_set_subdevdata(sd, NULL);
+ 	pm_runtime_disable(&pdev->dev);
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,162 @@
+From bd19c02c3f9185222c116424d8b20a3d1a71eb7a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 286/302] staging: media: imx: isi: Constify all instances of
+ mxc_isi_fmt
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c  | 24 +++++++++++------------
+ drivers/staging/media/imx/imx8-isi-core.h |  4 ++--
+ drivers/staging/media/imx/imx8-isi-hw.c   |  4 ++--
+ 3 files changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index cc26fdd60d93..20b4c07724ad 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -31,7 +31,7 @@
+ 
+ #define sd_to_cap_dev(ptr)	container_of(ptr, struct mxc_isi_cap_dev, sd)
+ 
+-struct mxc_isi_fmt mxc_isi_out_formats[] = {
++const struct mxc_isi_fmt mxc_isi_out_formats[] = {
+ 	{
+ 		.name		= "Y8-RAW",
+ 		.fourcc		= V4L2_PIX_FMT_GREY,
+@@ -230,7 +230,7 @@ struct mxc_isi_fmt mxc_isi_out_formats[] = {
+ /*
+  * Pixel link input format
+  */
+-struct mxc_isi_fmt mxc_isi_src_formats[] = {
++const struct mxc_isi_fmt mxc_isi_src_formats[] = {
+ 	{
+ 		.name		= "RGB32",
+ 		.fourcc		= V4L2_PIX_FMT_RGB32,
+@@ -246,7 +246,7 @@ struct mxc_isi_fmt mxc_isi_src_formats[] = {
+ 	}
+ };
+ 
+-struct mxc_isi_fmt *mxc_isi_get_format(unsigned int index)
++const struct mxc_isi_fmt *mxc_isi_get_format(unsigned int index)
+ {
+ 	return &mxc_isi_out_formats[index];
+ }
+@@ -254,9 +254,9 @@ struct mxc_isi_fmt *mxc_isi_get_format(unsigned int index)
+ /*
+  * lookup mxc_isi color format by fourcc or media bus format
+  */
+-struct mxc_isi_fmt *mxc_isi_find_format(const u32 *pixelformat, int index)
++const struct mxc_isi_fmt *mxc_isi_find_format(const u32 *pixelformat, int index)
+ {
+-	struct mxc_isi_fmt *fmt, *def_fmt = NULL;
++	const struct mxc_isi_fmt *fmt, *def_fmt = NULL;
+ 	unsigned int i;
+ 	int id = 0;
+ 
+@@ -274,7 +274,7 @@ struct mxc_isi_fmt *mxc_isi_find_format(const u32 *pixelformat, int index)
+ 	return def_fmt;
+ }
+ 
+-struct mxc_isi_fmt *mxc_isi_get_src_fmt(struct v4l2_subdev_format *sd_fmt)
++const struct mxc_isi_fmt *mxc_isi_get_src_fmt(struct v4l2_subdev_format *sd_fmt)
+ {
+ 	u32 index;
+ 
+@@ -450,7 +450,7 @@ static int cap_vb2_queue_setup(struct vb2_queue *q,
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = vb2_get_drv_priv(q);
+ 	struct mxc_isi_frame *dst_f = &isi_cap->dst_f;
+-	struct mxc_isi_fmt *fmt = dst_f->fmt;
++	const struct mxc_isi_fmt *fmt = dst_f->fmt;
+ 	unsigned long wh;
+ 	int i;
+ 
+@@ -851,7 +851,7 @@ static int mxc_isi_cap_enum_fmt(struct file *file, void *priv,
+ 				       struct v4l2_fmtdesc *f)
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+-	struct mxc_isi_fmt *fmt;
++	const struct mxc_isi_fmt *fmt;
+ 
+ 	dev_dbg(&isi_cap->pdev->dev, "%s\n", __func__);
+ 
+@@ -896,7 +896,7 @@ static int mxc_isi_cap_try_fmt_mplane(struct file *file, void *fh,
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct v4l2_pix_format_mplane *pix = &f->fmt.pix_mp;
+-	struct mxc_isi_fmt *fmt;
++	const struct mxc_isi_fmt *fmt;
+ 	int i;
+ 
+ 	dev_dbg(&isi_cap->pdev->dev, "%s\n", __func__);
+@@ -986,7 +986,7 @@ static int mxc_isi_cap_s_fmt_mplane(struct file *file, void *priv,
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct v4l2_pix_format_mplane *pix = &f->fmt.pix_mp;
+ 	struct mxc_isi_frame *dst_f = &isi_cap->dst_f;
+-	struct mxc_isi_fmt *fmt;
++	const struct mxc_isi_fmt *fmt;
+ 	int bpl;
+ 	int i;
+ 
+@@ -1208,8 +1208,8 @@ static int mxc_isi_cap_enum_framesizes(struct file *file, void *priv,
+ 				       struct v4l2_frmsizeenum *fsize)
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
++	const struct mxc_isi_fmt *fmt;
+ 	struct device_node *parent;
+-	struct mxc_isi_fmt *fmt;
+ 
+ 	fmt = mxc_isi_find_format(&fsize->pixel_format, 0);
+ 	if (!fmt || fmt->fourcc != fsize->pixel_format)
+@@ -1365,7 +1365,7 @@ static int mxc_isi_subdev_set_fmt(struct v4l2_subdev *sd,
+ 	struct device_node *parent;
+ 	struct v4l2_mbus_framefmt *mf = &fmt->format;
+ 	struct mxc_isi_frame *dst_f = &isi_cap->dst_f;
+-	struct mxc_isi_fmt *out_fmt;
++	const struct mxc_isi_fmt *out_fmt;
+ 	int i;
+ 
+ 	if (fmt->pad < MXC_ISI_SD_PAD_SOURCE_MEM &&
+diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
+index 0e5b0805aeac..11e13ddb3d8a 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.h
++++ b/drivers/staging/media/imx/imx8-isi-core.h
+@@ -101,7 +101,7 @@ enum mxc_isi_in_fmt {
+ };
+ 
+ struct mxc_isi_fmt {
+-	char	*name;
++	const char	*name;
+ 	u32	mbus_code;
+ 	u32	fourcc;
+ 	u32	color;
+@@ -160,7 +160,7 @@ struct mxc_isi_frame {
+ 	u32	height;
+ 	unsigned int	sizeimage[MXC_MAX_PLANES];
+ 	unsigned int	bytesperline[MXC_MAX_PLANES];
+-	struct mxc_isi_fmt	*fmt;
++	const struct mxc_isi_fmt	*fmt;
+ };
+ 
+ struct mxc_isi_roi_alpha {
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.c b/drivers/staging/media/imx/imx8-isi-hw.c
+index 0df4f18c0a59..a8403461b6a9 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.c
++++ b/drivers/staging/media/imx/imx8-isi-hw.c
+@@ -326,8 +326,8 @@ void mxc_isi_channel_set_csc(struct mxc_isi_dev *mxc_isi,
+ 			     struct mxc_isi_frame *src_f,
+ 			     struct mxc_isi_frame *dst_f)
+ {
+-	struct mxc_isi_fmt *src_fmt = src_f->fmt;
+-	struct mxc_isi_fmt *dst_fmt = dst_f->fmt;
++	const struct mxc_isi_fmt *src_fmt = src_f->fmt;
++	const struct mxc_isi_fmt *dst_fmt = dst_f->fmt;
+ 	u32 val, csc = 0;
+ 
+ 	val = readl(mxc_isi->regs + CHNL_IMG_CTRL);
+-- 
+Regards,
+
+Laurent Pinchart
+

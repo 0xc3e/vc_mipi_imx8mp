@@ -1,0 +1,50 @@
+From 759fd032f88d291b188b091978a4c4ba9027c85a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 02:15:10 +0300
+Subject: [PATCH 295/302] arm64: dts: imx8mp: Drop ISI capture and M2M nodes
+
+They're not used anymore.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ arch/arm64/boot/dts/freescale/imx8mp.dtsi | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp.dtsi b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+index 4f553b5e299f..eac54454020f 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mp.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+@@ -1777,16 +1777,6 @@
+ 					power-domains = <&mediamix_pd>;
+ 					isi_chain = <&isi_chain_buf>;
+ 					status = "disabled";
+-
+-					cap_device {
+-						compatible = "imx-isi-capture";
+-						status = "disabled";
+-					};
+-
+-					m2m_device{
+-						compatible = "imx-isi-m2m";
+-						status = "disabled";
+-					};
+ 				};
+ 
+ 				isi_1: isi@32e02000 {
+@@ -1805,11 +1795,6 @@
+ 					no-reset-control;
+ 					power-domains = <&mediamix_pd>;
+ 					status = "disabled";
+-
+-					cap_device {
+-						compatible = "imx-isi-capture";
+-						status = "disabled";
+-					};
+ 				};
+ 
+ 				isp_0: isp@32e10000 {
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -27,5 +27,5 @@ if [[ $CMD == "test" ]]; then
 
         scp $WORKING_DIR/test/* $TARGET_USER@$TARGET_IP:/home/root/test
         scp $BUILD_DIR/yavta/yavta $TARGET_USER@$TARGET_IP:/usr/bin
-        scp $BUILD_DIR/linux/scripts/* $TARGET_USER@$TARGET_IP:/home/root/test
+        scp $SRC_DIR/linux/scripts/* $TARGET_USER@$TARGET_IP:/home/root/test
 fi

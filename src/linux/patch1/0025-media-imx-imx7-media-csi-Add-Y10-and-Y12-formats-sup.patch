@@ -1,0 +1,44 @@
+From cb50dd80bd03401adb93df4e5281b14970069f87 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 10 Mar 2020 17:06:32 +0100
+Subject: [PATCH 025/302] media: imx: imx7-media-csi: Add Y10 and Y12 formats
+ support
+
+Support capturing the 10- and 12-bit greyscale formats.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: b1f240eeef79711e4bb0459f8eca501ac1d3eb2a
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index 3da1e79f1bad..a7771dd61859 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -804,6 +804,14 @@ static int imx7_csi_configure(struct imx7_csi *csi)
+ 	case V4L2_PIX_FMT_YUYV:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_YUV422_8B;
+ 		break;
++	case V4L2_PIX_FMT_Y10:
++		cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
++		cr1 |= BIT_PIXEL_BIT;
++		break;
++	case V4L2_PIX_FMT_Y12:
++		cr18 |= BIT_MIPI_DATA_FORMAT_RAW12;
++		cr1 |= BIT_PIXEL_BIT;
++		break;
+ 	case V4L2_PIX_FMT_SBGGR8:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_RAW8;
+ 		break;
+-- 
+Regards,
+
+Laurent Pinchart
+

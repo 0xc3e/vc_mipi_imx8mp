@@ -1,0 +1,32 @@
+From f307bb0ce7632133718fcb3ae6b5c92a79af3454 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 287/302] staging: media: imx: isi: cap: Drop unused
+ mxc_isi_get_format() function
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 20b4c07724ad..a0bd2d71f9ff 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -246,11 +246,6 @@ const struct mxc_isi_fmt mxc_isi_src_formats[] = {
+ 	}
+ };
+ 
+-const struct mxc_isi_fmt *mxc_isi_get_format(unsigned int index)
+-{
+-	return &mxc_isi_out_formats[index];
+-}
+-
+ /*
+  * lookup mxc_isi color format by fourcc or media bus format
+  */
+-- 
+Regards,
+
+Laurent Pinchart
+

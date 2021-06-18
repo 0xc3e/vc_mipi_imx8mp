@@ -1,0 +1,29 @@
+From 3f9813c5367562660a5c09e8e650b6e4204706f6 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 6 Apr 2021 17:16:01 +0300
+Subject: [PATCH 266/302] staging: media: imx: isi: Enable compilation of
+ drivers as modules
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index 6cfcab3dc4d4..9f4c0c7a0ec9 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -57,7 +57,7 @@ config IMX8_MEDIA_DEVICE
+ 	  all modules in image subsystem of imx8qxp/qm platform.
+ 
+ config IMX8_ISI_CORE
+-	bool "IMX8 Image Sensor Interface Core Driver"
++	tristate "IMX8 Image Sensor Interface Core Driver"
+ 	depends on VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+ 	default y
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

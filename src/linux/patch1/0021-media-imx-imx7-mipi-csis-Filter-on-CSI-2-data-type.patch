@@ -1,0 +1,39 @@
+From d84474516d1d25ff15213eccb804b3079f24685b Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 10 Mar 2020 17:06:27 +0100
+Subject: [PATCH 021/302] media: imx: imx7-mipi-csis: Filter on CSI-2 data type
+
+Enable filtering based on CSI-2 data type. Otherwise sources that send
+multiple data types (such as sensors that send embedded data) will not
+be properly supported. They will both result in additional non-image
+lines being captured, and in the receiver being confused as it doesn't
+resynchronise on vsync.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 89f517a133ec8601e2efd3402422b44a2c79ec3e
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 139ca3e84f99..25017ab78095 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -430,6 +430,7 @@ static void mipi_csis_set_params(struct csi_state *state)
+ 	val = mipi_csis_read(state, MIPI_CSIS_CMN_CTRL);
+ 	val &= ~MIPI_CSIS_CMN_CTRL_LANE_NR_MASK;
+ 	val |= (lanes - 1) << MIPI_CSIS_CMN_CTRL_LANE_NR_OFFSET;
++	val |= MIPI_CSIS_CMN_CTRL_INTER_MODE;
+ 	mipi_csis_write(state, MIPI_CSIS_CMN_CTRL, val);
+ 
+ 	__mipi_csis_set_format(state);
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,70 @@
+From 8f57070cced02ef12d3bed87a0476634d1a7efab Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:50 +0200
+Subject: [PATCH 064/302] media: imx: csi: Create media links in bound notifier
+
+Implement a notifier bound op to register media links from the remote
+sub-device's source pad(s) to the CSI sink pad.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 2c586f18919895f0acb9906dcd8a1790b19464bc
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-csi.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index 08f698af4797..a051a063a2db 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -120,6 +120,11 @@ static inline struct csi_priv *sd_to_dev(struct v4l2_subdev *sdev)
+ 	return container_of(sdev, struct csi_priv, sd);
+ }
+ 
++static inline struct csi_priv *notifier_to_dev(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct csi_priv, notifier);
++}
++
+ static inline bool is_parallel_bus(struct v4l2_fwnode_endpoint *ep)
+ {
+ 	return ep->bus_type != V4L2_MBUS_CSI2_DPHY;
+@@ -1894,6 +1899,20 @@ static const struct v4l2_subdev_internal_ops csi_internal_ops = {
+ 	.unregistered = csi_unregistered,
+ };
+ 
++static int imx_csi_notify_bound(struct v4l2_async_notifier *notifier,
++				struct v4l2_subdev *sd,
++				struct v4l2_async_subdev *asd)
++{
++	struct csi_priv *priv = notifier_to_dev(notifier);
++	struct media_pad *sink = &priv->sd.entity.pads[CSI_SINK_PAD];
++
++	return v4l2_create_fwnode_links_to_pad(sd, sink);
++}
++
++static const struct v4l2_async_notifier_operations csi_notify_ops = {
++	.bound = imx_csi_notify_bound,
++};
++
+ static int imx_csi_async_register(struct csi_priv *priv)
+ {
+ 	struct v4l2_async_subdev *asd = NULL;
+@@ -1931,6 +1950,8 @@ static int imx_csi_async_register(struct csi_priv *priv)
+ 		}
+ 	}
+ 
++	priv->notifier.ops = &csi_notify_ops;
++
+ 	ret = v4l2_async_subdev_notifier_register(&priv->sd,
+ 						  &priv->notifier);
+ 	if (ret)
+-- 
+Regards,
+
+Laurent Pinchart
+

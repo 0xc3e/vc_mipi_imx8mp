@@ -1,0 +1,47 @@
+From 1c4ce78f4b27ba6fe743443e71a56c7df292162a Mon Sep 17 00:00:00 2001
+From: Philipp Zabel <p.zabel@pengutronix.de>
+Date: Thu, 12 Sep 2019 13:01:20 -0300
+Subject: [PATCH 011/302] media: imx: enable V4L2_PIX_FMT_XBGR32, _BGRX32, and
+ _RGBX32
+
+Now that proper V4L2 pixel formats exist for all 32-bit RGB
+permutations, drop support for the poorly defined legacy format
+V4L2_PIX_FMT_BGR32.
+
+Signed-off-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+Upstream-commit: a5bbeeca8e361d09795d5c736a6e7f0e10cb9ea2
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-utils.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 4cc6a7462ae2..0788a1874557 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -184,7 +184,15 @@ static const struct imx_media_pixfmt rgb_formats[] = {
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 24,
+ 	}, {
+-		.fourcc	= V4L2_PIX_FMT_BGR32,
++		.fourcc	= V4L2_PIX_FMT_XBGR32,
++		.cs     = IPUV3_COLORSPACE_RGB,
++		.bpp    = 32,
++	}, {
++		.fourcc	= V4L2_PIX_FMT_BGRX32,
++		.cs     = IPUV3_COLORSPACE_RGB,
++		.bpp    = 32,
++	}, {
++		.fourcc	= V4L2_PIX_FMT_RGBX32,
+ 		.cs     = IPUV3_COLORSPACE_RGB,
+ 		.bpp    = 32,
+ 	},
+-- 
+Regards,
+
+Laurent Pinchart
+

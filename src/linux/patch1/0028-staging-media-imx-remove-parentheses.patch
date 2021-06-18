@@ -1,0 +1,38 @@
+From fd5cc6a6f8823665891148af27ec1706bff2cd35 Mon Sep 17 00:00:00 2001
+From: Kaaira Gupta <kgupta@es.iitr.ac.in>
+Date: Sat, 14 Mar 2020 03:24:05 +0530
+Subject: [PATCH 028/302] staging: media: imx: remove parentheses
+
+Remove unnecessary parentheses around a binary OR in file
+imx7-mipi-csis.c. Check reported by coccinelle.
+
+Signed-off-by: Kaaira Gupta <kgupta@es.iitr.ac.in>
+Reviewed-by: Stefano Brivio <sbrivio@redhat.com>
+Link: https://lore.kernel.org/r/20200313215406.2485-4-kgupta@es.iitr.ac.in
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+Upstream-commit: c4546a359a49439700609ec66e9878b9b2c0a0fe
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 25017ab78095..6318f0aebb4b 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -417,7 +417,7 @@ static void mipi_csis_set_hsync_settle(struct csi_state *state, int hs_settle)
+ {
+ 	u32 val = mipi_csis_read(state, MIPI_CSIS_DPHYCTRL);
+ 
+-	val = ((val & ~MIPI_CSIS_DPHYCTRL_HSS_MASK) | (hs_settle << 24));
++	val = (val & ~MIPI_CSIS_DPHYCTRL_HSS_MASK) | (hs_settle << 24);
+ 
+ 	mipi_csis_write(state, MIPI_CSIS_DPHYCTRL, val);
+ }
+-- 
+Regards,
+
+Laurent Pinchart
+

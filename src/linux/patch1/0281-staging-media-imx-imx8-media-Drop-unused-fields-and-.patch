@@ -1,0 +1,56 @@
+From 383a7556139626cb4bf7c549307a9ea18114a9d9 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 281/302] staging: media: imx: imx8-media: Drop unused fields
+ and values
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-media-dev.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-media-dev.c b/drivers/staging/media/imx/imx8-media-dev.c
+index 5a86d5a06115..2ac3fecf35ac 100644
+--- a/drivers/staging/media/imx/imx8-media-dev.c
++++ b/drivers/staging/media/imx/imx8-media-dev.c
+@@ -46,18 +46,11 @@
+ #define GRP_ID_MXC_SENSOR		BIT(8)
+ #define GRP_ID_MXC_ISI			BIT(9)
+ #define GRP_ID_MXC_MIPI_CSI2		BIT(11)
+-#define GRP_ID_MXC_HDMI_RX		BIT(12)
+-#define GRP_ID_MXC_MJPEG_DEC		BIT(13)
+-#define GRP_ID_MXC_MJPEG_ENC		BIT(14)
+ #define GRP_ID_MXC_PARALLEL_CSI		BIT(15)
+ 
+ enum mxc_subdev_index {
+-	IDX_SENSOR,
+ 	IDX_ISI,
+ 	IDX_MIPI_CSI2,
+-	IDX_HDMI_RX,
+-	IDX_MJPEG_ENC,
+-	IDX_MJPEG_DEC,
+ 	IDX_PARALLEL_CSI,
+ 	IDX_MAX,
+ };
+@@ -114,7 +107,6 @@ struct mxc_md {
+ 	struct platform_device *pdev;
+ 
+ 	struct v4l2_async_notifier subdev_notifier;
+-	struct v4l2_async_subdev *async_subdevs[MXC_MAX_SENSORS];
+ };
+ 
+ static inline struct mxc_md *notifier_to_mxc_md(struct v4l2_async_notifier *n)
+@@ -816,7 +808,7 @@ static int mxc_md_register_platform_entities(struct mxc_md *mxc_md,
+ 		else if (!strcmp(node->name, PARALLEL_OF_NODE_NAME))
+ 			plat_entity = IDX_PARALLEL_CSI;
+ 
+-		if (plat_entity >= IDX_SENSOR && plat_entity < IDX_MAX) {
++		if (plat_entity >= IDX_ISI && plat_entity < IDX_MAX) {
+ 			ret = mxc_md_register_platform_entity(mxc_md, node,
+ 							      plat_entity);
+ 			if (ret < 0)
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,55 @@
+From 008021a8dbfdc988a10147ffdcc706427aa62685 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:13 +0100
+Subject: [PATCH 142/302] media: imx: imx7-media-csi: Set RFF burst type in
+ imx7_csi_configure()
+
+The RFF burst type is set in imx7_csi_dmareq_rff_enable(), which doesn't
+match the function name. Move it to imx7_csi_configure().
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit b5cbab5e1a2f9a7b3fa096ee625d0da2bac13345)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index ea14195e6c7f..3d1dd8ef9d87 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -308,10 +308,6 @@ static void imx7_csi_rx_fifo_clear(struct imx7_csi *csi)
+ static void imx7_csi_dmareq_rff_enable(struct imx7_csi *csi)
+ {
+ 	u32 cr3 = imx7_csi_reg_read(csi, CSI_CSICR3);
+-	u32 cr2 = imx7_csi_reg_read(csi, CSI_CSICR2);
+-
+-	/* Burst Type of DMA Transfer from RxFIFO. INCR16 */
+-	cr2 |= BIT_DMA_BURST_TYPE_RFF_INCR16;
+ 
+ 	cr3 |= BIT_DMA_REQ_EN_RFF;
+ 	cr3 |= BIT_HRESP_ERR_EN;
+@@ -319,7 +315,6 @@ static void imx7_csi_dmareq_rff_enable(struct imx7_csi *csi)
+ 	cr3 |= BIT_RXFF_LEVEL(2);
+ 
+ 	imx7_csi_reg_write(csi, cr3, CSI_CSICR3);
+-	imx7_csi_reg_write(csi, cr2, CSI_CSICR2);
+ }
+ 
+ static void imx7_csi_dmareq_rff_disable(struct imx7_csi *csi)
+@@ -532,7 +527,7 @@ static void imx7_csi_configure(struct imx7_csi *csi)
+ 	}
+ 
+ 	imx7_csi_reg_write(csi, cr1, CSI_CSICR1);
+-	imx7_csi_reg_write(csi, 0, CSI_CSICR2);
++	imx7_csi_reg_write(csi, BIT_DMA_BURST_TYPE_RFF_INCR16, CSI_CSICR2);
+ 	imx7_csi_reg_write(csi, BIT_FRMCNT_RST, CSI_CSICR3);
+ 	imx7_csi_reg_write(csi, cr18, CSI_CSICR18);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

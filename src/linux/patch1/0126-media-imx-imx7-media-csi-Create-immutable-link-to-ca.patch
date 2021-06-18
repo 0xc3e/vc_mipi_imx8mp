@@ -1,0 +1,76 @@
+From 27ce7bdc10c0ca53794cbdcab199970808c51118 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:57 +0100
+Subject: [PATCH 126/302] media: imx: imx7-media-csi: Create immutable link to
+ capture device
+
+The i.MX7 camera pipeline is simple, with the CSI connected directly to
+the capture device without any other option. There's thus no need to
+allow link configurable by userspace. Make it immutable.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 61c699bfb013a0f3e4378a0bf3c18450d7ef5b70)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 20 +++-----------------
+ 1 file changed, 3 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index bc3324a30824..174e608ededa 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -166,8 +166,6 @@ struct imx7_csi {
+ 
+ 	struct v4l2_subdev *src_sd;
+ 
+-	struct media_entity *sink;
+-
+ 	struct v4l2_mbus_framefmt format_mbus[IMX7_CSI_PADS_NUM];
+ 	const struct imx_media_pixfmt *cc[IMX7_CSI_PADS_NUM];
+ 	struct v4l2_fract frame_interval[IMX7_CSI_PADS_NUM];
+@@ -450,19 +448,6 @@ static int imx7_csi_link_setup(struct media_entity *entity,
+ 		} else {
+ 			csi->src_sd = NULL;
+ 		}
+-
+-		goto unlock;
+-	}
+-
+-	/* source pad */
+-	if (flags & MEDIA_LNK_FL_ENABLED) {
+-		if (csi->sink) {
+-			ret = -EBUSY;
+-			goto unlock;
+-		}
+-		csi->sink = remote->entity;
+-	} else {
+-		csi->sink = NULL;
+ 	}
+ 
+ unlock:
+@@ -842,7 +827,7 @@ static int imx7_csi_s_stream(struct v4l2_subdev *sd, int enable)
+ 
+ 	mutex_lock(&csi->lock);
+ 
+-	if (!csi->src_sd || !csi->sink) {
++	if (!csi->src_sd) {
+ 		ret = -EPIPE;
+ 		goto out_unlock;
+ 	}
+@@ -1091,7 +1076,8 @@ static int imx7_csi_registered(struct v4l2_subdev *sd)
+ 	if (IS_ERR(csi->vdev))
+ 		return PTR_ERR(csi->vdev);
+ 
+-	ret = imx_media_capture_device_register(csi->vdev, 0);
++	ret = imx_media_capture_device_register(csi->vdev,
++						MEDIA_LNK_FL_IMMUTABLE);
+ 	if (ret)
+ 		imx_media_capture_device_remove(csi->vdev);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

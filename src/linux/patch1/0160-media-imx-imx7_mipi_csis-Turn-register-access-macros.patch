@@ -1,0 +1,45 @@
+From 9bf5d5f07030f2201f49b793e5e4743591f0fd7d Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:35 +0100
+Subject: [PATCH 160/302] media: imx: imx7_mipi_csis: Turn register access
+ macros into functions
+
+Make it easier to instrument register access (for instance with
+printk-based logging) by turning the macros into inline functions.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 6eac0eecd092c92f870e76af6c9a5c26fa647e55)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index e1728240b494..597d7dbde537 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -358,8 +358,15 @@ static const struct csis_pix_format mipi_csis_formats[] = {
+ 	}
+ };
+ 
+-#define mipi_csis_write(__csis, __r, __v) writel(__v, (__csis)->regs + (__r))
+-#define mipi_csis_read(__csis, __r) readl((__csis)->regs + (__r))
++static inline void mipi_csis_write(struct csi_state *state, u32 reg, u32 val)
++{
++	writel(val, state->regs + reg);
++}
++
++static inline u32 mipi_csis_read(struct csi_state *state, u32 reg)
++{
++	return readl(state->regs + reg);
++}
+ 
+ static int mipi_csis_dump_regs(struct csi_state *state)
+ {
+-- 
+Regards,
+
+Laurent Pinchart
+

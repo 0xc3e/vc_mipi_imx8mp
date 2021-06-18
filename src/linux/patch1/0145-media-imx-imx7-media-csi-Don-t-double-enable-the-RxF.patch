@@ -1,0 +1,36 @@
+From ba63c07cc753088ec3ed4f82e2a8e98bec0bd418 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:16 +0100
+Subject: [PATCH 145/302] media: imx: imx7-media-csi: Don't double-enable the
+ RxFIFO
+
+The RxFIFO is enabled by imx7_csi_dmareq_rff_enable() in both
+imx7_csi_init() and imx7_csi_enable(). Enabling it once is enough,
+remove the former.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 30122594cd5b4747d1572fafe0128f8975fa9837)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index ed389928fa4e..439e4ed8ed10 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -544,7 +544,6 @@ static int imx7_csi_init(struct imx7_csi *csi)
+ 		return ret;
+ 
+ 	imx7_csi_configure(csi);
+-	imx7_csi_dmareq_rff_enable(csi);
+ 
+ 	ret = imx7_csi_dma_setup(csi);
+ 	if (ret < 0)
+-- 
+Regards,
+
+Laurent Pinchart
+

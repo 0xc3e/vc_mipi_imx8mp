@@ -1,0 +1,374 @@
+From 3c062201088dfd66aca4ea88928989812a329925 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 278/302] staging: media: imx: isi: cap: Drop virtual channel
+ support
+
+Virtual channel support should not be implemented through multiple pads,
+but using the multiplexed streams API under development. Drop it for
+now, hardcoding VC to 0.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-common.h    |  48 +++------
+ drivers/staging/media/imx/imx8-isi-cap.c   |  30 ++----
+ drivers/staging/media/imx/imx8-isi-core.c  |   2 +-
+ drivers/staging/media/imx/imx8-isi-hw.c    |   8 +-
+ drivers/staging/media/imx/imx8-media-dev.c | 111 ++++++---------------
+ 5 files changed, 55 insertions(+), 144 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-common.h b/drivers/staging/media/imx/imx8-common.h
+index ddfbcc0fd7bf..d85f2a28e24a 100644
+--- a/drivers/staging/media/imx/imx8-common.h
++++ b/drivers/staging/media/imx/imx8-common.h
+@@ -21,36 +21,22 @@
+ #define MXC_MAX_SENSORS		3
+ 
+ /* ISI PADS */
+-#define MXC_ISI_SD_PAD_SINK_MIPI0_VC0		0
+-#define MXC_ISI_SD_PAD_SINK_MIPI0_VC1		1
+-#define MXC_ISI_SD_PAD_SINK_MIPI0_VC2		2
+-#define MXC_ISI_SD_PAD_SINK_MIPI0_VC3		3
+-#define MXC_ISI_SD_PAD_SINK_MIPI1_VC0		4
+-#define MXC_ISI_SD_PAD_SINK_MIPI1_VC1		5
+-#define MXC_ISI_SD_PAD_SINK_MIPI1_VC2		6
+-#define MXC_ISI_SD_PAD_SINK_MIPI1_VC3		7
++#define MXC_ISI_SD_PAD_SINK_MIPI0		0
++#define MXC_ISI_SD_PAD_SINK_MIPI1		1
+ 
+-#define MXC_ISI_SD_PAD_SINK_DC0			8
+-#define MXC_ISI_SD_PAD_SINK_DC1			9
+-#define MXC_ISI_SD_PAD_SINK_HDMI		10
+-#define MXC_ISI_SD_PAD_SINK_MEM			11
+-#define MXC_ISI_SD_PAD_SOURCE_MEM		12
+-#define MXC_ISI_SD_PAD_SOURCE_DC0		13
+-#define MXC_ISI_SD_PAD_SOURCE_DC1		14
+-#define MXC_ISI_SD_PAD_SINK_PARALLEL_CSI	15
+-#define MXC_ISI_SD_PADS_NUM			16
++#define MXC_ISI_SD_PAD_SINK_DC0			2
++#define MXC_ISI_SD_PAD_SINK_DC1			3
++#define MXC_ISI_SD_PAD_SINK_HDMI		4
++#define MXC_ISI_SD_PAD_SINK_MEM			5
++#define MXC_ISI_SD_PAD_SOURCE_MEM		6
++#define MXC_ISI_SD_PAD_SOURCE_DC0		7
++#define MXC_ISI_SD_PAD_SOURCE_DC1		8
++#define MXC_ISI_SD_PAD_SINK_PARALLEL_CSI	9
++#define MXC_ISI_SD_PADS_NUM			10
+ 
+ /* MIPI CSI PADS */
+-#define MXC_MIPI_CSI2_VC0_PAD_SINK		0
+-#define MXC_MIPI_CSI2_VC1_PAD_SINK		1
+-#define MXC_MIPI_CSI2_VC2_PAD_SINK		2
+-#define MXC_MIPI_CSI2_VC3_PAD_SINK		3
+-
+-#define MXC_MIPI_CSI2_VC0_PAD_SOURCE		4
+-#define MXC_MIPI_CSI2_VC1_PAD_SOURCE		5
+-#define MXC_MIPI_CSI2_VC2_PAD_SOURCE		6
+-#define MXC_MIPI_CSI2_VC3_PAD_SOURCE		7
+-#define MXC_MIPI_CSI2_VCX_PADS_NUM		8
++#define MXC_MIPI_CSI2_PAD_SINK			0
++#define MXC_MIPI_CSI2_PAD_SOURCE		1
+ 
+ /* Parallel CSI PADS */
+ #define MXC_PARALLEL_CSI_PAD_SOURCE		0
+@@ -61,7 +47,6 @@
+ 
+ enum {
+ 	IN_PORT,
+-	SUB_IN_PORT,
+ 	OUT_PORT,
+ 	MAX_PORTS,
+ };
+@@ -77,13 +62,6 @@ enum isi_input_interface {
+ 	ISI_INPUT_INTERFACE_MAX,
+ };
+ 
+-enum isi_input_sub_interface {
+-	ISI_INPUT_SUB_INTERFACE_VC0 = 0,
+-	ISI_INPUT_SUB_INTERFACE_VC1,
+-	ISI_INPUT_SUB_INTERFACE_VC2,
+-	ISI_INPUT_SUB_INTERFACE_VC3,
+-};
+-
+ enum isi_output_interface {
+ 	ISI_OUTPUT_INTERFACE_DC0 = 0,
+ 	ISI_OUTPUT_INTERFACE_DC1,
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index b738c6af26e8..ac48fbcd1a0b 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1285,14 +1285,8 @@ static int mxc_isi_link_setup(struct media_entity *entity,
+ 		}
+ 	} else if (local->flags & MEDIA_PAD_FL_SINK) {
+ 		switch (local->index) {
+-		case MXC_ISI_SD_PAD_SINK_MIPI0_VC0:
+-		case MXC_ISI_SD_PAD_SINK_MIPI0_VC1:
+-		case MXC_ISI_SD_PAD_SINK_MIPI0_VC2:
+-		case MXC_ISI_SD_PAD_SINK_MIPI0_VC3:
+-		case MXC_ISI_SD_PAD_SINK_MIPI1_VC0:
+-		case MXC_ISI_SD_PAD_SINK_MIPI1_VC1:
+-		case MXC_ISI_SD_PAD_SINK_MIPI1_VC2:
+-		case MXC_ISI_SD_PAD_SINK_MIPI1_VC3:
++		case MXC_ISI_SD_PAD_SINK_MIPI0:
++		case MXC_ISI_SD_PAD_SINK_MIPI1:
+ 		case MXC_ISI_SD_PAD_SINK_HDMI:
+ 		case MXC_ISI_SD_PAD_SINK_DC0:
+ 		case MXC_ISI_SD_PAD_SINK_DC1:
+@@ -1336,14 +1330,8 @@ static int mxc_isi_subdev_get_fmt(struct v4l2_subdev *sd,
+ 	case MXC_ISI_SD_PAD_SOURCE_DC1:
+ 		f = &isi_cap->dst_f;
+ 		break;
+-	case MXC_ISI_SD_PAD_SINK_MIPI0_VC0:
+-	case MXC_ISI_SD_PAD_SINK_MIPI0_VC1:
+-	case MXC_ISI_SD_PAD_SINK_MIPI0_VC2:
+-	case MXC_ISI_SD_PAD_SINK_MIPI0_VC3:
+-	case MXC_ISI_SD_PAD_SINK_MIPI1_VC0:
+-	case MXC_ISI_SD_PAD_SINK_MIPI1_VC1:
+-	case MXC_ISI_SD_PAD_SINK_MIPI1_VC2:
+-	case MXC_ISI_SD_PAD_SINK_MIPI1_VC3:
++	case MXC_ISI_SD_PAD_SINK_MIPI0:
++	case MXC_ISI_SD_PAD_SINK_MIPI1:
+ 	case MXC_ISI_SD_PAD_SINK_HDMI:
+ 	case MXC_ISI_SD_PAD_SINK_DC0:
+ 	case MXC_ISI_SD_PAD_SINK_DC1:
+@@ -1695,14 +1683,8 @@ static int isi_cap_probe(struct platform_device *pdev)
+ 	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
+ 
+ 	/* ISI Sink pads */
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI0_VC0].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI0_VC1].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI0_VC2].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI0_VC3].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI1_VC0].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI1_VC1].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI1_VC2].flags = MEDIA_PAD_FL_SINK;
+-	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI1_VC3].flags = MEDIA_PAD_FL_SINK;
++	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI0].flags = MEDIA_PAD_FL_SINK;
++	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_MIPI1].flags = MEDIA_PAD_FL_SINK;
+ 	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_DC0].flags = MEDIA_PAD_FL_SINK;
+ 	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_DC1].flags = MEDIA_PAD_FL_SINK;
+ 	isi_cap->sd_pads[MXC_ISI_SD_PAD_SINK_HDMI].flags = MEDIA_PAD_FL_SINK;
+diff --git a/drivers/staging/media/imx/imx8-isi-core.c b/drivers/staging/media/imx/imx8-isi-core.c
+index 08634f540509..99ac1a5bfc3a 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.c
++++ b/drivers/staging/media/imx/imx8-isi-core.c
+@@ -305,7 +305,7 @@ static int mxc_isi_parse_dt(struct mxc_isi_dev *mxc_isi)
+ 
+ 	mxc_isi->id = of_alias_get_id(node, "isi");
+ 
+-	ret = of_property_read_u32_array(node, "interface", mxc_isi->interface, 3);
++	ret = of_property_read_u32_array(node, "interface", mxc_isi->interface, 2);
+ 	if (ret < 0)
+ 		return ret;
+ 
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.c b/drivers/staging/media/imx/imx8-isi-hw.c
+index f8e804483a48..4e4ef516d506 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.c
++++ b/drivers/staging/media/imx/imx8-isi-hw.c
+@@ -287,15 +287,11 @@ void mxc_isi_channel_source_config(struct mxc_isi_dev *mxc_isi)
+ 	switch (mxc_isi->interface[IN_PORT]) {
+ 	case ISI_INPUT_INTERFACE_MIPI0_CSI2:
+ 		val |= mxc_isi->pdata->chan_src->src_mipi0;
+-		if (mxc_isi->interface[SUB_IN_PORT] <= CHNL_CTRL_MIPI_VC_ID_VC3 &&
+-		    mxc_isi->interface[SUB_IN_PORT] >= CHNL_CTRL_MIPI_VC_ID_VC0)
+-			val |= (mxc_isi->interface[SUB_IN_PORT] << CHNL_CTRL_MIPI_VC_ID_OFFSET);
++		val |= 0 << CHNL_CTRL_MIPI_VC_ID_OFFSET;
+ 		break;
+ 	case ISI_INPUT_INTERFACE_MIPI1_CSI2:
+ 		val |= mxc_isi->pdata->chan_src->src_mipi1;
+-		if (mxc_isi->interface[SUB_IN_PORT] <= CHNL_CTRL_MIPI_VC_ID_VC3 &&
+-		    mxc_isi->interface[SUB_IN_PORT] >= CHNL_CTRL_MIPI_VC_ID_VC0)
+-			val |= (mxc_isi->interface[SUB_IN_PORT] << CHNL_CTRL_MIPI_VC_ID_OFFSET);
++		val |= 0 << CHNL_CTRL_MIPI_VC_ID_OFFSET;
+ 		break;
+ 	case ISI_INPUT_INTERFACE_DC0:
+ 		val |= mxc_isi->pdata->chan_src->src_dc0;
+diff --git a/drivers/staging/media/imx/imx8-media-dev.c b/drivers/staging/media/imx/imx8-media-dev.c
+index e2a63c2c5b57..5a86d5a06115 100644
+--- a/drivers/staging/media/imx/imx8-media-dev.c
++++ b/drivers/staging/media/imx/imx8-media-dev.c
+@@ -80,7 +80,6 @@ struct mxc_mipi_csi2_info {
+ 
+ 	char sd_name[MXC_NAME_LENS];
+ 	int id;
+-	bool vchannel;
+ };
+ 
+ struct mxc_parallel_csi_info {
+@@ -206,27 +205,19 @@ static int mxc_md_clean_channel(struct mxc_md *mxc_md, int index)
+ 	struct mxc_parallel_csi_info *pcsidev;
+ 	struct media_pad *local_pad;
+ 	struct media_entity *local_en;
+-	u32 i, mipi_vc = 0;
+ 	int ret;
+ 
+ 	if (mxc_md->mipi_csi2[index].sd) {
+ 		mipi_csi2 = &mxc_md->mipi_csi2[index];
+ 
+-		if (mipi_csi2->vchannel == true)
+-			mipi_vc = 4;
+-		else
+-			mipi_vc = 1;
+-
+ 		local_en = &mipi_csi2->sd->entity;
+ 		if (local_en == NULL)
+ 			return -ENODEV;
+ 
+-		for (i = 0; i < mipi_vc; i++) {
+-			local_pad = &local_en->pads[MXC_MIPI_CSI2_VC0_PAD_SOURCE + i];
+-			ret = mxc_md_do_clean(mxc_md, local_pad);
+-			if (ret < 0)
+-				return -ENODEV;
+-		}
++		local_pad = &local_en->pads[MXC_MIPI_CSI2_PAD_SOURCE];
++		ret = mxc_md_do_clean(mxc_md, local_pad);
++		if (ret < 0)
++			return -ENODEV;
+ 	} else if (mxc_md->parallel_csi && !sensor->mipi_mode) {
+ 		pcsidev = &mxc_md->pcsidev;
+ 		if (pcsidev->sd == NULL)
+@@ -291,10 +282,9 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 	struct mxc_mipi_csi2_info *mipi_csi2;
+ 	struct mxc_parallel_csi_info *pcsidev;
+ 	int num_sensors = mxc_md->num_sensors;
+-	int i, j, ret = 0;
++	int i, ret = 0;
+ 	u16  source_pad, sink_pad;
+ 	u32 flags;
+-	u32 mipi_vc = 0;
+ 
+ 	/* Create links between each ISI's subdev and video node */
+ 	flags = MEDIA_LNK_FL_ENABLED;
+@@ -356,24 +346,8 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 				continue;
+ 			source = find_entity_by_name(mxc_md, mipi_csi2->sd_name);
+ 
+-			switch (mxc_isi->interface[SUB_IN_PORT]) {
+-			case ISI_INPUT_SUB_INTERFACE_VC1:
+-				source_pad = MXC_MIPI_CSI2_VC1_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0_VC1;
+-				break;
+-			case ISI_INPUT_SUB_INTERFACE_VC2:
+-				source_pad = MXC_MIPI_CSI2_VC2_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0_VC2;
+-				break;
+-			case ISI_INPUT_SUB_INTERFACE_VC3:
+-				source_pad = MXC_MIPI_CSI2_VC3_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0_VC3;
+-				break;
+-			default:
+-				source_pad = MXC_MIPI_CSI2_VC0_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0_VC0;
+-				break;
+-			}
++			source_pad = MXC_MIPI_CSI2_PAD_SOURCE;
++			sink_pad = MXC_ISI_SD_PAD_SINK_MIPI0;
+ 			break;
+ 
+ 		case ISI_INPUT_INTERFACE_MIPI1_CSI2:
+@@ -382,24 +356,8 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 				continue;
+ 			source = find_entity_by_name(mxc_md, mipi_csi2->sd_name);
+ 
+-			switch (mxc_isi->interface[SUB_IN_PORT]) {
+-			case ISI_INPUT_SUB_INTERFACE_VC1:
+-				source_pad = MXC_MIPI_CSI2_VC1_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1_VC1;
+-				break;
+-			case ISI_INPUT_SUB_INTERFACE_VC2:
+-				source_pad = MXC_MIPI_CSI2_VC2_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1_VC2;
+-				break;
+-			case ISI_INPUT_SUB_INTERFACE_VC3:
+-				source_pad = MXC_MIPI_CSI2_VC3_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1_VC3;
+-				break;
+-			default:
+-				source_pad = MXC_MIPI_CSI2_VC0_PAD_SOURCE;
+-				sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1_VC0;
+-				break;
+-			}
++			source_pad = MXC_MIPI_CSI2_PAD_SOURCE;
++			sink_pad = MXC_ISI_SD_PAD_SINK_MIPI1;
+ 			break;
+ 
+ 		case ISI_INPUT_INTERFACE_PARALLEL_CSI:
+@@ -499,33 +457,31 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 			source_pad = 0;
+ 			sink_pad = source_pad;
+ 
+-			mipi_vc = (mipi_csi2->vchannel) ? 4 : 1;
+-			for (j = 0; j < mipi_vc; j++) {
+-				ret = media_create_pad_link(source,
+-							    source_pad + j,
+-							    sink,
+-							    sink_pad + j,
+-							    MEDIA_LNK_FL_IMMUTABLE |
+-							    MEDIA_LNK_FL_ENABLED);
+-				if (ret)
+-					return ret;
++			ret = media_create_pad_link(source,
++						    source_pad,
++						    sink,
++						    sink_pad,
++						    MEDIA_LNK_FL_IMMUTABLE |
++						    MEDIA_LNK_FL_ENABLED);
++			if (ret)
++				return ret;
+ 
+-				/* Notify MIPI subdev entity */
+-				ret = media_entity_call(sink, link_setup,
+-							&sink->pads[sink_pad + j],
+-							&source->pads[source_pad + j],
+-							0);
+-				if (ret)
+-					return ret;
++			/* Notify MIPI subdev entity */
++			ret = media_entity_call(sink, link_setup,
++						&sink->pads[sink_pad],
++						&source->pads[source_pad],
++						0);
++			if (ret)
++				return ret;
++
++			/* Notify MIPI sensor subdev entity */
++			ret = media_entity_call(source, link_setup,
++						&source->pads[source_pad],
++						&sink->pads[sink_pad],
++						0);
++			if (ret && ret != -ENOIOCTLCMD)
++				return ret;
+ 
+-				/* Notify MIPI sensor subdev entity */
+-				ret = media_entity_call(source, link_setup,
+-							&source->pads[source_pad + j],
+-							&sink->pads[sink_pad + j],
+-							0);
+-				if (ret && ret != -ENOIOCTLCMD)
+-					return ret;
+-			}
+ 			v4l2_info(&mxc_md->v4l2_dev,
+ 				  "created link [%s] => [%s]\n",
+ 				  source->name, sink->name);
+@@ -640,7 +596,7 @@ static struct mxc_isi_info *mxc_md_parse_isi_entity(struct mxc_md *mxc_md,
+ 	sprintf(mxc_isi->vdev_name, "mxc_isi.%d.capture", mxc_isi->id);
+ 
+ 	ret = of_property_read_u32_array(node, "interface",
+-					 mxc_isi->interface, 3);
++					 mxc_isi->interface, 2);
+ 	if (ret < 0) {
+ 		dev_err(dev, "%s node has not interface property\n", child->name);
+ 		return NULL;
+@@ -667,7 +623,6 @@ mxc_md_parse_csi_entity(struct mxc_md *mxc_md,
+ 	if (!mipi_csi2)
+ 		return NULL;
+ 
+-	mipi_csi2->vchannel = of_property_read_bool(node, "virtual-channel");
+ 	mipi_csi2->id = id;
+ 	mipi_csi2->node = node;
+ 	sprintf(mipi_csi2->sd_name, "mxc-mipi-csi2.%d", mipi_csi2->id);
+-- 
+Regards,
+
+Laurent Pinchart
+

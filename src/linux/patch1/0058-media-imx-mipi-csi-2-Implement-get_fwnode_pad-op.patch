@@ -1,0 +1,36 @@
+From 8cf983adc44ae3e4ffd061765a30ecfd02150264 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:43 +0200
+Subject: [PATCH 058/302] media: imx: mipi csi-2: Implement get_fwnode_pad op
+
+Use v4l2_subdev_get_fwnode_pad_1_to_1() as the get_fwnode_pad operation.
+The MIPI CSI-2 receiver maps port numbers and pad indexes 1:1.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: fd5b69df4ffc62e81b149b54c0676125b8afe25c
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx6-mipi-csi2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx6-mipi-csi2.c b/drivers/staging/media/imx/imx6-mipi-csi2.c
+index 332d77aec8aa..23823c8c6c3d 100644
+--- a/drivers/staging/media/imx/imx6-mipi-csi2.c
++++ b/drivers/staging/media/imx/imx6-mipi-csi2.c
+@@ -510,6 +510,7 @@ static int csi2_registered(struct v4l2_subdev *sd)
+ static const struct media_entity_operations csi2_entity_ops = {
+ 	.link_setup = csi2_link_setup,
+ 	.link_validate = v4l2_subdev_link_validate,
++	.get_fwnode_pad = v4l2_subdev_get_fwnode_pad_1_to_1,
+ };
+ 
+ static const struct v4l2_subdev_video_ops csi2_video_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

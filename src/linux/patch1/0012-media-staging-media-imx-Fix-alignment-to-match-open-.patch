@@ -1,0 +1,48 @@
+From 96378b29fabc335f5e2882bf6688f6f7eea55270 Mon Sep 17 00:00:00 2001
+From: Amol Grover <frextrite@gmail.com>
+Date: Wed, 11 Sep 2019 13:56:55 -0300
+Subject: [PATCH 012/302] media: staging: media: imx: Fix alignment to match
+ open parenthesis
+
+CHECK: Alignment should match open parenthesis
+
+Signed-off-by: Amol Grover <frextrite@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+Upstream-commit: 1d96e53fe8b562f24365c7617d363e92e9a7b760
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-csi.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index 367e39f5b382..773b3d6964cf 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -627,8 +627,8 @@ static int csi_idmac_start(struct csi_priv *priv)
+ 	}
+ 
+ 	priv->nfb4eof_irq = ipu_idmac_channel_irq(priv->ipu,
+-						 priv->idmac_ch,
+-						 IPU_IRQ_NFB4EOF);
++						  priv->idmac_ch,
++						  IPU_IRQ_NFB4EOF);
+ 	ret = devm_request_irq(priv->dev, priv->nfb4eof_irq,
+ 			       csi_idmac_nfb4eof_interrupt, 0,
+ 			       "imx-smfc-nfb4eof", priv);
+@@ -1472,7 +1472,7 @@ static void csi_try_fmt(struct csi_priv *priv,
+ 			imx_media_enum_mbus_format(&code, 0,
+ 						   CS_SEL_ANY, false);
+ 			*cc = imx_media_find_mbus_format(code,
+-							CS_SEL_ANY, false);
++							 CS_SEL_ANY, false);
+ 			sdformat->format.code = (*cc)->codes[0];
+ 		}
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

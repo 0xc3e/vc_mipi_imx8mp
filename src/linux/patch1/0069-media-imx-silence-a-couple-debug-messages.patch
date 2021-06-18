@@ -1,0 +1,72 @@
+From ab816dbc0e0777dae792be1606031926c79b7471 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:55 +0200
+Subject: [PATCH 069/302] media: imx: silence a couple debug messages
+
+Convert to dev_dbg the "subdev bound" and IPU-internal media-link
+creation messages.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 50da3f36e60e84f671e5bcb67f436512b43e5eac
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-dev-common.c  | 4 +++-
+ drivers/staging/media/imx/imx-media-dev.c         | 2 +-
+ drivers/staging/media/imx/imx-media-internal-sd.c | 6 +++---
+ 3 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-dev-common.c b/drivers/staging/media/imx/imx-media-dev-common.c
+index f6ad9631fa0e..5fe4b22ab847 100644
+--- a/drivers/staging/media/imx/imx-media-dev-common.c
++++ b/drivers/staging/media/imx/imx-media-dev-common.c
+@@ -24,7 +24,9 @@ static int imx_media_subdev_bound(struct v4l2_async_notifier *notifier,
+ 				  struct v4l2_subdev *sd,
+ 				  struct v4l2_async_subdev *asd)
+ {
+-	v4l2_info(sd->v4l2_dev, "subdev %s bound\n", sd->name);
++	struct imx_media_dev *imxmd = notifier2dev(notifier);
++
++	dev_dbg(imxmd->md.dev, "subdev %s bound\n", sd->name);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/staging/media/imx/imx-media-dev.c b/drivers/staging/media/imx/imx-media-dev.c
+index e16408af92d9..338b8bd0bb07 100644
+--- a/drivers/staging/media/imx/imx-media-dev.c
++++ b/drivers/staging/media/imx/imx-media-dev.c
+@@ -32,7 +32,7 @@ static int imx_media_subdev_bound(struct v4l2_async_notifier *notifier,
+ 			return ret;
+ 	}
+ 
+-	v4l2_info(&imxmd->v4l2_dev, "subdev %s bound\n", sd->name);
++	dev_dbg(imxmd->md.dev, "subdev %s bound\n", sd->name);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/staging/media/imx/imx-media-internal-sd.c b/drivers/staging/media/imx/imx-media-internal-sd.c
+index d4237e1a4241..da4109b2fd13 100644
+--- a/drivers/staging/media/imx/imx-media-internal-sd.c
++++ b/drivers/staging/media/imx/imx-media-internal-sd.c
+@@ -142,9 +142,9 @@ static int create_internal_link(struct imx_media_dev *imxmd,
+ 				   &sink->entity.pads[link->remote_pad]))
+ 		return 0;
+ 
+-	v4l2_info(&imxmd->v4l2_dev, "%s:%d -> %s:%d\n",
+-		  src->name, link->local_pad,
+-		  sink->name, link->remote_pad);
++	dev_dbg(imxmd->md.dev, "%s:%d -> %s:%d\n",
++		src->name, link->local_pad,
++		sink->name, link->remote_pad);
+ 
+ 	ret = media_create_pad_link(&src->entity, link->local_pad,
+ 				    &sink->entity, link->remote_pad, 0);
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,190 @@
+From 27c4a91af7668d93bf37166f66999d24e4bd5490 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 6 Apr 2021 17:16:01 +0300
+Subject: [PATCH 265/302] staging: media: imx: isi: Remove dependency from ISI
+ core to cap & m2m
+
+There's a circular dependency between the ISI core and the cap and m2m
+drivers. The latter use the API implemented by the core, and the core
+calls back into the cap and m2m drivers to handle frame end interrupts.
+
+Break this dependency by implementing frame end signalling through a
+function pointer. The implementation is probably racy at this point, but
+it's no worse than the existing code.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c  | 13 ++++++++-----
+ drivers/staging/media/imx/imx8-isi-core.c |  8 ++------
+ drivers/staging/media/imx/imx8-isi-core.h |  3 ++-
+ drivers/staging/media/imx/imx8-isi-hw.h   |  2 --
+ drivers/staging/media/imx/imx8-isi-m2m.c  |  9 ++++-----
+ 5 files changed, 16 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 0de99a42c8b7..9537d439a56e 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -374,7 +374,7 @@ static int mxc_isi_update_buf_paddr(struct mxc_isi_buffer *buf, int memplanes)
+ 	return 0;
+ }
+ 
+-void mxc_isi_cap_frame_write_done(struct mxc_isi_dev *mxc_isi)
++static void mxc_isi_cap_frame_write_done(struct mxc_isi_dev *mxc_isi)
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = mxc_isi->isi_cap;
+ 	struct device *dev = &isi_cap->pdev->dev;
+@@ -431,7 +431,6 @@ void mxc_isi_cap_frame_write_done(struct mxc_isi_dev *mxc_isi)
+ 	vb2->state = VB2_BUF_STATE_ACTIVE;
+ 	list_move_tail(isi_cap->out_pending.next, &isi_cap->out_active);
+ }
+-EXPORT_SYMBOL_GPL(mxc_isi_cap_frame_write_done);
+ 
+ static int cap_vb2_queue_setup(struct vb2_queue *q,
+ 			       unsigned int *num_buffers,
+@@ -805,7 +804,7 @@ static int mxc_isi_capture_open(struct file *file)
+ 	}
+ 	mutex_unlock(&isi_cap->lock);
+ 
+-	if (mxc_isi->m2m_enabled) {
++	if (mxc_isi->frame_write_done) {
+ 		dev_err(dev, "ISI channel[%d] is busy\n", isi_cap->id);
+ 		return ret;
+ 	}
+@@ -834,7 +833,7 @@ static int mxc_isi_capture_open(struct file *file)
+ 	/* increase usage count for ISI channel */
+ 	mutex_lock(&mxc_isi->lock);
+ 	atomic_inc(&mxc_isi->usage_count);
+-	mxc_isi->m2m_enabled = false;
++	mxc_isi->frame_write_done = mxc_isi_cap_frame_write_done;
+ 	mutex_unlock(&mxc_isi->lock);
+ 
+ 	return 0;
+@@ -874,6 +873,10 @@ static int mxc_isi_capture_release(struct file *file)
+ 		goto label;
+ 	}
+ 
++	mutex_lock(&mxc_isi->lock);
++	mxc_isi->frame_write_done = NULL;
++	mutex_unlock(&mxc_isi->lock);
++
+ label:
+ 	pm_runtime_put(dev);
+ 	return (ret) ? ret : 0;
+@@ -1203,7 +1206,7 @@ static int mxc_isi_cap_streamon(struct file *file, void *priv,
+ 		return ret;
+ 
+ 	ret = vb2_ioctl_streamon(file, priv, type);
+-	mxc_isi_channel_enable(mxc_isi, mxc_isi->m2m_enabled);
++	mxc_isi_channel_enable(mxc_isi, false);
+ 	ret = mxc_isi_pipeline_enable(isi_cap, 1);
+ 	if (ret < 0 && ret != -ENOIOCTLCMD)
+ 		return ret;
+diff --git a/drivers/staging/media/imx/imx8-isi-core.c b/drivers/staging/media/imx/imx8-isi-core.c
+index d2e684971e21..08634f540509 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.c
++++ b/drivers/staging/media/imx/imx8-isi-core.c
+@@ -48,12 +48,8 @@ static irqreturn_t mxc_isi_irq_handler(int irq, void *priv)
+ 	mxc_isi->status = status;
+ 	mxc_isi_clean_irq_status(mxc_isi, status);
+ 
+-	if (status & CHNL_STS_FRM_STRD_MASK) {
+-		if (mxc_isi->m2m_enabled)
+-			mxc_isi_m2m_frame_write_done(mxc_isi);
+-		else
+-			mxc_isi_cap_frame_write_done(mxc_isi);
+-	}
++	if (status & CHNL_STS_FRM_STRD_MASK && mxc_isi->frame_write_done)
++		mxc_isi->frame_write_done(mxc_isi);
+ 
+ 	if (status & (CHNL_STS_AXI_WR_ERR_Y_MASK |
+ 		      CHNL_STS_AXI_WR_ERR_U_MASK |
+diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
+index c955ec21c8d8..5995d6db3350 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.h
++++ b/drivers/staging/media/imx/imx8-isi-core.h
+@@ -353,9 +353,10 @@ struct mxc_isi_dev {
+ 
+ 	u8 chain_buf;
+ 	u8 alpha;
+-	bool m2m_enabled;
+ 	bool buf_active_reverse;
+ 
++	void (*frame_write_done)(struct mxc_isi_dev *mxc_isi);
++
+ 	/* manage share ISI channel resource */
+ 	atomic_t usage_count;
+ 
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.h b/drivers/staging/media/imx/imx8-isi-hw.h
+index 54cde426fa0d..875280a276f2 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.h
++++ b/drivers/staging/media/imx/imx8-isi-hw.h
+@@ -430,7 +430,6 @@ void mxc_isi_channel_init(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_channel_deinit(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_channel_enable(struct mxc_isi_dev *mxc_isi, bool m2m_enabled);
+ void mxc_isi_channel_disable(struct mxc_isi_dev *mxc_isi);
+-void mxc_isi_cap_frame_write_done(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_channel_set_deinterlace(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_channel_sw_reset(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_channel_hw_reset(struct mxc_isi_dev *mxc_isi);
+@@ -469,7 +468,6 @@ void mxc_isi_m2m_config_dst(struct mxc_isi_dev *mxc_isi,
+ 			    struct mxc_isi_frame *dst_f);
+ 
+ void mxc_isi_m2m_start_read(struct mxc_isi_dev *mxc_isi);
+-void mxc_isi_m2m_frame_write_done(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_clean_irq_status(struct mxc_isi_dev *mxc_isi, u32 val);
+ void mxc_isi_clean_registers(struct mxc_isi_dev *mxc_isi);
+ void mxc_isi_enable_irq(struct mxc_isi_dev *mxc_isi);
+diff --git a/drivers/staging/media/imx/imx8-isi-m2m.c b/drivers/staging/media/imx/imx8-isi-m2m.c
+index e292b91e9ecc..670d12d8aea0 100644
+--- a/drivers/staging/media/imx/imx8-isi-m2m.c
++++ b/drivers/staging/media/imx/imx8-isi-m2m.c
+@@ -90,7 +90,7 @@ static struct v4l2_m2m_buffer *to_v4l2_m2m_buffer(struct vb2_v4l2_buffer *vbuf)
+ 	return b;
+ }
+ 
+-void mxc_isi_m2m_frame_write_done(struct mxc_isi_dev *mxc_isi)
++static void mxc_isi_m2m_frame_write_done(struct mxc_isi_dev *mxc_isi)
+ {
+ 	struct mxc_isi_m2m_dev *isi_m2m = mxc_isi->isi_m2m;
+ 	struct v4l2_fh *fh;
+@@ -149,7 +149,6 @@ void mxc_isi_m2m_frame_write_done(struct mxc_isi_dev *mxc_isi)
+ job_finish:
+ 	v4l2_m2m_job_finish(isi_m2m->m2m_dev, fh->m2m_ctx);
+ }
+-EXPORT_SYMBOL_GPL(mxc_isi_m2m_frame_write_done);
+ 
+ static void mxc_isi_m2m_device_run(void *priv)
+ {
+@@ -174,7 +173,7 @@ static void mxc_isi_m2m_device_run(void *priv)
+ 
+ 	src_buf = to_isi_buffer(vbuf);
+ 	mxc_isi_channel_set_m2m_src_addr(mxc_isi, src_buf);
+-	mxc_isi_channel_enable(mxc_isi, mxc_isi->m2m_enabled);
++	mxc_isi_channel_enable(mxc_isi, true);
+ 
+ unlock:
+ 	spin_unlock_irqrestore(&isi_m2m->slock, flags);
+@@ -485,7 +484,7 @@ static int mxc_isi_m2m_open(struct file *file)
+ 
+ 	/* lock host data */
+ 	mutex_lock(&mxc_isi->lock);
+-	mxc_isi->m2m_enabled = true;
++	mxc_isi->frame_write_done = mxc_isi_m2m_frame_write_done;
+ 	mutex_unlock(&mxc_isi->lock);
+ unlock:
+ 	mutex_unlock(&isi_m2m->lock);
+@@ -511,7 +510,7 @@ static int mxc_isi_m2m_release(struct file *file)
+ 		mxc_isi_channel_deinit(mxc_isi);
+ 
+ 	mutex_lock(&mxc_isi->lock);
+-	mxc_isi->m2m_enabled = false;
++	mxc_isi->frame_write_done = NULL;
+ 	mutex_unlock(&mxc_isi->lock);
+ 
+ 	pm_runtime_put(dev);
+-- 
+Regards,
+
+Laurent Pinchart
+

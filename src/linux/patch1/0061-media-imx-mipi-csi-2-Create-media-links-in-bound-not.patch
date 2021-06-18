@@ -1,0 +1,79 @@
+From cb2d5521d8d0f24539f147a3600e5b91a57972c7 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:47 +0200
+Subject: [PATCH 061/302] media: imx: mipi csi-2: Create media links in bound
+ notifier
+
+Implement a notifier bound op to register media links from the remote
+sub-device's source pad(s) to the mipi csi-2 receiver sink pad.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 8b4713c9939b6aa638b95a97d6b30eadaae799b0
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx6-mipi-csi2.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx6-mipi-csi2.c b/drivers/staging/media/imx/imx6-mipi-csi2.c
+index 23823c8c6c3d..94d87d27d389 100644
+--- a/drivers/staging/media/imx/imx6-mipi-csi2.c
++++ b/drivers/staging/media/imx/imx6-mipi-csi2.c
+@@ -14,6 +14,7 @@
+ #include <linux/platform_device.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-fwnode.h>
++#include <media/v4l2-mc.h>
+ #include <media/v4l2-subdev.h>
+ #include "imx-media.h"
+ 
+@@ -91,6 +92,11 @@ static inline struct csi2_dev *sd_to_dev(struct v4l2_subdev *sdev)
+ 	return container_of(sdev, struct csi2_dev, sd);
+ }
+ 
++static inline struct csi2_dev *notifier_to_dev(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct csi2_dev, notifier);
++}
++
+ /*
+  * The required sequence of MIPI CSI-2 startup as specified in the i.MX6
+  * reference manual is as follows:
+@@ -532,6 +538,20 @@ static const struct v4l2_subdev_internal_ops csi2_internal_ops = {
+ 	.registered = csi2_registered,
+ };
+ 
++static int csi2_notify_bound(struct v4l2_async_notifier *notifier,
++			     struct v4l2_subdev *sd,
++			     struct v4l2_async_subdev *asd)
++{
++	struct csi2_dev *csi2 = notifier_to_dev(notifier);
++	struct media_pad *sink = &csi2->sd.entity.pads[CSI2_SINK_PAD];
++
++	return v4l2_create_fwnode_links_to_pad(sd, sink);
++}
++
++static const struct v4l2_async_notifier_operations csi2_notify_ops = {
++	.bound = csi2_notify_bound,
++};
++
+ static int csi2_async_register(struct csi2_dev *csi2)
+ {
+ 	struct v4l2_fwnode_endpoint vep = {
+@@ -570,6 +590,8 @@ static int csi2_async_register(struct csi2_dev *csi2)
+ 
+ 	fwnode_handle_put(ep);
+ 
++	csi2->notifier.ops = &csi2_notify_ops;
++
+ 	ret = v4l2_async_subdev_notifier_register(&csi2->sd,
+ 						  &csi2->notifier);
+ 	if (ret)
+-- 
+Regards,
+
+Laurent Pinchart
+

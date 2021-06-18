@@ -1,0 +1,36 @@
+From c341700ee084dd704494c535d8f3a2c12dd39f0a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:33 +0100
+Subject: [PATCH 102/302] media: imx: capture: Remove forward declaration of
+ capture_qops
+
+The forward declaration of capture_qops isn't needed, remove it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 5722a1742606665fe81b1b277dbdfe5b0f698194)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index a0992191a974..0d3fb811b30b 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -60,8 +60,6 @@ struct capture_priv {
+ /* In bytes, per queue */
+ #define VID_MEM_LIMIT	SZ_64M
+ 
+-static const struct vb2_ops capture_qops;
+-
+ /*
+  * Video ioctls follow
+  */
+-- 
+Regards,
+
+Laurent Pinchart
+

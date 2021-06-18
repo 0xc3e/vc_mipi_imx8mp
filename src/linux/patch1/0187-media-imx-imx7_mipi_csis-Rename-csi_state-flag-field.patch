@@ -1,0 +1,117 @@
+From 7e3eb48de9828b6f7c5b14c2b9807f5f831da6f9 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:30:04 +0200
+Subject: [PATCH 187/302] media: imx: imx7_mipi_csis: Rename csi_state flag
+ field to state
+
+The flag field of the csi_state structure contains the device state.
+Rename it accordingly.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit f65ffcd8abf976d90c6fbcb1c1045c22974dfd81)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 26 +++++++++++-----------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 382d02f54239..a8e0a5c487a0 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -306,7 +306,7 @@ struct csi_state {
+ 	struct platform_device *pdev;
+ 	void __iomem *regs;
+ 	int irq;
+-	u32 flags;
++	u32 state;
+ 
+ 	struct dentry *debugfs_root;
+ 	bool debug;
+@@ -812,7 +812,7 @@ static int mipi_csis_s_stream(struct v4l2_subdev *sd, int enable)
+ 	mutex_lock(&state->lock);
+ 
+ 	if (enable) {
+-		if (state->flags & ST_SUSPENDED) {
++		if (state->state & ST_SUSPENDED) {
+ 			ret = -EBUSY;
+ 			goto unlock;
+ 		}
+@@ -824,14 +824,14 @@ static int mipi_csis_s_stream(struct v4l2_subdev *sd, int enable)
+ 
+ 		mipi_csis_log_counters(state, true);
+ 
+-		state->flags |= ST_STREAMING;
++		state->state |= ST_STREAMING;
+ 	} else {
+ 		v4l2_subdev_call(state->src_sd, video, s_stream, 0);
+ 		ret = v4l2_subdev_call(state->src_sd, core, s_power, 0);
+ 		if (ret == -ENOIOCTLCMD)
+ 			ret = 0;
+ 		mipi_csis_stop_stream(state);
+-		state->flags &= ~ST_STREAMING;
++		state->state &= ~ST_STREAMING;
+ 		if (state->debug)
+ 			mipi_csis_log_counters(state, true);
+ 	}
+@@ -1027,7 +1027,7 @@ static int mipi_csis_log_status(struct v4l2_subdev *sd)
+ 
+ 	mutex_lock(&state->lock);
+ 	mipi_csis_log_counters(state, true);
+-	if (state->debug && (state->flags & ST_POWERED))
++	if (state->debug && (state->state & ST_POWERED))
+ 		mipi_csis_dump_regs(state);
+ 	mutex_unlock(&state->lock);
+ 
+@@ -1177,15 +1177,15 @@ static int mipi_csis_pm_suspend(struct device *dev, bool runtime)
+ 	int ret = 0;
+ 
+ 	mutex_lock(&state->lock);
+-	if (state->flags & ST_POWERED) {
++	if (state->state & ST_POWERED) {
+ 		mipi_csis_stop_stream(state);
+ 		ret = regulator_disable(state->mipi_phy_regulator);
+ 		if (ret)
+ 			goto unlock;
+ 		mipi_csis_clk_disable(state);
+-		state->flags &= ~ST_POWERED;
++		state->state &= ~ST_POWERED;
+ 		if (!runtime)
+-			state->flags |= ST_SUSPENDED;
++			state->state |= ST_SUSPENDED;
+ 	}
+ 
+ unlock:
+@@ -1201,21 +1201,21 @@ static int mipi_csis_pm_resume(struct device *dev, bool runtime)
+ 	int ret = 0;
+ 
+ 	mutex_lock(&state->lock);
+-	if (!runtime && !(state->flags & ST_SUSPENDED))
++	if (!runtime && !(state->state & ST_SUSPENDED))
+ 		goto unlock;
+ 
+-	if (!(state->flags & ST_POWERED)) {
++	if (!(state->state & ST_POWERED)) {
+ 		ret = regulator_enable(state->mipi_phy_regulator);
+ 		if (ret)
+ 			goto unlock;
+ 
+-		state->flags |= ST_POWERED;
++		state->state |= ST_POWERED;
+ 		mipi_csis_clk_enable(state);
+ 	}
+-	if (state->flags & ST_STREAMING)
++	if (state->state & ST_STREAMING)
+ 		mipi_csis_start_stream(state);
+ 
+-	state->flags &= ~ST_SUSPENDED;
++	state->state &= ~ST_SUSPENDED;
+ 
+ unlock:
+ 	mutex_unlock(&state->lock);
+-- 
+Regards,
+
+Laurent Pinchart
+

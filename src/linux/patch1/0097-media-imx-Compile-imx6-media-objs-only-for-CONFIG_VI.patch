@@ -1,0 +1,46 @@
+From f3e54ae184d35a6eaebabc2a4149ced3ecbd666a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:28 +0100
+Subject: [PATCH 097/302] media: imx: Compile imx6-media-objs only for
+ CONFIG_VIDEO_IMX_CSI
+
+imx6-media-objs contains a set of objects that are specific to the i.MX6
+IPU-based media subsystem. They're not needed for the i.MX7 CSI. Only
+compile them if CONFIG_VIDEO_IMX_CSI is selected.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Ezequiel Garcia <ezequiel@collabora.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 772cb7f2cfd12c165f842ded88285ef23be11f2d)
+---
+ drivers/staging/media/imx/Makefile | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/Makefile b/drivers/staging/media/imx/Makefile
+index a4f5a896b54c..70866ac05924 100644
+--- a/drivers/staging/media/imx/Makefile
++++ b/drivers/staging/media/imx/Makefile
+@@ -1,13 +1,13 @@
+ # SPDX-License-Identifier: GPL-2.0
++imx-media-common-objs := imx-media-capture.o imx-media-dev-common.o \
++	imx-media-of.o imx-media-utils.o
++
+ imx6-media-objs := imx-media-dev.o imx-media-internal-sd.o \
+ 	imx-ic-common.o imx-ic-prp.o imx-ic-prpencvf.o imx-media-vdic.o \
+ 	imx-media-csc-scaler.o
+ 
+ imx8-capture-objs := imx8-isi-core.o
+ 
+-imx-media-common-objs := imx-media-capture.o imx-media-dev-common.o \
+-	imx-media-of.o imx-media-utils.o
+-
+ imx6-media-csi-objs := imx-media-csi.o imx-media-fim.o
+ 
+ obj-$(CONFIG_VIDEO_IMX_MEDIA) += imx-media-common.o
+-- 
+Regards,
+
+Laurent Pinchart
+

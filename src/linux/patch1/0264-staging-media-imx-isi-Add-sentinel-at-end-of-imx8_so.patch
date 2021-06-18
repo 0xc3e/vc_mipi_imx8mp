@@ -1,0 +1,31 @@
+From 848fcbe6fb1d8fe7a6c6c6a76135a5d0e786f045 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 6 Apr 2021 17:16:01 +0300
+Subject: [PATCH 264/302] staging: media: imx: isi: Add sentinel at end of
+ imx8_soc
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-core.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-core.c b/drivers/staging/media/imx/imx8-isi-core.c
+index d5c432cd6f34..d2e684971e21 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.c
++++ b/drivers/staging/media/imx/imx8-isi-core.c
+@@ -27,7 +27,9 @@ static const struct soc_device_attribute imx8_soc[] = {
+ 		.revision = "1.0",
+ 	}, {
+ 		.soc_id   = "i.MX8MP",
+-	},
++	}, {
++		/* sentinel */
++	}
+ };
+ 
+ static const struct of_device_id mxc_isi_of_match[];
+-- 
+Regards,
+
+Laurent Pinchart
+

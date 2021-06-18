@@ -1,0 +1,126 @@
+From d2a002f7f30ae0837a4720c25378c24cb9a5d7fe Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 24 Apr 2020 15:43:31 +0200
+Subject: [PATCH 003/302] media: v4l2: Extend VIDIOC_ENUM_FMT to support
+ MC-centric devices
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The VIDIOC_ENUM_FMT ioctl enumerates all formats supported by a video
+node. For MC-centric devices, its behaviour has always been ill-defined,
+with drivers implementing one of the following behaviours:
+
+- No support for VIDIOC_ENUM_FMT at all
+- Enumerating all formats supported by the video node, regardless of the
+  configuration of the pipeline
+- Enumerating formats supported by the video node for the active
+  configuration of the connected subdevice
+
+The first behaviour is obviously useless for applications. The second
+behaviour provides the most information, but doesn't offer a way to find
+what formats are compatible with a given pipeline configuration. The
+third behaviour fixes that, but with the drawback that applications
+can't enumerate all supported formats anymore, and have to modify the
+active configuration of the pipeline to enumerate formats.
+
+The situation is messy as none of the implemented behaviours are ideal,
+and userspace can't predict what will happen as the behaviour is
+driver-specific.
+
+To fix this, let's extend the VIDIOC_ENUM_FMT with a missing capability:
+enumerating pixel formats for a given media bus code. The media bus code
+is passed through the v4l2_fmtdesc structure in a new mbus_code field
+(repurposed from the reserved fields). With this capability in place,
+applications can enumerate pixel formats for a given media bus code
+without modifying the active configuration of the device.
+
+The current behaviour of the ioctl is preserved when the new mbus_code
+field is set to 0, ensuring compatibility with existing userspace. The
+API extension is documented as mandatory for MC-centric devices (as
+advertised through the V4L2_CAP_IO_MC capability), allowing applications
+and compliance tools to easily determine the availability of the
+VIDIOC_ENUM_FMT extension.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Niklas Söderlund <niklas.soderlund+renesas@ragnatech.se>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: e5b6b07a1b45dd9d19bec1fa1d60750b0fcf2fb0
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/v4l2-core/v4l2-ioctl.c | 13 +++++++++++--
+ include/uapi/linux/videodev2.h       |  3 ++-
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
+index 17aa57a3a908..c1778a5c13c9 100644
+--- a/drivers/media/v4l2-core/v4l2-ioctl.c
++++ b/drivers/media/v4l2-core/v4l2-ioctl.c
+@@ -266,12 +266,13 @@ static void v4l_print_fmtdesc(const void *arg, bool write_only)
+ {
+ 	const struct v4l2_fmtdesc *p = arg;
+ 
+-	pr_cont("index=%u, type=%s, flags=0x%x, pixelformat=%c%c%c%c, description='%.*s'\n",
++	pr_cont("index=%u, type=%s, flags=0x%x, pixelformat=%c%c%c%c, mbus_code=0x%04x, description='%.*s'\n",
+ 		p->index, prt_names(p->type, v4l2_type_names),
+ 		p->flags, (p->pixelformat & 0xff),
+ 		(p->pixelformat >>  8) & 0xff,
+ 		(p->pixelformat >> 16) & 0xff,
+ 		(p->pixelformat >> 24) & 0xff,
++		p->mbus_code,
+ 		(int)sizeof(p->description), p->description);
+ }
+ 
+@@ -1472,12 +1473,20 @@ static int v4l_enum_fmt(const struct v4l2_ioctl_ops *ops,
+ 	struct video_device *vdev = video_devdata(file);
+ 	struct v4l2_fmtdesc *p = arg;
+ 	int ret = check_fmt(file, p->type);
++	u32 mbus_code;
+ 	u32 cap_mask;
+ 
+ 	if (ret)
+ 		return ret;
+ 	ret = -EINVAL;
+ 
++	if (!(vdev->device_caps & V4L2_CAP_IO_MC))
++		p->mbus_code = 0;
++
++	mbus_code = p->mbus_code;
++	CLEAR_AFTER_FIELD(p, type);
++	p->mbus_code = mbus_code;
++
+ 	switch (p->type) {
+ 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+ 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+@@ -2754,7 +2763,7 @@ DEFINE_V4L_STUB_FUNC(dv_timings_cap)
+ 
+ static const struct v4l2_ioctl_info v4l2_ioctls[] = {
+ 	IOCTL_INFO(VIDIOC_QUERYCAP, v4l_querycap, v4l_print_querycap, 0),
+-	IOCTL_INFO(VIDIOC_ENUM_FMT, v4l_enum_fmt, v4l_print_fmtdesc, INFO_FL_CLEAR(v4l2_fmtdesc, type)),
++	IOCTL_INFO(VIDIOC_ENUM_FMT, v4l_enum_fmt, v4l_print_fmtdesc, 0),
+ 	IOCTL_INFO(VIDIOC_G_FMT, v4l_g_fmt, v4l_print_format, 0),
+ 	IOCTL_INFO(VIDIOC_S_FMT, v4l_s_fmt, v4l_print_format, INFO_FL_PRIO),
+ 	IOCTL_INFO(VIDIOC_REQBUFS, v4l_reqbufs, v4l_print_requestbuffers, INFO_FL_PRIO | INFO_FL_QUEUE),
+diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+index f49289737400..0a2504179bc4 100644
+--- a/include/uapi/linux/videodev2.h
++++ b/include/uapi/linux/videodev2.h
+@@ -803,7 +803,8 @@ struct v4l2_fmtdesc {
+ 	__u32               flags;
+ 	__u8		    description[32];   /* Description string */
+ 	__u32		    pixelformat;       /* Format fourcc      */
+-	__u32		    reserved[4];
++	__u32		    mbus_code;		/* Media bus code    */
++	__u32		    reserved[3];
+ };
+ 
+ #define V4L2_FMT_FLAG_COMPRESSED		0x0001
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,58 @@
+From f5948aa3b81d72f628d5cdd35716b8c32dd6ac7b Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Mon, 6 Apr 2020 18:38:59 +0200
+Subject: [PATCH 046/302] media: imx: Fix some pixel format selections
+
+- imx_media_capture_device_register() needs to use CS_SEL_ANY when
+  finding the format from the attached source subdevice, because the
+  source can be a CSI which supports bayer, and the CSI may have selected
+  a bayer format when it registered.
+
+- Likewise, imx_media_init_mbus_fmt() is called from the CSI, so the
+  function may be passed a bayer code. Use CS_SEL_ANY when locating
+  the format.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 3130c45c2ba357d0f495f178fc34b6b76c215596
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-capture.c | 2 +-
+ drivers/staging/media/imx/imx-media-utils.c   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 7501ddc1a6bc..4d3f69f75e6b 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -792,7 +792,7 @@ int imx_media_capture_device_register(struct imx_media_video_dev *vdev)
+ 	vdev->compose.width = fmt_src.format.width;
+ 	vdev->compose.height = fmt_src.format.height;
+ 	vdev->cc = imx_media_find_format(vdev->fmt.fmt.pix.pixelformat,
+-					 CS_SEL_YUV_RGB);
++					 CS_SEL_ANY);
+ 
+ 	v4l2_info(sd, "Registered %s as /dev/%s\n", vfd->name,
+ 		  video_device_node_name(vfd));
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 5552039a9d7e..852badd55bd1 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -402,7 +402,7 @@ int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+ 	mbus->field = field;
+ 	if (code == 0)
+ 		imx_media_enum_mbus_format(&code, 0, CS_SEL_YUV);
+-	lcc = imx_media_find_mbus_format(code, CS_SEL_YUV_RGB);
++	lcc = imx_media_find_mbus_format(code, CS_SEL_ANY);
+ 	if (!lcc) {
+ 		lcc = imx_media_find_ipu_format(code, CS_SEL_YUV_RGB);
+ 		if (!lcc)
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,68 @@
+From 2704965c478050f0298550e533561ac054444780 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 6 Apr 2020 18:38:57 +0200
+Subject: [PATCH 044/302] media: imx: utils: Inline init_mbus_colorimetry() in
+ its caller
+
+The init_mbus_colorimetry() function is small and used in a single
+place. The code becomes easier to follow if it gets inline in its
+caller. Do so.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: c25ab5caf516f9439a5607162852d398c635d948
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-utils.c | 24 +++++++++------------
+ 1 file changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 00a71f01786c..cf0aba8d53ba 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -210,19 +210,6 @@ static const struct imx_media_pixfmt ipu_rgb_formats[] = {
+ 
+ #define NUM_IPU_RGB_FORMATS ARRAY_SIZE(ipu_rgb_formats)
+ 
+-static void init_mbus_colorimetry(struct v4l2_mbus_framefmt *mbus,
+-				  const struct imx_media_pixfmt *fmt)
+-{
+-	mbus->colorspace = (fmt->cs == IPUV3_COLORSPACE_RGB) ?
+-		V4L2_COLORSPACE_SRGB : V4L2_COLORSPACE_SMPTE170M;
+-	mbus->xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(mbus->colorspace);
+-	mbus->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(mbus->colorspace);
+-	mbus->quantization =
+-		V4L2_MAP_QUANTIZATION_DEFAULT(fmt->cs == IPUV3_COLORSPACE_RGB,
+-					      mbus->colorspace,
+-					      mbus->ycbcr_enc);
+-}
+-
+ static const struct imx_media_pixfmt *find_format(u32 fourcc,
+ 						  u32 code,
+ 						  enum codespace_sel cs_sel,
+@@ -423,7 +410,16 @@ int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+ 	}
+ 
+ 	mbus->code = code;
+-	init_mbus_colorimetry(mbus, lcc);
++
++	mbus->colorspace = (lcc->cs == IPUV3_COLORSPACE_RGB) ?
++		V4L2_COLORSPACE_SRGB : V4L2_COLORSPACE_SMPTE170M;
++	mbus->xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(mbus->colorspace);
++	mbus->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(mbus->colorspace);
++	mbus->quantization =
++		V4L2_MAP_QUANTIZATION_DEFAULT(lcc->cs == IPUV3_COLORSPACE_RGB,
++					      mbus->colorspace,
++					      mbus->ycbcr_enc);
++
+ 	if (cc)
+ 		*cc = lcc;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

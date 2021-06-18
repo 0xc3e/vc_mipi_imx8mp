@@ -16,11 +16,11 @@ if [[ $CMD == "host" ]]; then
         tar xvf gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
         rm gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
 
-        cd $BUILD_DIR
-        rm -Rf linux
-        git clone git-iob-com@git.ideasonboard.com:toradex/linux.git
-        cd linux
-        git checkout de253e624badb22f32b9e276c4f2b58ce56de24b
+        # cd $BUILD_DIR
+        # rm -Rf linux
+        # git clone git-iob-com@git.ideasonboard.com:toradex/linux.git
+        # cd linux
+        # git checkout de253e624badb22f32b9e276c4f2b58ce56de24b
 
         cd $BUILD_DIR
         rm -Rf yavta
@@ -35,9 +35,8 @@ if [[ $CMD == "host" || $CMD == "kernel" ]]; then
         git clone -b toradex_5.4-2.3.x-imx git://git.toradex.com/linux-toradex.git $KERNEL_SOURCE
         cd $KERNEL_SOURCE
         git checkout bb33b94f1466399a995a0d052dca7b9224e3bd45
-
-        git apply ../linux/linux-5.4-2.3.x-imx/*.patch
-        git apply ../../src/linux/linux-5.4-2.3.x-imx/*.patch
+        git apply $SRC_DIR/linux/patch1/*.patch
+        git apply $SRC_DIR/linux/patch2/*.patch
 fi
 
 # /boot/overlays.txt

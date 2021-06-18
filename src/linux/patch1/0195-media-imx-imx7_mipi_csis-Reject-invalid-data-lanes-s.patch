@@ -1,0 +1,49 @@
+From c61c0d388a2f2501638dfadf5cb17ac7b8a1bf0c Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:30:12 +0200
+Subject: [PATCH 195/302] media: imx: imx7_mipi_csis: Reject invalid data-lanes
+ settings
+
+The CSIS doesn't support data lanes reordering. Reject invalid settings.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 88fc81388df942e580b65afa197c97c490b5b855)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index a1eaccc922a2..14ff785ba5d5 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -1114,6 +1114,7 @@ static int mipi_csis_async_register(struct csi_state *state)
+ 	};
+ 	struct v4l2_async_subdev *asd;
+ 	struct fwnode_handle *ep;
++	unsigned int i;
+ 	int ret;
+ 
+ 	v4l2_async_notifier_init(&state->notifier);
+@@ -1127,6 +1128,14 @@ static int mipi_csis_async_register(struct csi_state *state)
+ 	if (ret)
+ 		goto err_parse;
+ 
++	for (i = 0; i < vep.bus.mipi_csi2.num_data_lanes; ++i) {
++		if (vep.bus.mipi_csi2.data_lanes[i] != i + 1) {
++			dev_err(state->dev,
++				"data lanes reordering is not supported");
++			goto err_parse;
++		}
++	}
++
+ 	state->bus = vep.bus.mipi_csi2;
+ 
+ 	dev_dbg(state->dev, "data lanes: %d\n", state->bus.num_data_lanes);
+-- 
+Regards,
+
+Laurent Pinchart
+

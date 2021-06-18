@@ -1,0 +1,56 @@
+From 8b0dd954c6855fa1bebaa254bfdc527e8fd2bb88 Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:34:00 +0100
+Subject: [PATCH 262/302] media: imx: imx8-isi: Remove hflip and vflip
+ v4l2-ctrl from capture
+
+These flip ctrls from the capture device overwrite similar ctrls from
+the sensor. Since the capture device does not account for bayer patterns
+in its flipping implementation remove these ctrls for now so we can use
+the ones from the sensor.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 16 ----------------
+ 1 file changed, 16 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 1fe56b047702..0de99a42c8b7 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -668,18 +668,6 @@ static int mxc_isi_s_ctrl(struct v4l2_ctrl *ctrl)
+ 	spin_lock_irqsave(&mxc_isi->slock, flags);
+ 
+ 	switch (ctrl->id) {
+-	case V4L2_CID_HFLIP:
+-		if (ctrl->val < 0)
+-			return -EINVAL;
+-		mxc_isi->hflip = (ctrl->val > 0) ? 1 : 0;
+-		break;
+-
+-	case V4L2_CID_VFLIP:
+-		if (ctrl->val < 0)
+-			return -EINVAL;
+-		mxc_isi->vflip = (ctrl->val > 0) ? 1 : 0;
+-		break;
+-
+ 	case V4L2_CID_ALPHA_COMPONENT:
+ 		if (ctrl->val < 0 || ctrl->val > 255)
+ 			return -EINVAL;
+@@ -711,10 +699,6 @@ int mxc_isi_ctrls_create(struct mxc_isi_cap_dev *isi_cap)
+ 
+ 	v4l2_ctrl_handler_init(handler, 4);
+ 
+-	ctrls->hflip = v4l2_ctrl_new_std(handler, &mxc_isi_ctrl_ops,
+-					 V4L2_CID_HFLIP, 0, 1, 1, 0);
+-	ctrls->vflip = v4l2_ctrl_new_std(handler, &mxc_isi_ctrl_ops,
+-					 V4L2_CID_VFLIP, 0, 1, 1, 0);
+ 	ctrls->alpha = v4l2_ctrl_new_std(handler, &mxc_isi_ctrl_ops,
+ 					 V4L2_CID_ALPHA_COMPONENT,
+ 					 0, 0xff, 1, 0);
+-- 
+Regards,
+
+Laurent Pinchart
+

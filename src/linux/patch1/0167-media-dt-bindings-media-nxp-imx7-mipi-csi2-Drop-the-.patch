@@ -1,0 +1,58 @@
+From a74d53d2530f61345f397431a257cb1f6d81ca2a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:22 +0100
+Subject: [PATCH 167/302] media: dt-bindings: media: nxp,imx7-mipi-csi2: Drop
+ the reset-names property
+
+The reset-names property is incorrect, as it references the reset of the
+MIPI D-PHY master, which is used by the DSI controller. Fixing the
+property name would create backward-compatibility issues. As the device
+has a single reset, we can instead drop reset-names completely, which
+also simplifies the binding.
+
+Fix the example accordingly to use the correct reset.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Acked-by: Rob Herring <robh@kernel.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 9345f3514932930b76114ea9f14e70016ce5e46a)
+---
+ .../devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml        | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+index be47a7b62ca9..a673c41f366a 100644
+--- a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
++++ b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+@@ -44,9 +44,6 @@ properties:
+   resets:
+     maxItems: 1
+ 
+-  reset-names:
+-    const: mrst
+-
+   clock-frequency:
+     description:
+       The IP main (system bus) clock frequency in Hertz
+@@ -98,7 +95,6 @@ required:
+   - power-domains
+   - phy-supply
+   - resets
+-  - reset-names
+   - ports
+ 
+ additionalProperties: false
+@@ -124,7 +120,6 @@ examples:
+             power-domains = <&pgc_mipi_phy>;
+             phy-supply = <&reg_1p0d>;
+             resets = <&src IMX7_RESET_MIPI_PHY_MRST>;
+-            reset-names = "mrst";
+             fsl,csis-hs-settle = <3>;
+ 
+             ports {
+-- 
+Regards,
+
+Laurent Pinchart
+

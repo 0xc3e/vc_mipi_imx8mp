@@ -1,0 +1,74 @@
+From 8e146221bf98b9755264aaa6c2aba22f00cc8487 Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:33:58 +0100
+Subject: [PATCH 260/302] media: imx: imx8-isi: Fix setting of sizeimage and
+ bytesperline
+
+Return correct sizeimage and bytesperline values for videodevs s_fmt
+ioctl and subdevs set_fmt ioctl.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 36 ++++++++++++++++++------
+ 1 file changed, 28 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index b9ec7dcf9e51..ca9cdc728fab 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1137,14 +1137,14 @@ static int mxc_isi_cap_s_fmt_mplane(struct file *file, void *priv,
+ 			pix->plane_fmt[i].bytesperline =
+ 					(pix->width * fmt->depth[i]) >> 3;
+ 
+-		if (pix->plane_fmt[i].sizeimage == 0) {
+-			if ((i == 1) && (pix->pixelformat == V4L2_PIX_FMT_NV12))
+-				pix->plane_fmt[i].sizeimage =
+-				  (pix->width * (pix->height >> 1) * fmt->depth[i] >> 3);
+-			else
+-				pix->plane_fmt[i].sizeimage =
+-					(pix->width * pix->height * fmt->depth[i] >> 3);
+-		}
++		if ((i == 1) && (pix->pixelformat == V4L2_PIX_FMT_NV12))
++			pix->plane_fmt[i].sizeimage =
++				(pix->width * (pix->height >> 1) *
++				 fmt->depth[i] >> 3);
++		else
++			pix->plane_fmt[i].sizeimage =
++				(pix->width * pix->height *
++				 fmt->depth[i] >> 3);
+ 	}
+ 
+ 	if (pix->num_planes > 1) {
+@@ -1603,6 +1603,26 @@ static int mxc_isi_subdev_set_fmt(struct v4l2_subdev *sd,
+ 	mutex_lock(&isi_cap->lock);
+ 	/* update out put frame size and formate */
+ 	dst_f->fmt = &mxc_isi_out_formats[i];
++
++	if (dst_f->fmt->memplanes > 1) {
++		for (i = 0; i < dst_f->fmt->memplanes; i++) {
++			if ((i == 1) &&
++			    (dst_f->fmt->fourcc == V4L2_PIX_FMT_NV12))
++				dst_f->sizeimage[i] = (mf->width *
++						      (mf->height >> 1) *
++						      dst_f->fmt->depth[i] >> 3);
++			else
++				dst_f->sizeimage[i] = (mf->width *
++						      mf->height *
++						      dst_f->fmt->depth[i] >> 3);
++		}
++		dst_f->bytesperline[i] = (mf->width *
++					 dst_f->fmt->depth[i] >> 3);
++	} else {
++		dst_f->bytesperline[0] = mf->width * dst_f->fmt->depth[0] / 8;
++		dst_f->sizeimage[0]    = mf->height * dst_f->bytesperline[0];
++	}
++
+ 	set_frame_bounds(dst_f, mf->width, mf->height);
+ 	mutex_unlock(&isi_cap->lock);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

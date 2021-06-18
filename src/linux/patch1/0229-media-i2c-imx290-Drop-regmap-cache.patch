@@ -1,0 +1,30 @@
+From 70ef2aad98ef2661fcad70e0f0548c092dc59978 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 3 May 2021 21:33:35 +0300
+Subject: [PATCH 229/302] media: i2c: imx290: Drop regmap cache
+
+Only two registers are ever read, and once only. There's no need to
+cache values.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx290.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/media/i2c/imx290.c b/drivers/media/i2c/imx290.c
+index bdbfe3cd34ef..b5bc6a68000a 100644
+--- a/drivers/media/i2c/imx290.c
++++ b/drivers/media/i2c/imx290.c
+@@ -97,7 +97,6 @@ static const struct imx290_pixfmt imx290_formats[] = {
+ static const struct regmap_config imx290_regmap_config = {
+ 	.reg_bits = 16,
+ 	.val_bits = 8,
+-	.cache_type = REGCACHE_RBTREE,
+ };
+ 
+ static const char * const imx290_test_pattern_menu[] = {
+-- 
+Regards,
+
+Laurent Pinchart
+

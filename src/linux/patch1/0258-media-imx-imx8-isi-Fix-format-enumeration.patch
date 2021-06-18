@@ -1,0 +1,69 @@
+From 19f01a01e0583d7abc90455aed32d1a7a42590bb Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:33:56 +0100
+Subject: [PATCH 258/302] media: imx: imx8-isi: Fix format enumeration
+
+The format enumeration ioctl is only supposed to offer formats which are
+supported by the whole system configuration and not just return all
+possible formats the capture interface supports.
+
+Thus get the current format from the sensor subdevice and only return
+this format in case it matches a supported format of the capture
+interface.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 30 ++++++++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index cd95c08ffa0d..552488b1bd07 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -928,12 +928,38 @@ static int mxc_isi_cap_enum_fmt(struct file *file, void *priv,
+ {
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct mxc_isi_fmt *fmt;
++	struct v4l2_subdev_format src_fmt;
++	struct media_pad *source_pad;
++	struct v4l2_subdev *src_sd;
++	int ret;
+ 
+ 	dev_dbg(&isi_cap->pdev->dev, "%s\n", __func__);
+-	if (f->index >= (int)ARRAY_SIZE(mxc_isi_out_formats))
++
++	if (f->index > 0)
++		return -EINVAL;
++
++	source_pad = mxc_isi_get_remote_source_pad(&isi_cap->sd);
++	if (!source_pad) {
++		v4l2_err(&isi_cap->sd,
++			 "%s, No remote pad found!\n", __func__);
++		return -EINVAL;
++	}
++
++	src_sd = mxc_get_remote_subdev(&isi_cap->sd, __func__);
++	if (!src_sd)
++		return -EINVAL;
++
++	memset(&src_fmt, 0, sizeof(src_fmt));
++
++	src_fmt.pad = source_pad->index;
++	src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
++	ret = v4l2_subdev_call(src_sd, pad, get_fmt, NULL, &src_fmt);
++	if (ret < 0 && ret != -ENOIOCTLCMD) {
++		v4l2_err(&isi_cap->sd, "get remote fmt fail!\n");
+ 		return -EINVAL;
++	}
+ 
+-	fmt = &mxc_isi_out_formats[f->index];
++	fmt = mxc_isi_find_format(NULL, &src_fmt.format.code, 0);
+ 	if (!fmt)
+ 		return -EINVAL;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,142 @@
+From 91fb558318507b83faf73d03ddcb43c8586bf4a0 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:11 +0100
+Subject: [PATCH 030/302] media: imx: imx7-mipi-csis: Add missing RAW formats
+
+Add support for all the missing 8-, 10-, 12- and 14-bit RAW formats.
+This include all Bayer combinations, as well as greyscale. No media bus
+code exist for Y14 so this is currently left out.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: d9a7dd2f684c7f4c1a4940d42e25568bc9af32fa
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 80 +++++++++++++++++++---
+ 1 file changed, 70 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index ff2e00723152..d1a67aff10f0 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -143,6 +143,7 @@
+ #define MIPI_CSIS_ISPCFG_FMT_RAW8		(0x2a << 2)
+ #define MIPI_CSIS_ISPCFG_FMT_RAW10		(0x2b << 2)
+ #define MIPI_CSIS_ISPCFG_FMT_RAW12		(0x2c << 2)
++#define MIPI_CSIS_ISPCFG_FMT_RAW14		(0x2d << 2)
+ 
+ /* User defined formats, x = 1...4 */
+ #define MIPI_CSIS_ISPCFG_FMT_USER(x)	((0x30 + (x) - 1) << 2)
+@@ -264,34 +265,93 @@ struct csis_pix_format {
+ };
+ 
+ static const struct csis_pix_format mipi_csis_formats[] = {
++	/* YUV formats. */
+ 	{
+-		.code = MEDIA_BUS_FMT_SBGGR10_1X10,
+-		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
+-		.data_alignment = 16,
+-	}, {
+ 		.code = MEDIA_BUS_FMT_VYUY8_2X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+ 		.data_alignment = 16,
+-	}, {
+-		.code = MEDIA_BUS_FMT_SBGGR8_1X8,
+-		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
+-		.data_alignment = 8,
+ 	}, {
+ 		.code = MEDIA_BUS_FMT_YUYV8_2X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+ 		.data_alignment = 16,
++	},
++	/* RAW (Bayer and greyscale) formats. */
++	{
++		.code = MEDIA_BUS_FMT_SBGGR8_1X8,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
++		.data_alignment = 8,
++	}, {
++		.code = MEDIA_BUS_FMT_SGBRG8_1X8,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
++		.data_alignment = 8,
++	}, {
++		.code = MEDIA_BUS_FMT_SGRBG8_1X8,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
++		.data_alignment = 8,
++	}, {
++		.code = MEDIA_BUS_FMT_SRGGB8_1X8,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
++		.data_alignment = 8,
+ 	}, {
+ 		.code = MEDIA_BUS_FMT_Y8_1X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
+ 		.data_alignment = 8,
++	}, {
++		.code = MEDIA_BUS_FMT_SBGGR10_1X10,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
++		.data_alignment = 10,
++	}, {
++		.code = MEDIA_BUS_FMT_SGBRG10_1X10,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
++		.data_alignment = 10,
++	}, {
++		.code = MEDIA_BUS_FMT_SGRBG10_1X10,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
++		.data_alignment = 10,
++	}, {
++		.code = MEDIA_BUS_FMT_SRGGB10_1X10,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
++		.data_alignment = 10,
+ 	}, {
+ 		.code = MEDIA_BUS_FMT_Y10_1X10,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
+-		.data_alignment = 16,
++		.data_alignment = 10,
++	}, {
++		.code = MEDIA_BUS_FMT_SBGGR12_1X12,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
++		.data_alignment = 12,
++	}, {
++		.code = MEDIA_BUS_FMT_SGBRG12_1X12,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
++		.data_alignment = 12,
++	}, {
++		.code = MEDIA_BUS_FMT_SGRBG12_1X12,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
++		.data_alignment = 12,
++	}, {
++		.code = MEDIA_BUS_FMT_SRGGB12_1X12,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
++		.data_alignment = 12,
+ 	}, {
+ 		.code = MEDIA_BUS_FMT_Y12_1X12,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
+-		.data_alignment = 16,
++		.data_alignment = 12,
++	}, {
++		.code = MEDIA_BUS_FMT_SBGGR14_1X14,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW14,
++		.data_alignment = 14,
++	}, {
++		.code = MEDIA_BUS_FMT_SGBRG14_1X14,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW14,
++		.data_alignment = 14,
++	}, {
++		.code = MEDIA_BUS_FMT_SGRBG14_1X14,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW14,
++		.data_alignment = 14,
++	}, {
++		.code = MEDIA_BUS_FMT_SRGGB14_1X14,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW14,
++		.data_alignment = 14,
+ 	}
+ };
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

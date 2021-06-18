@@ -1,0 +1,30 @@
+From 33dbfa373d22b4261e35d537c282a9e8bdd592c4 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 20 Apr 2021 06:54:18 +0300
+Subject: [PATCH 252/302] Revert "media: isi: imx8: fix warning without
+ CONFIG_VIDEO_ECAM"
+
+This reverts commit bf85baa051d481ce69e56b561d55203810317f95.
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index bc9ad25f0c92..679a61a6e404 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1789,8 +1789,8 @@ static int mxc_isi_register_cap_device(struct mxc_isi_cap_dev *isi_cap,
+ err_ctrl_free:
+ #ifndef CONFIG_VIDEO_ECAM
+ 	mxc_isi_ctrls_delete(isi_cap);
++#endif
+ err_me_cleanup:
+-#endif
+ 	media_entity_cleanup(&vdev->entity);
+ err_free_ctx:
+ 	return ret;
+-- 
+Regards,
+
+Laurent Pinchart
+

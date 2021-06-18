@@ -1,0 +1,65 @@
+From df5e589f8a48732d49ee0e49356e25a0d14c5449 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:41 +0200
+Subject: [PATCH 057/302] media: imx: csi: Implement get_fwnode_pad op
+
+The CSI does not have a 1:1 relationship between fwnode port numbers and
+pad indexes. In fact the CSI fwnode device is itself a port which is the
+sink, containing only a single fwnode endpoint. Implement media_entity
+operation get_fwnode_pad to first verify the given endpoint is the CSI's
+sink endpoint, and if so return the CSI sink pad index.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 596e5c5801cd97d3528b30447e23578656eba10b
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-csi.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index 905b1ee27db6..08f698af4797 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -1832,9 +1832,32 @@ static void csi_unregistered(struct v4l2_subdev *sd)
+ 		ipu_csi_put(priv->csi);
+ }
+ 
++/*
++ * The CSI has only one fwnode endpoint, at the sink pad. Verify the
++ * endpoint belongs to us, and return CSI_SINK_PAD.
++ */
++static int csi_get_fwnode_pad(struct media_entity *entity,
++			      struct fwnode_endpoint *endpoint)
++{
++	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
++	struct csi_priv *priv = v4l2_get_subdevdata(sd);
++	struct fwnode_handle *csi_port = dev_fwnode(priv->dev);
++	struct fwnode_handle *csi_ep;
++	int ret;
++
++	csi_ep = fwnode_get_next_child_node(csi_port, NULL);
++
++	ret = endpoint->local_fwnode == csi_ep ? CSI_SINK_PAD : -ENXIO;
++
++	fwnode_handle_put(csi_ep);
++
++	return ret;
++}
++
+ static const struct media_entity_operations csi_entity_ops = {
+ 	.link_setup = csi_link_setup,
+ 	.link_validate = v4l2_subdev_link_validate,
++	.get_fwnode_pad = csi_get_fwnode_pad,
+ };
+ 
+ static const struct v4l2_subdev_core_ops csi_core_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,57 @@
+From e127bbe941b2210c1e2cffee4100e63d887612a8 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 30 May 2021 21:09:36 +0300
+Subject: [PATCH 245/302] media: i2c: imx296: Reorder subdev pad operations
+
+Match the order of operations in the v4l2_subdev_pad_ops structure.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx296.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/media/i2c/imx296.c b/drivers/media/i2c/imx296.c
+index 4beba157d48e..9ea375775ae7 100644
+--- a/drivers/media/i2c/imx296.c
++++ b/drivers/media/i2c/imx296.c
+@@ -655,6 +655,17 @@ imx296_get_pad_crop(struct imx296 *imx, struct v4l2_subdev_pad_config *cfg,
+ 	}
+ }
+ 
++static int imx296_get_format(struct v4l2_subdev *sd,
++			     struct v4l2_subdev_pad_config *cfg,
++			     struct v4l2_subdev_format *fmt)
++{
++	struct imx296 *imx = to_imx296(sd);
++
++	fmt->format = *imx296_get_pad_format(imx, cfg, fmt->pad, fmt->which);
++
++	return 0;
++}
++
+ static int imx296_set_format(struct v4l2_subdev *sd,
+ 			     struct v4l2_subdev_pad_config *cfg,
+ 			     struct v4l2_subdev_format *fmt)
+@@ -768,17 +779,6 @@ static int imx296_set_selection(struct v4l2_subdev *sd,
+ 	return 0;
+ }
+ 
+-static int imx296_get_format(struct v4l2_subdev *sd,
+-			     struct v4l2_subdev_pad_config *cfg,
+-			     struct v4l2_subdev_format *fmt)
+-{
+-	struct imx296 *imx = to_imx296(sd);
+-
+-	fmt->format = *imx296_get_pad_format(imx, cfg, fmt->pad, fmt->which);
+-
+-	return 0;
+-}
+-
+ static int imx296_init_cfg(struct v4l2_subdev *sd,
+ 			   struct v4l2_subdev_pad_config *cfg)
+ {
+-- 
+Regards,
+
+Laurent Pinchart
+

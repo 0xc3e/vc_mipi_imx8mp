@@ -1,0 +1,55 @@
+From e33d18e3a0b56ad1b55a3c1b8465649c0ad81282 Mon Sep 17 00:00:00 2001
+From: Kaaira Gupta <kgupta@es.iitr.ac.in>
+Date: Sat, 14 Mar 2020 03:24:04 +0530
+Subject: [PATCH 027/302] staging: media: imx: remove temporary variable
+
+Remove unnecessary local variable `ret` in file `imx6-mipi-csi2.c` and
+directly returning the value assigned to `ret.`
+
+Signed-off-by: Kaaira Gupta <kgupta@es.iitr.ac.in>
+Reviewed-by: Stefano Brivio <sbrivio@redhat.com>
+Link: https://lore.kernel.org/r/20200313215406.2485-3-kgupta@es.iitr.ac.in
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+Upstream-commit: fde287627302b19ad6c16f2700983c799c3bced3
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx6-mipi-csi2.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx6-mipi-csi2.c b/drivers/staging/media/imx/imx6-mipi-csi2.c
+index cd3dd6e33ef0..8ab823042c09 100644
+--- a/drivers/staging/media/imx/imx6-mipi-csi2.c
++++ b/drivers/staging/media/imx/imx6-mipi-csi2.c
+@@ -592,22 +592,19 @@ static int csi2_probe(struct platform_device *pdev)
+ 	csi2->pllref_clk = devm_clk_get(&pdev->dev, "ref");
+ 	if (IS_ERR(csi2->pllref_clk)) {
+ 		v4l2_err(&csi2->sd, "failed to get pll reference clock\n");
+-		ret = PTR_ERR(csi2->pllref_clk);
+-		return ret;
++		return PTR_ERR(csi2->pllref_clk);
+ 	}
+ 
+ 	csi2->dphy_clk = devm_clk_get(&pdev->dev, "dphy");
+ 	if (IS_ERR(csi2->dphy_clk)) {
+ 		v4l2_err(&csi2->sd, "failed to get dphy clock\n");
+-		ret = PTR_ERR(csi2->dphy_clk);
+-		return ret;
++		return PTR_ERR(csi2->dphy_clk);
+ 	}
+ 
+ 	csi2->pix_clk = devm_clk_get(&pdev->dev, "pix");
+ 	if (IS_ERR(csi2->pix_clk)) {
+ 		v4l2_err(&csi2->sd, "failed to get pixel clock\n");
+-		ret = PTR_ERR(csi2->pix_clk);
+-		return ret;
++		return PTR_ERR(csi2->pix_clk);
+ 	}
+ 
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-- 
+Regards,
+
+Laurent Pinchart
+

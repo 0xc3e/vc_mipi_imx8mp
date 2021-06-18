@@ -1,0 +1,49 @@
+From d8a57ab62d2bb9a705db065fbd9c940f2d56cce0 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:29:55 +0200
+Subject: [PATCH 178/302] media: imx: imx7_mipi_csis: Move static data to top
+ of mipi_csis_dump_regs()
+
+It's customary to declare static variables at the top of the function,
+with a blank line separating them from the non-static variables.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit eed6a93044e38a63e397f7aef8dbc7ee667459fb)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index fe6aa1d0afa1..1697d8740241 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -429,9 +429,6 @@ static inline u32 mipi_csis_read(struct csi_state *state, u32 reg)
+ 
+ static int mipi_csis_dump_regs(struct csi_state *state)
+ {
+-	struct device *dev = &state->pdev->dev;
+-	unsigned int i;
+-	u32 cfg;
+ 	static const struct {
+ 		u32 offset;
+ 		const char * const name;
+@@ -450,6 +447,10 @@ static int mipi_csis_dump_regs(struct csi_state *state)
+ 		{ MIPI_CSIS_DBG_CTRL, "DBG_CTRL" },
+ 	};
+ 
++	struct device *dev = &state->pdev->dev;
++	unsigned int i;
++	u32 cfg;
++
+ 	dev_info(dev, "--- REGISTERS ---\n");
+ 
+ 	for (i = 0; i < ARRAY_SIZE(registers); i++) {
+-- 
+Regards,
+
+Laurent Pinchart
+

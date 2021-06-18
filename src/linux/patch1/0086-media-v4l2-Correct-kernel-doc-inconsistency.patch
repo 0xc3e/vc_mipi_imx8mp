@@ -1,0 +1,52 @@
+From bdd58f607c7c779e81803eda673991bf996ff25a Mon Sep 17 00:00:00 2001
+From: Colton Lewis <colton.w.lewis@protonmail.com>
+Date: Sun, 19 Jul 2020 23:16:16 +0200
+Subject: [PATCH 086/302] media: v4l2: Correct kernel-doc inconsistency
+
+Silence documentation build warnings by correcting kernel-doc comment
+v4l2_create_fwnode_links_to_pad and v4l2_create_fwnode_links functions.
+
+./include/media/v4l2-mc.h:110: warning: Function parameter or member 'src_sd' not described in 'v4l2_create_fwnode_links_to_pad'
+./include/media/v4l2-mc.h:110: warning: Function parameter or member 'sink' not described in 'v4l2_create_fwnode_links_to_pad'
+./include/media/v4l2-mc.h:134: warning: Function parameter or member 'src_sd' not described in 'v4l2_create_fwnode_links'
+./include/media/v4l2-mc.h:134: warning: Function parameter or member 'sink_sd' not described in 'v4l2_create_fwnode_links'
+
+Signed-off-by: Colton Lewis <colton.w.lewis@protonmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 6d10fc2b9bfeb34756c9f2bda135aa56105118d9)
+---
+ include/media/v4l2-mc.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/include/media/v4l2-mc.h b/include/media/v4l2-mc.h
+index 917d36dab593..338941c75d3c 100644
+--- a/include/media/v4l2-mc.h
++++ b/include/media/v4l2-mc.h
+@@ -89,8 +89,8 @@ int v4l_vb2q_enable_media_source(struct vb2_queue *q);
+  * v4l2_create_fwnode_links_to_pad - Create fwnode-based links from a
+  *                                   source subdev to a sink subdev pad.
+  *
+- * @src_sd - pointer to a source subdev
+- * @sink - pointer to a subdev sink pad
++ * @src_sd: pointer to a source subdev
++ * @sink:  pointer to a subdev sink pad
+  *
+  * This function searches for fwnode endpoint connections from a source
+  * subdevice to a single sink pad, and if suitable connections are found,
+@@ -113,8 +113,8 @@ int v4l2_create_fwnode_links_to_pad(struct v4l2_subdev *src_sd,
+  * v4l2_create_fwnode_links - Create fwnode-based links from a source
+  *                            subdev to a sink subdev.
+  *
+- * @src_sd - pointer to a source subdevice
+- * @sink_sd - pointer to a sink subdevice
++ * @src_sd: pointer to a source subdevice
++ * @sink_sd: pointer to a sink subdevice
+  *
+  * This function searches for any and all fwnode endpoint connections
+  * between source and sink subdevices, and translates them into media
+-- 
+Regards,
+
+Laurent Pinchart
+

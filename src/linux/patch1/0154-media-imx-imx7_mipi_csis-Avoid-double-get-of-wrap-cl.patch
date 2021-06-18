@@ -1,0 +1,100 @@
+From 757695558a631dc41a789fe8aaf86c1a3e152f1a Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:29 +0100
+Subject: [PATCH 154/302] media: imx: imx7_mipi_csis: Avoid double get of wrap
+ clock
+
+The wrap clock is retrieved with the other clocks using
+devm_clk_bulk_get(), and retrieved independently with a specific
+devm_clk_get() call. The latter isn't needed, replace it with usage of
+the wrap clock from the bulk array.
+
+As the wrap clock is mandatory, simplify its usage further by removing
+conditionals.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 6e1de0062768ffaf780fd4a07f98723174653052)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 31 +++++++++++-----------
+ 1 file changed, 16 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index c153a77c3784..816650c438aa 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -206,7 +206,17 @@ static const struct mipi_csis_event mipi_csis_events[] = {
+ 
+ #define MIPI_CSIS_NUM_EVENTS ARRAY_SIZE(mipi_csis_events)
+ 
+-static const char * const mipi_csis_clk_id[] = {"pclk", "wrap", "phy"};
++enum mipi_csis_clk {
++	MIPI_CSIS_CLK_PCLK,
++	MIPI_CSIS_CLK_WRAP,
++	MIPI_CSIS_CLK_PHY,
++};
++
++static const char * const mipi_csis_clk_id[] = {
++	"pclk",
++	"wrap",
++	"phy",
++};
+ 
+ struct csis_hw_reset {
+ 	struct regmap *src;
+@@ -229,7 +239,6 @@ struct csi_state {
+ 	struct platform_device *pdev;
+ 	struct phy *phy;
+ 	void __iomem *regs;
+-	struct clk *wrap_clk;
+ 	int irq;
+ 	u32 flags;
+ 
+@@ -507,12 +516,7 @@ static void mipi_csis_set_params(struct csi_state *state)
+ 	mipi_csis_write(state, MIPI_CSIS_ISPSYNC_CH0, val);
+ 
+ 	val = mipi_csis_read(state, MIPI_CSIS_CLK_CTRL);
+-	val &= ~MIPI_CSIS_CLK_CTRL_WCLK_SRC;
+-	if (state->wrap_clk)
+-		val |= MIPI_CSIS_CLK_CTRL_WCLK_SRC;
+-	else
+-		val &= ~MIPI_CSIS_CLK_CTRL_WCLK_SRC;
+-
++	val |= MIPI_CSIS_CLK_CTRL_WCLK_SRC;
+ 	val |= MIPI_CSIS_CLK_CTRL_CLKGATE_TRAIL_CH0(15);
+ 	val &= ~MIPI_CSIS_CLK_CTRL_CLKGATE_EN_MSK;
+ 	mipi_csis_write(state, MIPI_CSIS_CLK_CTRL, val);
+@@ -557,12 +561,9 @@ static int mipi_csis_clk_get(struct csi_state *state)
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	state->wrap_clk = devm_clk_get(dev, "wrap");
+-	if (IS_ERR(state->wrap_clk))
+-		return PTR_ERR(state->wrap_clk);
+-
+ 	/* Set clock rate */
+-	ret = clk_set_rate(state->wrap_clk, state->clk_frequency);
++	ret = clk_set_rate(state->clks[MIPI_CSIS_CLK_WRAP].clk,
++			   state->clk_frequency);
+ 	if (ret < 0)
+ 		dev_err(dev, "set rate=%d failed: %d\n", state->clk_frequency,
+ 			ret);
+@@ -1149,9 +1150,9 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 			goto unregister_all;
+ 	}
+ 
+-	dev_info(&pdev->dev, "lanes: %d, hs_settle: %d, wclk: %d, freq: %u\n",
++	dev_info(&pdev->dev, "lanes: %d, hs_settle: %d, freq: %u\n",
+ 		 state->bus.num_data_lanes, state->hs_settle,
+-		 state->wrap_clk ? 1 : 0, state->clk_frequency);
++		 state->clk_frequency);
+ 
+ 	return 0;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,35 @@
+From 6c8584bd74bf7436bd207d1b05ba5dec52bf855d Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sat, 10 Apr 2021 06:29:33 +0300
+Subject: [PATCH 280/302] staging: media: imx: isi: cap: Create link to video
+ node locally
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 70544397f337..2852105a62d4 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1587,6 +1587,14 @@ static int mxc_isi_register_cap_device(struct mxc_isi_cap_dev *isi_cap,
+ 	if (ret)
+ 		goto err_ctrl_free;
+ 
++	ret = media_create_pad_link(&isi_cap->sd.entity,
++				    MXC_ISI_SD_PAD_SOURCE_MEM,
++				    &vdev->entity, 0,
++				    MEDIA_LNK_FL_IMMUTABLE |
++				    MEDIA_LNK_FL_ENABLED);
++	if (ret < 0)
++		goto err_ctrl_free;
++
+ 	vdev->ctrl_handler = &isi_cap->ctrls.handler;
+ 	v4l2_dev->ctrl_handler = &isi_cap->ctrls.handler;
+ 	v4l2_info(v4l2_dev, "Registered %s as /dev/%s\n",
+-- 
+Regards,
+
+Laurent Pinchart
+

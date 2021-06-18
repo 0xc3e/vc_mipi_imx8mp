@@ -1,0 +1,299 @@
+From d5a93091317774f79efe492afb984cfefc70c51e Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Mon, 6 Apr 2020 18:39:03 +0200
+Subject: [PATCH 050/302] media: imx: utils: Split find|enum_format into fourcc
+ and mbus functions
+
+To make the code easier to follow, split up find_format() into separate
+search functions for pixel formats and media-bus codes, and inline
+find_format() into the exported functions imx_media_find_format()
+and imx_media_find_mbus_format().
+
+Do the equivalent for enum_format().
+
+Also add comment blocks for the exported find|enum functions.
+
+The convenience functions imx_media_find_ipu_format() and
+imx_media_enum_ipu_format() can now be made inline and moved to
+imx-media.h.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 74cd3984f13381049627cfa260fd87e6fcd31add
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-utils.c | 167 ++++++++++++--------
+ drivers/staging/media/imx/imx-media.h       |  17 +-
+ 2 files changed, 116 insertions(+), 68 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 8d88c2a8df64..53e4dc1ad06f 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -199,10 +199,15 @@ static const struct imx_media_pixfmt pixel_formats[] = {
+ 	},
+ };
+ 
+-static const struct imx_media_pixfmt *find_format(u32 fourcc,
+-						  u32 code,
+-						  enum imx_pixfmt_sel fmt_sel,
+-						  bool allow_non_mbus)
++/*
++ * Search in the pixel_formats[] array for an entry with the given fourcc
++ * that matches the requested selection criteria and return it.
++ *
++ * @fourcc: Search for an entry with the given fourcc pixel format.
++ * @fmt_sel: Allow entries only with the given selection criteria.
++ */
++const struct imx_media_pixfmt *
++imx_media_find_format(u32 fourcc, enum imx_pixfmt_sel fmt_sel)
+ {
+ 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
+ 	unsigned int i;
+@@ -212,7 +217,6 @@ static const struct imx_media_pixfmt *find_format(u32 fourcc,
+ 	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
+ 		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
+ 		enum imx_pixfmt_sel sel;
+-		unsigned int j;
+ 
+ 		if (sel_ipu != fmt->ipufmt)
+ 			continue;
+@@ -221,14 +225,42 @@ static const struct imx_media_pixfmt *find_format(u32 fourcc,
+ 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
+ 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
+ 
+-		if (!(fmt_sel & sel) ||
+-		    (!allow_non_mbus && !fmt->codes))
+-			continue;
+-
+-		if (fourcc && fmt->fourcc == fourcc)
++		if ((fmt_sel & sel) && fmt->fourcc == fourcc)
+ 			return fmt;
++	}
+ 
+-		if (!code || !fmt->codes)
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(imx_media_find_format);
++
++/*
++ * Search in the pixel_formats[] array for an entry with the given media
++ * bus code that matches the requested selection criteria and return it.
++ *
++ * @code: Search for an entry with the given media-bus code.
++ * @fmt_sel: Allow entries only with the given selection criteria.
++ */
++const struct imx_media_pixfmt *
++imx_media_find_mbus_format(u32 code, enum imx_pixfmt_sel fmt_sel)
++{
++	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
++	unsigned int i;
++
++	fmt_sel &= ~PIXFMT_SEL_IPU;
++
++	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
++		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
++		enum imx_pixfmt_sel sel;
++		unsigned int j;
++
++		if (sel_ipu != fmt->ipufmt)
++			continue;
++
++		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
++			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
++			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
++
++		if (!(fmt_sel & sel) || !fmt->codes)
+ 			continue;
+ 
+ 		for (j = 0; fmt->codes[j]; j++) {
+@@ -239,10 +271,21 @@ static const struct imx_media_pixfmt *find_format(u32 fourcc,
+ 
+ 	return NULL;
+ }
++EXPORT_SYMBOL_GPL(imx_media_find_mbus_format);
+ 
+-static int enum_format(u32 *fourcc, u32 *code, u32 index,
+-		       enum imx_pixfmt_sel fmt_sel,
+-		       bool allow_non_mbus)
++/*
++ * Enumerate entries in the pixel_formats[] array that match the
++ * requested selection criteria. Return the fourcc that matches the
++ * selection criteria at the requested match index.
++ *
++ * @fourcc: The returned fourcc that matches the search criteria at
++ *          the requested match index.
++ * @index: The requested match index.
++ * @fmt_sel: Include in the enumeration entries with the given selection
++ *           criteria.
++ */
++int imx_media_enum_format(u32 *fourcc, u32 index,
++			  enum imx_pixfmt_sel fmt_sel)
+ {
+ 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
+ 	unsigned int i;
+@@ -252,7 +295,6 @@ static int enum_format(u32 *fourcc, u32 *code, u32 index,
+ 	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
+ 		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
+ 		enum imx_pixfmt_sel sel;
+-		unsigned int j;
+ 
+ 		if (sel_ipu != fmt->ipufmt)
+ 			continue;
+@@ -261,74 +303,69 @@ static int enum_format(u32 *fourcc, u32 *code, u32 index,
+ 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
+ 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
+ 
+-		if (!(fmt_sel & sel) ||
+-		    (!allow_non_mbus && !fmt->codes))
++		if (!(fmt_sel & sel))
+ 			continue;
+ 
+-		if (fourcc && index == 0) {
++		if (index == 0) {
+ 			*fourcc = fmt->fourcc;
+ 			return 0;
+ 		}
+ 
+-		if (!code) {
+-			index--;
+-			continue;
+-		}
+-
+-		for (j = 0; fmt->codes[j]; j++) {
+-			if (index == 0) {
+-				*code = fmt->codes[j];
+-				return 0;
+-			}
+-
+-			index--;
+-		}
++		index--;
+ 	}
+ 
+ 	return -EINVAL;
+ }
+-
+-const struct imx_media_pixfmt *
+-imx_media_find_format(u32 fourcc, enum imx_pixfmt_sel fmt_sel)
+-{
+-	return find_format(fourcc, 0, fmt_sel, true);
+-}
+-EXPORT_SYMBOL_GPL(imx_media_find_format);
+-
+-int imx_media_enum_format(u32 *fourcc, u32 index, enum imx_pixfmt_sel fmt_sel)
+-{
+-	return enum_format(fourcc, NULL, index, fmt_sel, true);
+-}
+ EXPORT_SYMBOL_GPL(imx_media_enum_format);
+ 
+-const struct imx_media_pixfmt *
+-imx_media_find_mbus_format(u32 code, enum imx_pixfmt_sel fmt_sel)
+-{
+-	return find_format(0, code, fmt_sel, false);
+-}
+-EXPORT_SYMBOL_GPL(imx_media_find_mbus_format);
+-
++/*
++ * Enumerate entries in the pixel_formats[] array that match the
++ * requested search criteria. Return the media-bus code that matches
++ * the search criteria at the requested match index.
++ *
++ * @code: The returned media-bus code that matches the search criteria at
++ *        the requested match index.
++ * @index: The requested match index.
++ * @fmt_sel: Include in the enumeration entries with the given selection
++ *           criteria.
++ */
+ int imx_media_enum_mbus_format(u32 *code, u32 index,
+ 			       enum imx_pixfmt_sel fmt_sel)
+ {
+-	return enum_format(NULL, code, index, fmt_sel, false);
++	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
++	unsigned int i;
++
++	fmt_sel &= ~PIXFMT_SEL_IPU;
++
++	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
++		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
++		enum imx_pixfmt_sel sel;
++		unsigned int j;
++
++		if (sel_ipu != fmt->ipufmt)
++			continue;
++
++		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
++			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
++			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
++
++		if (!(fmt_sel & sel) || !fmt->codes)
++			continue;
++
++		for (j = 0; fmt->codes[j]; j++) {
++			if (index == 0) {
++				*code = fmt->codes[j];
++				return 0;
++			}
++
++			index--;
++		}
++	}
++
++	return -EINVAL;
+ }
+ EXPORT_SYMBOL_GPL(imx_media_enum_mbus_format);
+ 
+-const struct imx_media_pixfmt *
+-imx_media_find_ipu_format(u32 code, enum imx_pixfmt_sel fmt_sel)
+-{
+-	return find_format(0, code, fmt_sel | PIXFMT_SEL_IPU, false);
+-}
+-EXPORT_SYMBOL_GPL(imx_media_find_ipu_format);
+-
+-int imx_media_enum_ipu_format(u32 *code, u32 index,
+-			      enum imx_pixfmt_sel fmt_sel)
+-{
+-	return enum_format(NULL, code, index, fmt_sel | PIXFMT_SEL_IPU, false);
+-}
+-EXPORT_SYMBOL_GPL(imx_media_enum_ipu_format);
+-
+ int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+ 			    u32 width, u32 height, u32 code, u32 field,
+ 			    const struct imx_media_pixfmt **cc)
+diff --git a/drivers/staging/media/imx/imx-media.h b/drivers/staging/media/imx/imx-media.h
+index 459ec15bcdaf..c0813aeac3f5 100644
+--- a/drivers/staging/media/imx/imx-media.h
++++ b/drivers/staging/media/imx/imx-media.h
+@@ -170,9 +170,20 @@ int imx_media_enum_format(u32 *fourcc, u32 index, enum imx_pixfmt_sel sel);
+ const struct imx_media_pixfmt *
+ imx_media_find_mbus_format(u32 code, enum imx_pixfmt_sel sel);
+ int imx_media_enum_mbus_format(u32 *code, u32 index, enum imx_pixfmt_sel sel);
+-const struct imx_media_pixfmt *
+-imx_media_find_ipu_format(u32 code, enum imx_pixfmt_sel sel);
+-int imx_media_enum_ipu_format(u32 *code, u32 index, enum imx_pixfmt_sel sel);
++
++static inline const struct imx_media_pixfmt *
++imx_media_find_ipu_format(u32 code, enum imx_pixfmt_sel fmt_sel)
++{
++	return imx_media_find_mbus_format(code, fmt_sel | PIXFMT_SEL_IPU);
++}
++
++static inline int imx_media_enum_ipu_format(u32 *code, u32 index,
++					    enum imx_pixfmt_sel fmt_sel)
++{
++	return imx_media_enum_mbus_format(code, index,
++					  fmt_sel | PIXFMT_SEL_IPU);
++}
++
+ int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+ 			    u32 width, u32 height, u32 code, u32 field,
+ 			    const struct imx_media_pixfmt **cc);
+-- 
+Regards,
+
+Laurent Pinchart
+

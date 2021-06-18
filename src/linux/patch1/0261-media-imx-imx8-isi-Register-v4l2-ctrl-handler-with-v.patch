@@ -1,0 +1,32 @@
+From 1056a2f0e8bd60109b915d56375c4460ed5ea489 Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:33:59 +0100
+Subject: [PATCH 261/302] media: imx: imx8-isi: Register v4l2-ctrl handler with
+ v4l2_dev
+
+Otherwise v4l2-ctrls from the sensor won't be populated to the video
+device.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index ca9cdc728fab..1fe56b047702 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1799,6 +1799,7 @@ static int mxc_isi_register_cap_device(struct mxc_isi_cap_dev *isi_cap,
+ 		goto err_ctrl_free;
+ 
+ 	vdev->ctrl_handler = &isi_cap->ctrls.handler;
++	v4l2_dev->ctrl_handler = &isi_cap->ctrls.handler;
+ 	v4l2_info(v4l2_dev, "Registered %s as /dev/%s\n",
+ 		  vdev->name, video_device_node_name(vdev));
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

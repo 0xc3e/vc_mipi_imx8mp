@@ -1,0 +1,73 @@
+From 88914b7c1ba69ffd8dd98fa954948dee521fd2b2 Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:49 +0200
+Subject: [PATCH 063/302] media: imx7: csi: Create media links in bound
+ notifier
+
+Implement a notifier bound op to register media links from the remote
+sub-device's source pad(s) to the CSI sink pad.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 94b99296f3d97360b9ba6ad181584f3b5504a540
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index c74455f65b3e..21a86fa3d89b 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -196,6 +196,12 @@ struct imx7_csi {
+ 	struct completion last_eof_completion;
+ };
+ 
++static struct imx7_csi *
++imx7_csi_notifier_to_dev(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct imx7_csi, notifier);
++}
++
+ static u32 imx7_csi_reg_read(struct imx7_csi *csi, unsigned int offset)
+ {
+ 	return readl(csi->regbase + offset);
+@@ -1204,6 +1210,20 @@ static const struct v4l2_subdev_internal_ops imx7_csi_internal_ops = {
+ 	.unregistered	= imx7_csi_unregistered,
+ };
+ 
++static int imx7_csi_notify_bound(struct v4l2_async_notifier *notifier,
++				 struct v4l2_subdev *sd,
++				 struct v4l2_async_subdev *asd)
++{
++	struct imx7_csi *csi = imx7_csi_notifier_to_dev(notifier);
++	struct media_pad *sink = &csi->sd.entity.pads[IMX7_CSI_PAD_SINK];
++
++	return v4l2_create_fwnode_links_to_pad(sd, sink);
++}
++
++static const struct v4l2_async_notifier_operations imx7_csi_notify_ops = {
++	.bound = imx7_csi_notify_bound,
++};
++
+ static int imx7_csi_async_register(struct imx7_csi *csi)
+ {
+ 	struct v4l2_async_subdev *asd = NULL;
+@@ -1234,6 +1254,8 @@ static int imx7_csi_async_register(struct imx7_csi *csi)
+ 		}
+ 	}
+ 
++	csi->notifier.ops = &imx7_csi_notify_ops;
++
+ 	ret = v4l2_async_subdev_notifier_register(&csi->sd, &csi->notifier);
+ 	if (ret)
+ 		return ret;
+-- 
+Regards,
+
+Laurent Pinchart
+

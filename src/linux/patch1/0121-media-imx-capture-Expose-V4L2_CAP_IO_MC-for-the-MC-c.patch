@@ -1,0 +1,47 @@
+From 5eac67d6758f8d48800ab51b1916dbbe7ce660d6 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:52 +0100
+Subject: [PATCH 121/302] media: imx: capture: Expose V4L2_CAP_IO_MC for the
+ MC-centric API
+
+Report to userspace that the MC-centric API is MC-centric by exposing
+the V4L2_CAP_IO_MC. This requires adding support for mbus code filtering
+in format enumeration, as required by V4L2_CAP_IO_MC.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit a1060d0789b1790f21c1649172aaca56ed6b4f0e)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 956f53fd957b..c3aca92eb5b9 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -96,7 +96,7 @@ static int capture_enum_fmt_vid_cap(struct file *file, void *fh,
+ 				    struct v4l2_fmtdesc *f)
+ {
+ 	return imx_media_enum_pixel_formats(&f->pixelformat, f->index,
+-					    PIXFMT_SEL_ANY, 0);
++					    PIXFMT_SEL_ANY, f->mbus_code);
+ }
+ 
+ static int capture_enum_framesizes(struct file *file, void *fh,
+@@ -986,7 +986,8 @@ imx_media_capture_device_init(struct device *dev, struct v4l2_subdev *src_sd,
+ 	vfd->release = video_device_release;
+ 	vfd->vfl_dir = VFL_DIR_RX;
+ 	vfd->tvnorms = V4L2_STD_NTSC | V4L2_STD_PAL | V4L2_STD_SECAM;
+-	vfd->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
++	vfd->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING
++			 | (!legacy_api ? V4L2_CAP_IO_MC : 0);
+ 	vfd->lock = &priv->mutex;
+ 	vfd->queue = &priv->q;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

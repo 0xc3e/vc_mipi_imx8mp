@@ -1,0 +1,92 @@
+From 4aa7373fa4324572efe9ea84a520537027f3945c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Krzysztof=20Ha=C5=82asa?= <khalasa@piap.pl>
+Date: Thu, 14 May 2020 12:00:47 +0200
+Subject: [PATCH 071/302] staging/media: Remove unneeded geometry restrictions
+ from i.MX CSI driver
+
+I don't know what minimal image dimensions are, but 32x32 appears to
+be ok according to the docs.
+This is needed for small sensors like 80x80 thermal imagers.
+
+Signed-off-by: Krzysztof Halasa <khalasa@piap.pl>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Tested-by: Philipp Zabel <p.zabel@pengutronix.de>
+Acked-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: f0e226885c3c18b2e7e27b8043c5a393405b037e
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-ic-prp.c      | 4 ++--
+ drivers/staging/media/imx/imx-ic-prpencvf.c | 4 ++--
+ drivers/staging/media/imx/imx-media-csi.c   | 4 ++--
+ drivers/staging/media/imx/imx-media-vdic.c  | 4 ++--
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-ic-prp.c b/drivers/staging/media/imx/imx-ic-prp.c
+index 7658b83466a7..5b09e11b1a0e 100644
+--- a/drivers/staging/media/imx/imx-ic-prp.c
++++ b/drivers/staging/media/imx/imx-ic-prp.c
+@@ -26,8 +26,8 @@
+ /*
+  * Min/Max supported width and heights.
+  */
+-#define MIN_W       176
+-#define MIN_H       144
++#define MIN_W        32
++#define MIN_H        32
+ #define MAX_W      4096
+ #define MAX_H      4096
+ #define W_ALIGN    4 /* multiple of 16 pixels */
+diff --git a/drivers/staging/media/imx/imx-ic-prpencvf.c b/drivers/staging/media/imx/imx-ic-prpencvf.c
+index b1f84e0ac486..74f5de466d5d 100644
+--- a/drivers/staging/media/imx/imx-ic-prpencvf.c
++++ b/drivers/staging/media/imx/imx-ic-prpencvf.c
+@@ -35,8 +35,8 @@
+  * has not requested a planar format, we should allow 8 pixel
+  * alignment at the source pad.
+  */
+-#define MIN_W_SINK  176
+-#define MIN_H_SINK  144
++#define MIN_W_SINK   32
++#define MIN_H_SINK   32
+ #define MAX_W_SINK 4096
+ #define MAX_H_SINK 4096
+ #define W_ALIGN_SINK  3 /* multiple of 8 pixels */
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index d7e5b9ed27b8..d92fd804488e 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -33,8 +33,8 @@
+  * has not requested planar formats, we should allow 8 pixel
+  * alignment.
+  */
+-#define MIN_W       176
+-#define MIN_H       144
++#define MIN_W       32
++#define MIN_H       32
+ #define MAX_W      4096
+ #define MAX_H      4096
+ #define W_ALIGN    1 /* multiple of 2 pixels */
+diff --git a/drivers/staging/media/imx/imx-media-vdic.c b/drivers/staging/media/imx/imx-media-vdic.c
+index 303b5407fb64..879329f81f79 100644
+--- a/drivers/staging/media/imx/imx-media-vdic.c
++++ b/drivers/staging/media/imx/imx-media-vdic.c
+@@ -49,8 +49,8 @@ struct vdic_pipeline_ops {
+ /*
+  * Min/Max supported width and heights.
+  */
+-#define MIN_W       176
+-#define MIN_H       144
++#define MIN_W        32
++#define MIN_H        32
+ #define MAX_W_VDIC  968
+ #define MAX_H_VDIC 2048
+ #define W_ALIGN    4 /* multiple of 16 pixels */
+-- 
+Regards,
+
+Laurent Pinchart
+

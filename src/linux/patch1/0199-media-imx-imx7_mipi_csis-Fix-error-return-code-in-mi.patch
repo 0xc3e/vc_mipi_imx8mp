@@ -1,0 +1,37 @@
+From 9369616e1f996b8f130139ebf16561243f2629ef Mon Sep 17 00:00:00 2001
+From: Wei Yongjun <weiyongjun1@huawei.com>
+Date: Mon, 24 May 2021 15:35:51 +0200
+Subject: [PATCH 199/302] media: imx: imx7_mipi_csis: Fix error return code in
+ mipi_csis_async_register()
+
+Fix to return negative error code -EINVAL from the error handling
+case instead of 0, as done elsewhere in this function.
+
+Fixes: 88fc81388df9 ("media: imx: imx7_mipi_csis: Reject invalid data-lanes settings")
+Reported-by: Hulk Robot <hulkci@huawei.com>
+Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 80daed70c6dcc79f5ef36b98157062b0f3522732)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index d573f3475d28..9cd3c86fee58 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -1175,6 +1175,7 @@ static int mipi_csis_async_register(struct csi_state *state)
+ 		if (vep.bus.mipi_csi2.data_lanes[i] != i + 1) {
+ 			dev_err(state->dev,
+ 				"data lanes reordering is not supported");
++			ret = -EINVAL;
+ 			goto err_parse;
+ 		}
+ 	}
+-- 
+Regards,
+
+Laurent Pinchart
+

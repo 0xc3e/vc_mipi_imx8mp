@@ -1,0 +1,97 @@
+From de01ce5c594465c0bd27923af5e3add440572f78 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:29:56 +0200
+Subject: [PATCH 179/302] media: imx: imx7_mipi_csis: Minimize locking in
+ get/set format
+
+Reduce the code sections that are run with the lock held in the get/set
+format handlers:
+
+- mipi_csis_get_format() retrieves a pointer to the format, and thus
+  doesn't need locking as long as the arguments passed to the function
+  don't require locking either.
+
+- sdformat is a structure passed by the caller, not an internal state,
+  and thus doesn't require locking.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 2cb7c5c08cf25b0d2d375732a76b1185c92a1853)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 36 ++++++++++++----------
+ 1 file changed, 20 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 1697d8740241..f195c65563e7 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -859,8 +859,9 @@ static int mipi_csis_get_fmt(struct v4l2_subdev *mipi_sd,
+ 	struct csi_state *state = mipi_sd_to_csis_state(mipi_sd);
+ 	struct v4l2_mbus_framefmt *fmt;
+ 
+-	mutex_lock(&state->lock);
+ 	fmt = mipi_csis_get_format(state, cfg, sdformat->which, sdformat->pad);
++
++	mutex_lock(&state->lock);
+ 	sdformat->format = *fmt;
+ 	mutex_unlock(&state->lock);
+ 
+@@ -918,24 +919,17 @@ static int mipi_csis_set_fmt(struct v4l2_subdev *mipi_sd,
+ 	if (sdformat->pad != CSIS_PAD_SINK)
+ 		return -EINVAL;
+ 
+-	fmt = mipi_csis_get_format(state, cfg, sdformat->which, sdformat->pad);
+-
+-	mutex_lock(&state->lock);
+-
+-	/* Validate the media bus code and clamp the size. */
+-	csis_fmt = find_csis_format(sdformat->format.code);
+-	if (!csis_fmt)
+-		csis_fmt = &mipi_csis_formats[0];
+-
+-	fmt->code = csis_fmt->code;
+-	fmt->width = sdformat->format.width;
+-	fmt->height = sdformat->format.height;
+-
+ 	/*
++	 * Validate the media bus code and clamp and align the size.
++	 *
+ 	 * The total number of bits per line must be a multiple of 8. We thus
+ 	 * need to align the width for formats that are not multiples of 8
+ 	 * bits.
+ 	 */
++	csis_fmt = find_csis_format(sdformat->format.code);
++	if (!csis_fmt)
++		csis_fmt = &mipi_csis_formats[0];
++
+ 	switch (csis_fmt->width % 8) {
+ 	case 0:
+ 		align = 0;
+@@ -955,8 +949,18 @@ static int mipi_csis_set_fmt(struct v4l2_subdev *mipi_sd,
+ 		break;
+ 	}
+ 
+-	v4l_bound_align_image(&fmt->width, 1, CSIS_MAX_PIX_WIDTH, align,
+-			      &fmt->height, 1, CSIS_MAX_PIX_HEIGHT, 0, 0);
++	v4l_bound_align_image(&sdformat->format.width, 1,
++			      CSIS_MAX_PIX_WIDTH, align,
++			      &sdformat->format.height, 1,
++			      CSIS_MAX_PIX_HEIGHT, 0, 0);
++
++	fmt = mipi_csis_get_format(state, cfg, sdformat->which, sdformat->pad);
++
++	mutex_lock(&state->lock);
++
++	fmt->code = csis_fmt->code;
++	fmt->width = sdformat->format.width;
++	fmt->height = sdformat->format.height;
+ 
+ 	sdformat->format = *fmt;
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

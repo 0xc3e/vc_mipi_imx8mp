@@ -1,0 +1,86 @@
+From 79872965450ccc2ee03dd8cf555d7654e774ea90 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 275/302] staging: media: imx: isi: cap: Don't call .s_power()
+ on source subdev
+
+The .s_power() operation is deprecated, and isn't implemented by the
+source subdev any (imx7-mipi-csis). Don't call it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 23 -----------------------
+ 1 file changed, 23 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 2958fbe600fe..df5ea9420a80 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -785,7 +785,6 @@ static int mxc_isi_capture_open(struct file *file)
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct mxc_isi_dev *mxc_isi = mxc_isi_get_hostdata(isi_cap->pdev);
+ 	struct device *dev = &isi_cap->pdev->dev;
+-	struct v4l2_subdev *sd;
+ 	int ret = -EBUSY;
+ 
+ 	mutex_lock(&isi_cap->lock);
+@@ -801,10 +800,6 @@ static int mxc_isi_capture_open(struct file *file)
+ 		return ret;
+ 	}
+ 
+-	sd = mxc_get_source_subdev(&isi_cap->sd, __func__);
+-	if (!sd)
+-		return -ENODEV;
+-
+ 	mutex_lock(&isi_cap->lock);
+ 	ret = v4l2_fh_open(file);
+ 	if (ret) {
+@@ -815,13 +810,6 @@ static int mxc_isi_capture_open(struct file *file)
+ 
+ 	pm_runtime_get_sync(dev);
+ 
+-	ret = v4l2_subdev_call(sd, core, s_power, 1);
+-	if (ret && ret != -ENOIOCTLCMD) {
+-		dev_err(dev, "Call subdev s_power fail!\n");
+-		pm_runtime_put(dev);
+-		return ret;
+-	}
+-
+ 	/* increase usage count for ISI channel */
+ 	mutex_lock(&mxc_isi->lock);
+ 	atomic_inc(&mxc_isi->usage_count);
+@@ -836,16 +824,11 @@ static int mxc_isi_capture_release(struct file *file)
+ 	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+ 	struct mxc_isi_dev *mxc_isi = mxc_isi_get_hostdata(isi_cap->pdev);
+ 	struct device *dev = &isi_cap->pdev->dev;
+-	struct v4l2_subdev *sd;
+ 	int ret = -1;
+ 
+ 	if (!isi_cap->is_link_setup)
+ 		return 0;
+ 
+-	sd = mxc_get_source_subdev(&isi_cap->sd, __func__);
+-	if (!sd)
+-		goto label;
+-
+ 	mutex_lock(&isi_cap->lock);
+ 	ret = _vb2_fop_release(file, NULL);
+ 	if (ret) {
+@@ -859,12 +842,6 @@ static int mxc_isi_capture_release(struct file *file)
+ 	    atomic_dec_and_test(&mxc_isi->usage_count))
+ 		mxc_isi_channel_deinit(mxc_isi);
+ 
+-	ret = v4l2_subdev_call(sd, core, s_power, 0);
+-	if (ret < 0 && ret != -ENOIOCTLCMD) {
+-		dev_err(dev, "%s s_power fail\n", __func__);
+-		goto label;
+-	}
+-
+ 	mutex_lock(&mxc_isi->lock);
+ 	mxc_isi->frame_write_done = NULL;
+ 	mutex_unlock(&mxc_isi->lock);
+-- 
+Regards,
+
+Laurent Pinchart
+

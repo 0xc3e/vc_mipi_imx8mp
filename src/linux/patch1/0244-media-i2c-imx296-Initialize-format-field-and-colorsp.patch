@@ -1,0 +1,46 @@
+From 43217e2c1e4703a731e56c101da08d5be17a58b3 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 30 May 2021 05:13:09 +0300
+Subject: [PATCH 244/302] media: i2c: imx296: Initialize format field and
+ colorspace
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx296.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/i2c/imx296.c b/drivers/media/i2c/imx296.c
+index ab3ecfc92998..4beba157d48e 100644
+--- a/drivers/media/i2c/imx296.c
++++ b/drivers/media/i2c/imx296.c
+@@ -695,6 +695,12 @@ static int imx296_set_format(struct v4l2_subdev *sd,
+ 
+ 	format->code = imx->mono ? MEDIA_BUS_FMT_Y10_1X10
+ 		     : MEDIA_BUS_FMT_SBGGR10_1X10;
++	format->field = V4L2_FIELD_NONE;
++	format->colorspace = V4L2_COLORSPACE_RAW;
++	format->ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
++	format->quantization = V4L2_QUANTIZATION_FULL_RANGE;
++	format->xfer_func = V4L2_XFER_FUNC_NONE;
++
+ 	fmt->format = *format;
+ 
+ 	return 0;
+@@ -786,8 +792,10 @@ static int imx296_init_cfg(struct v4l2_subdev *sd,
+ 	struct v4l2_subdev_format format = {
+ 		.which = cfg ? V4L2_SUBDEV_FORMAT_TRY
+ 		       : V4L2_SUBDEV_FORMAT_ACTIVE,
+-		.format.width = IMX296_PIXEL_ARRAY_WIDTH,
+-		.format.height = IMX296_PIXEL_ARRAY_HEIGHT,
++		.format = {
++			.width = IMX296_PIXEL_ARRAY_WIDTH,
++			.height = IMX296_PIXEL_ARRAY_HEIGHT,
++		},
+ 	};
+ 
+ 	imx296_set_selection(sd, cfg, &sel);
+-- 
+Regards,
+
+Laurent Pinchart
+

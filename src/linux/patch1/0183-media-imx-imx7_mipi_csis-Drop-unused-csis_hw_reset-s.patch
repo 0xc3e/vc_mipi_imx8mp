@@ -1,0 +1,48 @@
+From 5147252b91b4c1d178c2a594636c042f5aef53e3 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:30:00 +0200
+Subject: [PATCH 183/302] media: imx: imx7_mipi_csis: Drop unused csis_hw_reset
+ structure
+
+The csis_hw_reset structure is instantiated as a member of csi_state,
+but that member is never used. Drop it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 492d418c082c10c97ad1ca3d35ac8c2438b4fc17)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 5dc001a415d4..e01838931e6f 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -278,12 +278,6 @@ static const char * const mipi_csis_clk_id[] = {
+ 	"phy",
+ };
+ 
+-struct csis_hw_reset {
+-	struct regmap *src;
+-	u8 req_src;
+-	u8 rst_bit;
+-};
+-
+ struct csi_state {
+ 	/* lock elements below */
+ 	struct mutex lock;
+@@ -321,7 +315,6 @@ struct csi_state {
+ 
+ 	struct mipi_csis_event events[MIPI_CSIS_NUM_EVENTS];
+ 
+-	struct csis_hw_reset hw_reset;
+ 	struct regulator *mipi_phy_regulator;
+ };
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

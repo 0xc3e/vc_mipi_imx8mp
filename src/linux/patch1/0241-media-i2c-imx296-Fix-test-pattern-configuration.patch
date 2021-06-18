@@ -1,0 +1,33 @@
+From 72cc14b64e5723732b4cc8579f6086005bb6a4f7 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 14 Aug 2020 00:34:32 +0300
+Subject: [PATCH 241/302] media: i2c: imx296: Fix test pattern configuration
+
+When disabling the test pattern, but IMX296_PGCTRL_CLKEN needs to be
+kept, otherwise incorrect behaviour occurs and the output image is
+garbage.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx296.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/imx296.c b/drivers/media/i2c/imx296.c
+index bee594e73b05..903db6f93913 100644
+--- a/drivers/media/i2c/imx296.c
++++ b/drivers/media/i2c/imx296.c
+@@ -306,7 +306,8 @@ static int imx296_s_ctrl(struct v4l2_ctrl *ctrl)
+ 				     IMX296_PGCTRL_CLKEN |
+ 				     IMX296_PGCTRL_MODE(ctrl->val - 1), &ret);
+ 		} else {
+-			imx296_write(imx, IMX296_PGCTRL, 0, &ret);
++			imx296_write(imx, IMX296_PGCTRL,
++				     IMX296_PGCTRL_CLKEN, &ret);
+ 			imx296_write(imx, IMX296_BLKLEVEL, 0x3c, &ret);
+ 			imx296_write(imx, IMX296_BLKLEVELAUTO,
+ 				     IMX296_BLKLEVELAUTO_ON, &ret);
+-- 
+Regards,
+
+Laurent Pinchart
+

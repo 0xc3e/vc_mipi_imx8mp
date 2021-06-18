@@ -1,0 +1,103 @@
+From 0f88550ce87e97ea1b8e5633698a94a0bbe67006 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 02:15:10 +0300
+Subject: [PATCH 296/302] arm64: dts: imx8mp: Connect CSI-2 receiver to ISI
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ arch/arm64/boot/dts/freescale/imx8mp.dtsi | 56 +++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp.dtsi b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+index eac54454020f..26389cf33f89 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mp.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+@@ -1777,6 +1777,18 @@
+ 					power-domains = <&mediamix_pd>;
+ 					isi_chain = <&isi_chain_buf>;
+ 					status = "disabled";
++
++					ports {
++						#address-cells = <1>;
++						#size-cells = <0>;
++
++						port@0 {
++							reg = <0>;
++							isi_0_in: endpoint {
++								remote-endpoint = <&mipi_csi_0_out>;
++							};
++						};
++					};
+ 				};
+ 
+ 				isi_1: isi@32e02000 {
+@@ -1795,6 +1807,18 @@
+ 					no-reset-control;
+ 					power-domains = <&mediamix_pd>;
+ 					status = "disabled";
++
++					ports {
++						#address-cells = <1>;
++						#size-cells = <0>;
++
++						port@0 {
++							reg = <0>;
++							isi_1_in: endpoint {
++								remote-endpoint = <&mipi_csi_1_out>;
++							};
++						};
++					};
+ 				};
+ 
+ 				isp_0: isp@32e10000 {
+@@ -1865,6 +1889,22 @@
+ 					gpr = <&mediamix_blk_ctl>;
+ 					power-domains = <&mipi_phy1_pd>;
+ 					status = "disabled";
++
++					ports {
++						#address-cells = <1>;
++						#size-cells = <0>;
++
++						port@0 {
++							reg = <0>;
++						};
++
++						port@1 {
++							reg = <1>;
++							mipi_csi_0_out: endpoint {
++								remote-endpoint = <&isi_0_in>;
++							};
++						};
++					};
+ 				};
+ 
+ 				mipi_csi_1: csi@32e50000 {
+@@ -1884,6 +1924,22 @@
+ 					gpr = <&mediamix_blk_ctl>;
+ 					power-domains = <&mipi_phy2_pd>;
+ 					status = "disabled";
++
++					ports {
++						#address-cells = <1>;
++						#size-cells = <0>;
++
++						port@0 {
++							reg = <0>;
++						};
++
++						port@1 {
++							reg = <1>;
++							mipi_csi_1_out: endpoint {
++								remote-endpoint = <&isi_1_in>;
++							};
++						};
++					};
+ 				};
+ 			};
+ 		};
+-- 
+Regards,
+
+Laurent Pinchart
+

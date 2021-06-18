@@ -1,0 +1,57 @@
+From 792b67e6dcc2d7b07d39ff23ce1b5cbdd4adafba Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Fri, 13 Mar 2020 00:47:19 +0100
+Subject: [PATCH 038/302] media: imx: imx7-mipi-csis: Remove link setup on
+ source pad
+
+The driver rejects enablement of multiple links on its source pad. This
+isn't needed, as the CSIS doesn't care. Drop it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 1d812ad253d4667ee09b902950578184b797879b
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 32fd8465837f..377a3f018616 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -254,7 +254,6 @@ struct csi_state {
+ 
+ 	struct csis_hw_reset hw_reset;
+ 	struct regulator *mipi_phy_regulator;
+-	bool sink_linked;
+ };
+ 
+ struct csis_pix_format {
+@@ -675,17 +674,7 @@ static int mipi_csis_link_setup(struct media_entity *entity,
+ 
+ 	mutex_lock(&state->lock);
+ 
+-	if (local_pad->flags & MEDIA_PAD_FL_SOURCE) {
+-		if (flags & MEDIA_LNK_FL_ENABLED) {
+-			if (state->sink_linked) {
+-				ret = -EBUSY;
+-				goto out;
+-			}
+-			state->sink_linked = true;
+-		} else {
+-			state->sink_linked = false;
+-		}
+-	} else {
++	if (local_pad->flags & MEDIA_PAD_FL_SINK) {
+ 		if (flags & MEDIA_LNK_FL_ENABLED) {
+ 			if (state->src_sd) {
+ 				ret = -EBUSY;
+-- 
+Regards,
+
+Laurent Pinchart
+

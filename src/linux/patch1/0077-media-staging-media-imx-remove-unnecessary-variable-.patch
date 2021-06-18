@@ -1,0 +1,44 @@
+From afa9533d71b8972fb067413504133e91d738c93d Mon Sep 17 00:00:00 2001
+From: Deepak R Varma <mh12gx2825@gmail.com>
+Date: Fri, 16 Oct 2020 19:46:06 +0200
+Subject: [PATCH 077/302] media: staging: media: imx: remove unnecessary
+ variable use
+
+Use of variable vc_num is unnecessary here as it is used only once.
+Instead, the value can directly be used in place of the variable.
+
+Signed-off-by: Deepak R Varma <mh12gx2825@gmail.com>
+Acked-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit b14e7b66b08d604689e14dcd5b82855b46201699)
+---
+ drivers/staging/media/imx/imx-media-csi.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index 509d39af8c2c..1531595d5c23 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -1123,7 +1123,6 @@ static int csi_link_validate(struct v4l2_subdev *sd,
+ 	priv->upstream_ep = upstream_ep;
+ 	is_csi2 = !is_parallel_bus(&upstream_ep);
+ 	if (is_csi2) {
+-		int vc_num = 0;
+ 		/*
+ 		 * NOTE! It seems the virtual channels from the mipi csi-2
+ 		 * receiver are used only for routing by the video mux's,
+@@ -1131,7 +1130,7 @@ static int csi_link_validate(struct v4l2_subdev *sd,
+ 		 * enters the CSI's however, they are treated internally
+ 		 * in the IPU as virtual channel 0.
+ 		 */
+-		ipu_csi_set_mipi_datatype(priv->csi, vc_num,
++		ipu_csi_set_mipi_datatype(priv->csi, 0,
+ 					  &priv->format_mbus[CSI_SINK_PAD]);
+ 	}
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

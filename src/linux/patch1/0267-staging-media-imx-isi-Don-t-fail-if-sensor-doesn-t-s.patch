@@ -1,0 +1,38 @@
+From 5df24fc198c515895dc30c4b1be7d566aca2dbff Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 6 Apr 2021 17:16:01 +0300
+Subject: [PATCH 267/302] staging: media: imx: isi: Don't fail if sensor
+ doesn't support link_setup
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-media-dev.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-media-dev.c b/drivers/staging/media/imx/imx8-media-dev.c
+index e66d9ba9ad81..e2a63c2c5b57 100644
+--- a/drivers/staging/media/imx/imx8-media-dev.c
++++ b/drivers/staging/media/imx/imx8-media-dev.c
+@@ -486,7 +486,7 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 						&source->pads[source_pad],
+ 						&sink->pads[sink_pad],
+ 						0);
+-			if (ret)
++			if (ret && ret != -ENOIOCTLCMD)
+ 				return ret;
+ 			v4l2_info(&mxc_md->v4l2_dev,
+ 				  "created link [%s] => [%s]\n",
+@@ -523,7 +523,7 @@ static int mxc_md_create_links(struct mxc_md *mxc_md)
+ 							&source->pads[source_pad + j],
+ 							&sink->pads[sink_pad + j],
+ 							0);
+-				if (ret)
++				if (ret && ret != -ENOIOCTLCMD)
+ 					return ret;
+ 			}
+ 			v4l2_info(&mxc_md->v4l2_dev,
+-- 
+Regards,
+
+Laurent Pinchart
+

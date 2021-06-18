@@ -1,0 +1,207 @@
+From 0ea320f94a0de356aa0cf81ff4751d2a0697f33d Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:37 +0200
+Subject: [PATCH 006/302] media: v4l2-mc: add v4l2_create_fwnode_links helpers
+
+Add functions to create media links between source and sink subdevices,
+based on the fwnode endpoint connections between them:
+
+v4l2_create_fwnode_links_to_pad() - create links from a source subdev to
+                                    a single sink pad based on fwnode
+                                    endpoint connections.
+
+v4l2_create_fwnode_links() - create all links from a source to sink subdev
+                             based on fwnode endpoint connections.
+
+These functions can be used in a sink's v4l2-async notifier subdev
+bound callback to make the links from the bound subdev.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 0d3c81e82da90f0752a09c38ffae7e7ffec01b33
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/v4l2-core/v4l2-mc.c | 95 +++++++++++++++++++++++++++++++
+ include/media/v4l2-mc.h           | 48 ++++++++++++++++
+ 2 files changed, 143 insertions(+)
+
+diff --git a/drivers/media/v4l2-core/v4l2-mc.c b/drivers/media/v4l2-core/v4l2-mc.c
+index 014a2a97cadd..f644e8304a31 100644
+--- a/drivers/media/v4l2-core/v4l2-mc.c
++++ b/drivers/media/v4l2-core/v4l2-mc.c
+@@ -309,6 +309,101 @@ int v4l_vb2q_enable_media_source(struct vb2_queue *q)
+ }
+ EXPORT_SYMBOL_GPL(v4l_vb2q_enable_media_source);
+ 
++int v4l2_create_fwnode_links_to_pad(struct v4l2_subdev *src_sd,
++				    struct media_pad *sink)
++{
++	struct fwnode_handle *endpoint;
++	struct v4l2_subdev *sink_sd;
++
++	if (!(sink->flags & MEDIA_PAD_FL_SINK) ||
++	    !is_media_entity_v4l2_subdev(sink->entity))
++		return -EINVAL;
++
++	sink_sd = media_entity_to_v4l2_subdev(sink->entity);
++
++	fwnode_graph_for_each_endpoint(dev_fwnode(src_sd->dev), endpoint) {
++		struct fwnode_handle *remote_ep;
++		int src_idx, sink_idx, ret;
++		struct media_pad *src;
++
++		src_idx = media_entity_get_fwnode_pad(&src_sd->entity,
++						      endpoint,
++						      MEDIA_PAD_FL_SOURCE);
++		if (src_idx < 0)
++			continue;
++
++		remote_ep = fwnode_graph_get_remote_endpoint(endpoint);
++		if (!remote_ep)
++			continue;
++
++		/*
++		 * ask the sink to verify it owns the remote endpoint,
++		 * and translate to a sink pad.
++		 */
++		sink_idx = media_entity_get_fwnode_pad(&sink_sd->entity,
++						       remote_ep,
++						       MEDIA_PAD_FL_SINK);
++		fwnode_handle_put(remote_ep);
++
++		if (sink_idx < 0 || sink_idx != sink->index)
++			continue;
++
++		/*
++		 * the source endpoint corresponds to one of its source pads,
++		 * the source endpoint connects to an endpoint at the sink
++		 * entity, and the sink endpoint corresponds to the sink
++		 * pad requested, so we have found an endpoint connection
++		 * that works, create the media link for it.
++		 */
++
++		src = &src_sd->entity.pads[src_idx];
++
++		/* skip if link already exists */
++		if (media_entity_find_link(src, sink))
++			continue;
++
++		dev_dbg(sink_sd->dev, "creating link %s:%d -> %s:%d\n",
++			src_sd->entity.name, src_idx,
++			sink_sd->entity.name, sink_idx);
++
++		ret = media_create_pad_link(&src_sd->entity, src_idx,
++					    &sink_sd->entity, sink_idx, 0);
++		if (ret) {
++			dev_err(sink_sd->dev,
++				"link %s:%d -> %s:%d failed with %d\n",
++				src_sd->entity.name, src_idx,
++				sink_sd->entity.name, sink_idx, ret);
++
++			fwnode_handle_put(endpoint);
++			return ret;
++		}
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(v4l2_create_fwnode_links_to_pad);
++
++int v4l2_create_fwnode_links(struct v4l2_subdev *src_sd,
++			     struct v4l2_subdev *sink_sd)
++{
++	unsigned int i;
++
++	for (i = 0; i < sink_sd->entity.num_pads; i++) {
++		struct media_pad *pad = &sink_sd->entity.pads[i];
++		int ret;
++
++		if (!(pad->flags & MEDIA_PAD_FL_SINK))
++			continue;
++
++		ret = v4l2_create_fwnode_links_to_pad(src_sd, pad);
++		if (ret)
++			return ret;
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(v4l2_create_fwnode_links);
++
+ /* -----------------------------------------------------------------------------
+  * Pipeline power management
+  *
+diff --git a/include/media/v4l2-mc.h b/include/media/v4l2-mc.h
+index 384960249f01..917d36dab593 100644
+--- a/include/media/v4l2-mc.h
++++ b/include/media/v4l2-mc.h
+@@ -12,6 +12,7 @@
+ 
+ #include <media/media-device.h>
+ #include <media/v4l2-dev.h>
++#include <media/v4l2-subdev.h>
+ #include <linux/types.h>
+ 
+ /* We don't need to include pci.h or usb.h here */
+@@ -84,6 +85,53 @@ void v4l_disable_media_source(struct video_device *vdev);
+  */
+ int v4l_vb2q_enable_media_source(struct vb2_queue *q);
+ 
++/**
++ * v4l2_create_fwnode_links_to_pad - Create fwnode-based links from a
++ *                                   source subdev to a sink subdev pad.
++ *
++ * @src_sd - pointer to a source subdev
++ * @sink - pointer to a subdev sink pad
++ *
++ * This function searches for fwnode endpoint connections from a source
++ * subdevice to a single sink pad, and if suitable connections are found,
++ * translates them into media links to that pad. The function can be
++ * called by the sink subdevice, in its v4l2-async notifier subdev bound
++ * callback, to create links from a bound source subdevice.
++ *
++ * .. note::
++ *
++ *    Any sink subdevice that calls this function must implement the
++ *    .get_fwnode_pad media operation in order to verify endpoints passed
++ *    to the sink are owned by the sink.
++ *
++ * Return 0 on success or a negative error code on failure.
++ */
++int v4l2_create_fwnode_links_to_pad(struct v4l2_subdev *src_sd,
++				    struct media_pad *sink);
++
++/**
++ * v4l2_create_fwnode_links - Create fwnode-based links from a source
++ *                            subdev to a sink subdev.
++ *
++ * @src_sd - pointer to a source subdevice
++ * @sink_sd - pointer to a sink subdevice
++ *
++ * This function searches for any and all fwnode endpoint connections
++ * between source and sink subdevices, and translates them into media
++ * links. The function can be called by the sink subdevice, in its
++ * v4l2-async notifier subdev bound callback, to create all links from
++ * a bound source subdevice.
++ *
++ * .. note::
++ *
++ *    Any sink subdevice that calls this function must implement the
++ *    .get_fwnode_pad media operation in order to verify endpoints passed
++ *    to the sink are owned by the sink.
++ *
++ * Return 0 on success or a negative error code on failure.
++ */
++int v4l2_create_fwnode_links(struct v4l2_subdev *src_sd,
++			     struct v4l2_subdev *sink_sd);
+ 
+ /**
+  * v4l2_pipeline_pm_use - Update the use count of an entity
+-- 
+Regards,
+
+Laurent Pinchart
+

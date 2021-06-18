@@ -1,0 +1,64 @@
+From 4e03f29733429f1c109f8dd9f091e281d0c32a8b Mon Sep 17 00:00:00 2001
+From: Fabio Estevam <festevam@gmail.com>
+Date: Wed, 8 Apr 2020 15:10:05 +0200
+Subject: [PATCH 053/302] media: imx-media-csc-scaler: Use a shorter name for
+ driver
+
+Currently v4l2-compliance tool returns the following output:
+
+Compliance test for imx-media-csc-s device /dev/video8:
+
+Driver Info:
+        Driver name      : imx-media-csc-s
+        Card type        : imx-media-csc-scaler
+        Bus info         : platform:imx-media-csc-scaler
+
+The driver name string is limited to 16 characters, so provide
+a shorter name in order to get a better output.
+
+While at it, use the same shorter name for driver, card and platform.
+
+Signed-off-by: Fabio Estevam <festevam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 33d236371f707582128ab05faf7b9f95f479aa63
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-csc-scaler.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-csc-scaler.c b/drivers/staging/media/imx/imx-media-csc-scaler.c
+index d423be6e1c72..30ed60758f0d 100644
+--- a/drivers/staging/media/imx/imx-media-csc-scaler.c
++++ b/drivers/staging/media/imx/imx-media-csc-scaler.c
+@@ -25,6 +25,8 @@
+ 
+ #define fh_to_ctx(__fh)	container_of(__fh, struct ipu_csc_scaler_ctx, fh)
+ 
++#define IMX_CSC_SCALER_NAME "imx-csc-scaler"
++
+ enum {
+ 	V4L2_M2M_SRC = 0,
+ 	V4L2_M2M_DST = 1,
+@@ -150,10 +152,10 @@ static void device_run(void *_ctx)
+ static int ipu_csc_scaler_querycap(struct file *file, void *priv,
+ 				   struct v4l2_capability *cap)
+ {
+-	strscpy(cap->driver, "imx-media-csc-scaler", sizeof(cap->driver));
+-	strscpy(cap->card, "imx-media-csc-scaler", sizeof(cap->card));
+-	strscpy(cap->bus_info, "platform:imx-media-csc-scaler",
+-		sizeof(cap->bus_info));
++	strscpy(cap->driver, IMX_CSC_SCALER_NAME, sizeof(cap->driver));
++	strscpy(cap->card, IMX_CSC_SCALER_NAME, sizeof(cap->card));
++	snprintf(cap->bus_info, sizeof(cap->bus_info),
++		 "platform:%s", IMX_CSC_SCALER_NAME);
+ 
+ 	return 0;
+ }
+-- 
+Regards,
+
+Laurent Pinchart
+

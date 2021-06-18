@@ -1,0 +1,45 @@
+From 550eca4abab3ea4915f782d3f664751f4a6d0ee4 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:25 +0100
+Subject: [PATCH 094/302] media: imx: Drop dependency on I2C
+
+The i.MX staging media drivers don't depend on I2C. Drop the dependency
+from Kconfig.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit e6668bbaa5f96eb999cd37fcc95792f6609265b4)
+---
+ drivers/staging/media/imx/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index 90eec1388558..c23a722c60a7 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -18,7 +18,7 @@ menu "i.MX5/6/7/8 Media Sub devices"
+ 
+ config VIDEO_IMX_CSI
+ 	tristate "i.MX5/6 Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA && VIDEO_DEV && I2C
++	depends on VIDEO_IMX_MEDIA && VIDEO_DEV
+ 	depends on IMX_IPUV3_CORE
+ 	default y
+ 	help
+@@ -26,7 +26,7 @@ config VIDEO_IMX_CSI
+ 
+ config VIDEO_IMX7_CSI
+ 	tristate "i.MX6UL/L / i.MX7 / i.MX8M Camera Sensor Interface driver"
+-	depends on VIDEO_IMX_MEDIA && VIDEO_DEV && I2C
++	depends on VIDEO_IMX_MEDIA && VIDEO_DEV
+ 	default y
+ 	help
+ 	  Enable support for video4linux camera sensor interface driver for
+-- 
+Regards,
+
+Laurent Pinchart
+

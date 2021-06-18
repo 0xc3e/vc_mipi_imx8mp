@@ -1,0 +1,49 @@
+From f3300478cb13d75fbba5cabaddc2ba20dc93c821 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:31 +0100
+Subject: [PATCH 156/302] media: imx: imx7_mipi_csis: Fix UYVY8 media bus
+ format
+
+CSI-2 uses, as a convention, 1Xn media bus formats. Replace
+MEDIA_BUS_FMT_UYVY8_2X8 with MEDIA_BUS_FMT_UYVY8_1X16, and set the width
+value accordingly.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit aeceec5e924bc4a0af730ba637dcbc61f1ac8036)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index e73efc7e99f9..a705797559dd 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -273,9 +273,9 @@ struct csis_pix_format {
+ static const struct csis_pix_format mipi_csis_formats[] = {
+ 	/* YUV formats. */
+ 	{
+-		.code = MEDIA_BUS_FMT_UYVY8_2X8,
++		.code = MEDIA_BUS_FMT_UYVY8_1X16,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+-		.width = 8,
++		.width = 16,
+ 	},
+ 	/* RAW (Bayer and greyscale) formats. */
+ 	{
+@@ -718,7 +718,7 @@ static int mipi_csis_init_cfg(struct v4l2_subdev *mipi_sd,
+ 	which = cfg ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
+ 	fmt_sink = mipi_csis_get_format(state, cfg, which, CSIS_PAD_SINK);
+ 
+-	fmt_sink->code = MEDIA_BUS_FMT_UYVY8_2X8;
++	fmt_sink->code = MEDIA_BUS_FMT_UYVY8_1X16;
+ 	fmt_sink->width = MIPI_CSIS_DEF_PIX_WIDTH;
+ 	fmt_sink->height = MIPI_CSIS_DEF_PIX_HEIGHT;
+ 	fmt_sink->field = V4L2_FIELD_NONE;
+-- 
+Regards,
+
+Laurent Pinchart
+

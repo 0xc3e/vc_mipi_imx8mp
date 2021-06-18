@@ -1,0 +1,79 @@
+From 0ebd61cb5d8b80378081fa25606137ffd2c75cba Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:46 +0200
+Subject: [PATCH 009/302] media: video-mux: Create media links in bound
+ notifier
+
+Implement a notifier bound op to register media links from the remote
+sub-device's source pad(s) to the video-mux sink pad(s).
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 612b385efb1e40ea65b6ae081b746bf2ec688a81
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/platform/video-mux.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/media/platform/video-mux.c b/drivers/media/platform/video-mux.c
+index 9f148f403603..53570250a25d 100644
+--- a/drivers/media/platform/video-mux.c
++++ b/drivers/media/platform/video-mux.c
+@@ -17,6 +17,7 @@
+ #include <media/v4l2-async.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-fwnode.h>
++#include <media/v4l2-mc.h>
+ #include <media/v4l2-subdev.h>
+ 
+ struct video_mux {
+@@ -36,6 +37,12 @@ static const struct v4l2_mbus_framefmt video_mux_format_mbus_default = {
+ 	.field = V4L2_FIELD_NONE,
+ };
+ 
++static inline struct video_mux *
++notifier_to_video_mux(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct video_mux, notifier);
++}
++
+ static inline struct video_mux *v4l2_subdev_to_video_mux(struct v4l2_subdev *sd)
+ {
+ 	return container_of(sd, struct video_mux, subdev);
+@@ -332,6 +339,19 @@ static const struct v4l2_subdev_ops video_mux_subdev_ops = {
+ 	.video = &video_mux_subdev_video_ops,
+ };
+ 
++static int video_mux_notify_bound(struct v4l2_async_notifier *notifier,
++				  struct v4l2_subdev *sd,
++				  struct v4l2_async_subdev *asd)
++{
++	struct video_mux *vmux = notifier_to_video_mux(notifier);
++
++	return v4l2_create_fwnode_links(sd, &vmux->subdev);
++}
++
++static const struct v4l2_async_notifier_operations video_mux_notify_ops = {
++	.bound = video_mux_notify_bound,
++};
++
+ static int video_mux_async_register(struct video_mux *vmux,
+ 				    unsigned int num_input_pads)
+ {
+@@ -369,6 +389,8 @@ static int video_mux_async_register(struct video_mux *vmux,
+ 		}
+ 	}
+ 
++	vmux->notifier.ops = &video_mux_notify_ops;
++
+ 	ret = v4l2_async_subdev_notifier_register(&vmux->subdev,
+ 						  &vmux->notifier);
+ 	if (ret)
+-- 
+Regards,
+
+Laurent Pinchart
+

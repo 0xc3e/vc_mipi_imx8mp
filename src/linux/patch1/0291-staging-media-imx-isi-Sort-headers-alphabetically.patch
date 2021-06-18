@@ -1,0 +1,147 @@
+From 45e2e0150e06fa25f4b3795316c918012d67f8c4 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 291/302] staging: media: imx: isi: Sort headers alphabetically
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c  | 16 +++++------
+ drivers/staging/media/imx/imx8-isi-core.h | 33 +++++++++++------------
+ drivers/staging/media/imx/imx8-isi-hw.c   |  3 ++-
+ drivers/staging/media/imx/imx8-isi-hw.h   |  5 ++--
+ 4 files changed, 28 insertions(+), 29 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 46fcafd6d382..abb509de497a 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -6,21 +6,21 @@
+  * used to process image from camera sensor to memory or DC
+  *
+  * Copyright (c) 2019 NXP Semiconductor
+- *
+  */
+ 
+-#include <linux/module.h>
+-#include <linux/kernel.h>
+-#include <linux/types.h>
+-#include <linux/errno.h>
+ #include <linux/bug.h>
+-#include <linux/interrupt.h>
+ #include <linux/device.h>
+-#include <linux/pm_runtime.h>
++#include <linux/errno.h>
++#include <linux/interrupt.h>
++#include <linux/kernel.h>
+ #include <linux/list.h>
+-#include <linux/slab.h>
++#include <linux/module.h>
+ #include <linux/of_graph.h>
++#include <linux/pm_runtime.h>
++#include <linux/slab.h>
++#include <linux/types.h>
+ #include <linux/videodev2.h>
++
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-ioctl.h>
+ #include <media/videobuf2-core.h>
+diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
+index 1c15aba0f348..46e2a305103c 100644
+--- a/drivers/staging/media/imx/imx8-isi-core.h
++++ b/drivers/staging/media/imx/imx8-isi-core.h
+@@ -6,35 +6,34 @@
+ #ifndef __MXC_ISI_CORE_H__
+ #define __MXC_ISI_CORE_H__
+ 
+-#include <linux/module.h>
+-#include <linux/kernel.h>
+-#include <linux/types.h>
+-#include <linux/errno.h>
+ #include <linux/bug.h>
+-#include <linux/interrupt.h>
++#include <linux/clk.h>
+ #include <linux/device.h>
+-#include <linux/platform_device.h>
+-#include <linux/pm_runtime.h>
++#include <linux/errno.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/kernel.h>
+ #include <linux/list.h>
+ #include <linux/mfd/syscon.h>
+-#include <linux/io.h>
++#include <linux/module.h>
+ #include <linux/of.h>
+ #include <linux/of_device.h>
++#include <linux/platform_device.h>
++#include <linux/pm_runtime.h>
++#include <linux/regmap.h>
++#include <linux/reset.h>
+ #include <linux/slab.h>
+-#include <linux/clk.h>
++#include <linux/sys_soc.h>
++#include <linux/types.h>
++
+ #include <media/media-device.h>
+ #include <media/media-entity.h>
+-#include <media/v4l2-subdev.h>
+-#include <media/v4l2-ioctl.h>
+-#include <media/videobuf2-core.h>
+-#include <media/v4l2-device.h>
+-#include <media/v4l2-subdev.h>
+ #include <media/v4l2-ctrls.h>
++#include <media/v4l2-device.h>
++#include <media/v4l2-ioctl.h>
++#include <media/v4l2-subdev.h>
+ #include <media/videobuf2-core.h>
+ #include <media/videobuf2-dma-contig.h>
+-#include <linux/regmap.h>
+-#include <linux/reset.h>
+-#include <linux/sys_soc.h>
+ 
+ #include "imx8-common.h"
+ 
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.c b/drivers/staging/media/imx/imx8-isi-hw.c
+index 1707f27f6ab5..84d20bf25b15 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.c
++++ b/drivers/staging/media/imx/imx8-isi-hw.c
+@@ -6,8 +6,9 @@
+ #include <dt-bindings/pinctrl/pads-imx8qxp.h>
+ 
+ #include <linux/module.h>
+-#include "imx8-isi-hw.h"
++
+ #include "imx8-common.h"
++#include "imx8-isi-hw.h"
+ 
+ MODULE_AUTHOR("Freescale Semiconductor, Inc.");
+ MODULE_DESCRIPTION("IMX8 Image Sensor Interface Hardware driver");
+diff --git a/drivers/staging/media/imx/imx8-isi-hw.h b/drivers/staging/media/imx/imx8-isi-hw.h
+index c1b6fbe22baf..a9668fa843ee 100644
+--- a/drivers/staging/media/imx/imx8-isi-hw.h
++++ b/drivers/staging/media/imx/imx8-isi-hw.h
+@@ -1,17 +1,16 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ /*
+  * Copyright 2019-2020 NXP
+- *
+  */
+ 
+ #ifndef __MXC_ISI_HW_H__
+ #define __MXC_ISI_HW_H__
+ 
++#include <linux/bug.h>
+ #include <linux/delay.h>
+-#include <linux/types.h>
+ #include <linux/errno.h>
+-#include <linux/bug.h>
+ #include <linux/platform_device.h>
++#include <linux/types.h>
+ #include <linux/videodev2.h>
+ 
+ #include "imx8-isi-core.h"
+-- 
+Regards,
+
+Laurent Pinchart
+

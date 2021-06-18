@@ -1,0 +1,77 @@
+From 94e2b5425bda8af239ebce98c2fc67670c391d67 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:07 +0100
+Subject: [PATCH 136/302] media: imx: imx7-media-csi: Merge streaming_start()
+ with csi_enable()
+
+The imx7_csi_streaming_start() function just wraps imx7_csi_enable().
+Call the latter directly.
+
+Similarly, merge imx7_csi_streaming_stop() and imx7_csi_disable() as
+they're both called from a single location only.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit f2635a9aa0c8214f96c68a86001240c611b5b378)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 28 +++++++---------------
+ 1 file changed, 8 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index f6a26dff8541..53bab0a0a878 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -610,28 +610,16 @@ static void imx7_csi_enable(struct imx7_csi *csi)
+ }
+ 
+ static void imx7_csi_disable(struct imx7_csi *csi)
+-{
+-	imx7_csi_dmareq_rff_disable(csi);
+-
+-	imx7_csi_hw_disable_irq(csi);
+-
+-	imx7_csi_buf_stride_set(csi, 0);
+-
+-	imx7_csi_hw_disable(csi);
+-}
+-
+-static void imx7_csi_streaming_start(struct imx7_csi *csi)
+-{
+-	imx7_csi_enable(csi);
+-}
+-
+-static int imx7_csi_streaming_stop(struct imx7_csi *csi)
+ {
+ 	imx7_csi_dma_stop(csi);
+ 
+-	imx7_csi_disable(csi);
++	imx7_csi_dmareq_rff_disable(csi);
+ 
+-	return 0;
++	imx7_csi_hw_disable_irq(csi);
++
++	imx7_csi_buf_stride_set(csi, 0);
++
++	imx7_csi_hw_disable(csi);
+ }
+ 
+ /* -----------------------------------------------------------------------------
+@@ -767,9 +755,9 @@ static int imx7_csi_s_stream(struct v4l2_subdev *sd, int enable)
+ 			goto out_unlock;
+ 		}
+ 
+-		imx7_csi_streaming_start(csi);
++		imx7_csi_enable(csi);
+ 	} else {
+-		imx7_csi_streaming_stop(csi);
++		imx7_csi_disable(csi);
+ 
+ 		v4l2_subdev_call(csi->src_sd, video, s_stream, 0);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

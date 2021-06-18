@@ -1,0 +1,67 @@
+From e8a77d1a935de3ccca0c212e0165673192654090 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 30 May 2021 21:52:36 +0300
+Subject: [PATCH 248/302] media: i2c: imx296: Add V4L2_CID_HBLANK control
+
+Hardcode the control value for now, it will be recomputed based on the
+format later.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/media/i2c/imx296.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/i2c/imx296.c b/drivers/media/i2c/imx296.c
+index 5da481d09901..6b1b31216016 100644
+--- a/drivers/media/i2c/imx296.c
++++ b/drivers/media/i2c/imx296.c
+@@ -198,6 +198,7 @@ struct imx296 {
+ 	struct media_pad pad;
+ 
+ 	struct v4l2_ctrl_handler ctrls;
++	struct v4l2_ctrl *hblank;
+ 	struct v4l2_ctrl *vblank;
+ 
+ 	struct v4l2_mbus_framefmt format;
+@@ -328,19 +329,35 @@ static const struct v4l2_ctrl_ops imx296_ctrl_ops = {
+ static int imx296_ctrls_init(struct imx296 *imx)
+ {
+ 	struct v4l2_fwnode_device_properties props;
++	unsigned int hblank;
+ 	int ret;
+ 
+ 	ret = v4l2_fwnode_device_parse(imx->dev, &props);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	v4l2_ctrl_handler_init(&imx->ctrls, 7);
++	v4l2_ctrl_handler_init(&imx->ctrls, 8);
+ 
+ 	v4l2_ctrl_new_std(&imx->ctrls, &imx296_ctrl_ops,
+ 			  V4L2_CID_EXPOSURE, 1, 1048575, 1, 1104);
+ 	v4l2_ctrl_new_std(&imx->ctrls, &imx296_ctrl_ops,
+ 			  V4L2_CID_GAIN, IMX296_GAIN_MIN,
+ 			  IMX296_GAIN_MAX, 1, IMX296_GAIN_MIN);
++
++	/*
++	 * Horizontal blanking is controlled through the HMAX register, which
++	 * contains a line length in INCK clock units. The INCK frequency is
++	 * fixed to 74.25 MHz. The HMAX value is currently fixed to 1100,
++	 * convert it to a number of pixels based on the nominal pixel rate.
++	 */
++	hblank = 1100 * 1188000000ULL / 10 / 74250000
++	       - IMX296_PIXEL_ARRAY_WIDTH;
++	imx->hblank = v4l2_ctrl_new_std(&imx->ctrls, &imx296_ctrl_ops,
++					V4L2_CID_HBLANK, hblank, hblank, 1,
++					hblank);
++	if (imx->hblank)
++		imx->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
++
+ 	imx->vblank = v4l2_ctrl_new_std(&imx->ctrls, &imx296_ctrl_ops,
+ 					V4L2_CID_VBLANK, 30,
+ 					1048575 - IMX296_PIXEL_ARRAY_HEIGHT,
+-- 
+Regards,
+
+Laurent Pinchart
+

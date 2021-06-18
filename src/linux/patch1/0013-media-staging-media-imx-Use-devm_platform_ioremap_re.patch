@@ -1,0 +1,51 @@
+From 936e895a99f03e11268b2ded4586d4395ef3d982 Mon Sep 17 00:00:00 2001
+From: Jeeeun Evans <jeeeunevans@gmail.com>
+Date: Thu, 26 Sep 2019 12:55:39 -0300
+Subject: [PATCH 013/302] media: staging: media: imx: Use
+ devm_platform_ioremap_resource().
+
+This patch fixes a warning by coccicheck:
+drivers/staging/media/imx/imx7-mipi-csis.c:973:1-12: WARNING: Use devm_platform_ioremap_resource for state -> regs
+
+Use devm_platform_ioremap_resource helper which wraps platform_get_resource()
+and devm_ioremap_resource() together.
+
+Signed-off-by: Jeeeun Evans <jeeeunevans@gmail.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+Upstream-commit: 80a501a46f0887ad2a17e1bdfdd753a4e75bbe7c
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 021bbd420390..c42154af8458 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -941,7 +941,6 @@ static void mipi_csis_debugfs_exit(struct csi_state *state)
+ static int mipi_csis_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+-	struct resource *mem_res;
+ 	struct csi_state *state;
+ 	int ret;
+ 
+@@ -966,8 +965,7 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 
+ 	mipi_csis_phy_reset(state);
+ 
+-	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-	state->regs = devm_ioremap_resource(dev, mem_res);
++	state->regs = devm_platform_ioremap_resource(pdev, 0);
+ 	if (IS_ERR(state->regs))
+ 		return PTR_ERR(state->regs);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

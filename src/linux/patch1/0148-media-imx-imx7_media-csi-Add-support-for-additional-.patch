@@ -1,0 +1,57 @@
+From 650c6a8f4dd292abfadac4c27b2d66bc13e6b0a8 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:19 +0100
+Subject: [PATCH 148/302] media: imx: imx7_media-csi: Add support for
+ additional Bayer patterns
+
+The CSI driver only supports the BGGR Bayer patterns currently. The
+hardware supports all patterns (the only pattern-dependent hardware
+operation is statistics calculation, as de-bayering isn't supported),
+enable them in the driver too.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 42849cf0869fc8df5fa7c9cfdbd7dceb59d0f93a)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index 475c39b05f9a..763235447422 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -496,7 +496,13 @@ static void imx7_csi_configure(struct imx7_csi *csi)
+ 		case V4L2_PIX_FMT_Y10:
+ 		case V4L2_PIX_FMT_Y12:
+ 		case V4L2_PIX_FMT_SBGGR8:
++		case V4L2_PIX_FMT_SGBRG8:
++		case V4L2_PIX_FMT_SGRBG8:
++		case V4L2_PIX_FMT_SRGGB8:
+ 		case V4L2_PIX_FMT_SBGGR16:
++		case V4L2_PIX_FMT_SGBRG16:
++		case V4L2_PIX_FMT_SGRBG16:
++		case V4L2_PIX_FMT_SRGGB16:
+ 			cr1 |= BIT_PIXEL_BIT;
+ 			break;
+ 		}
+@@ -975,7 +981,13 @@ static int imx7_csi_pad_link_validate(struct v4l2_subdev *sd,
+ 	case V4L2_PIX_FMT_Y10:
+ 	case V4L2_PIX_FMT_Y12:
+ 	case V4L2_PIX_FMT_SBGGR8:
++	case V4L2_PIX_FMT_SGBRG8:
++	case V4L2_PIX_FMT_SGRBG8:
++	case V4L2_PIX_FMT_SRGGB8:
+ 	case V4L2_PIX_FMT_SBGGR16:
++	case V4L2_PIX_FMT_SGBRG16:
++	case V4L2_PIX_FMT_SGRBG16:
++	case V4L2_PIX_FMT_SRGGB16:
+ 		break;
+ 
+ 	default:
+-- 
+Regards,
+
+Laurent Pinchart
+

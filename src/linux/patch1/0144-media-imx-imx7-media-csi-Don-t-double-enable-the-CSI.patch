@@ -1,0 +1,37 @@
+From 8e5865fac3b01d1ba52c3165845f92999854e860 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:15 +0100
+Subject: [PATCH 144/302] media: imx: imx7-media-csi: Don't double-enable the
+ CSI
+
+The CSI is enabled at the end of imx7_csi_sw_reset(), called from
+imx7_csi_enable(), as well as at the end of imx7_csi_enable(). The
+latter is enough, remove the former.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 67c98cb1ac7c8e7a3e1babf5d67613ee99f32269)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index fb09af335edf..ed389928fa4e 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -331,8 +331,6 @@ static void imx7_csi_sw_reset(struct imx7_csi *csi)
+ 	usleep_range(2000, 3000);
+ 
+ 	imx7_csi_irq_clear(csi);
+-
+-	imx7_csi_hw_enable(csi);
+ }
+ 
+ static void imx7_csi_update_buf(struct imx7_csi *csi, dma_addr_t phys,
+-- 
+Regards,
+
+Laurent Pinchart
+

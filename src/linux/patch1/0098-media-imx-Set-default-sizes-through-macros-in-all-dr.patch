@@ -1,0 +1,137 @@
+From 4db7a2d5c9c6f749aea664f92bc4ef27d64f3932 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:29 +0100
+Subject: [PATCH 098/302] media: imx: Set default sizes through macros in all
+ drivers
+
+All drivers use 640x480 as the default size, but they all hardcode those
+values. Create two global macros named IMX_MEDIA_DEF_PIX_WIDTH and
+IMX_MEDIA_DEF_PIX_HEIGHT to store the default size, and use them through
+the code.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 0ab05d7f7d24c893ee40632cfa0deda5153f6762)
+---
+ drivers/staging/media/imx/imx-ic-prp.c      |  4 +++-
+ drivers/staging/media/imx/imx-ic-prpencvf.c |  5 +++--
+ drivers/staging/media/imx/imx-media-csi.c   | 13 +++++++------
+ drivers/staging/media/imx/imx-media-vdic.c  |  5 +++--
+ drivers/staging/media/imx/imx-media.h       |  3 +++
+ drivers/staging/media/imx/imx6-mipi-csi2.c  |  4 +++-
+ 6 files changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-ic-prp.c b/drivers/staging/media/imx/imx-ic-prp.c
+index 5b09e11b1a0e..f21ed881295f 100644
+--- a/drivers/staging/media/imx/imx-ic-prp.c
++++ b/drivers/staging/media/imx/imx-ic-prp.c
+@@ -442,7 +442,9 @@ static int prp_registered(struct v4l2_subdev *sd)
+ 	/* set a default mbus format  */
+ 	imx_media_enum_ipu_formats(&code, 0, PIXFMT_SEL_YUV);
+ 
+-	return imx_media_init_mbus_fmt(&priv->format_mbus, 640, 480, code,
++	return imx_media_init_mbus_fmt(&priv->format_mbus,
++				       IMX_MEDIA_DEF_PIX_WIDTH,
++				       IMX_MEDIA_DEF_PIX_HEIGHT, code,
+ 				       V4L2_FIELD_NONE, NULL);
+ }
+ 
+diff --git a/drivers/staging/media/imx/imx-ic-prpencvf.c b/drivers/staging/media/imx/imx-ic-prpencvf.c
+index 74f5de466d5d..47df1a5a1ae8 100644
+--- a/drivers/staging/media/imx/imx-ic-prpencvf.c
++++ b/drivers/staging/media/imx/imx-ic-prpencvf.c
+@@ -1255,8 +1255,9 @@ static int prp_registered(struct v4l2_subdev *sd)
+ 
+ 	for (i = 0; i < PRPENCVF_NUM_PADS; i++) {
+ 		ret = imx_media_init_mbus_fmt(&priv->format_mbus[i],
+-					      640, 480, code, V4L2_FIELD_NONE,
+-					      &priv->cc[i]);
++					      IMX_MEDIA_DEF_PIX_WIDTH,
++					      IMX_MEDIA_DEF_PIX_HEIGHT, code,
++					      V4L2_FIELD_NONE, &priv->cc[i]);
+ 		if (ret)
+ 			return ret;
+ 	}
+diff --git a/drivers/staging/media/imx/imx-media-csi.c b/drivers/staging/media/imx/imx-media-csi.c
+index 32a83933b43a..debf46f7dbd2 100644
+--- a/drivers/staging/media/imx/imx-media-csi.c
++++ b/drivers/staging/media/imx/imx-media-csi.c
+@@ -1758,8 +1758,9 @@ static int csi_registered(struct v4l2_subdev *sd)
+ 
+ 		/* set a default mbus format  */
+ 		ret = imx_media_init_mbus_fmt(&priv->format_mbus[i],
+-					      640, 480, code, V4L2_FIELD_NONE,
+-					      &priv->cc[i]);
++					      IMX_MEDIA_DEF_PIX_WIDTH,
++					      IMX_MEDIA_DEF_PIX_HEIGHT, code,
++					      V4L2_FIELD_NONE, &priv->cc[i]);
+ 		if (ret)
+ 			goto put_csi;
+ 
+@@ -1772,10 +1773,10 @@ static int csi_registered(struct v4l2_subdev *sd)
+ 	priv->skip = &csi_skip[0];
+ 
+ 	/* init default crop and compose rectangle sizes */
+-	priv->crop.width = 640;
+-	priv->crop.height = 480;
+-	priv->compose.width = 640;
+-	priv->compose.height = 480;
++	priv->crop.width = IMX_MEDIA_DEF_PIX_WIDTH;
++	priv->crop.height = IMX_MEDIA_DEF_PIX_HEIGHT;
++	priv->compose.width = IMX_MEDIA_DEF_PIX_WIDTH;
++	priv->compose.height = IMX_MEDIA_DEF_PIX_HEIGHT;
+ 
+ 	priv->fim = imx_media_fim_init(&priv->sd);
+ 	if (IS_ERR(priv->fim)) {
+diff --git a/drivers/staging/media/imx/imx-media-vdic.c b/drivers/staging/media/imx/imx-media-vdic.c
+index 879329f81f79..395b850736fa 100644
+--- a/drivers/staging/media/imx/imx-media-vdic.c
++++ b/drivers/staging/media/imx/imx-media-vdic.c
+@@ -856,8 +856,9 @@ static int vdic_registered(struct v4l2_subdev *sd)
+ 
+ 		/* set a default mbus format  */
+ 		ret = imx_media_init_mbus_fmt(&priv->format_mbus[i],
+-					      640, 480, code, V4L2_FIELD_NONE,
+-					      &priv->cc[i]);
++					      IMX_MEDIA_DEF_PIX_WIDTH,
++					      IMX_MEDIA_DEF_PIX_HEIGHT, code,
++					      V4L2_FIELD_NONE, &priv->cc[i]);
+ 		if (ret)
+ 			return ret;
+ 
+diff --git a/drivers/staging/media/imx/imx-media.h b/drivers/staging/media/imx/imx-media.h
+index c8b6a43d0d7c..1abb9bb88c12 100644
+--- a/drivers/staging/media/imx/imx-media.h
++++ b/drivers/staging/media/imx/imx-media.h
+@@ -15,6 +15,9 @@
+ #include <media/videobuf2-dma-contig.h>
+ #include <video/imx-ipu-v3.h>
+ 
++#define IMX_MEDIA_DEF_PIX_WIDTH		640
++#define IMX_MEDIA_DEF_PIX_HEIGHT	480
++
+ /*
+  * Enumeration of the IPU internal sub-devices
+  */
+diff --git a/drivers/staging/media/imx/imx6-mipi-csi2.c b/drivers/staging/media/imx/imx6-mipi-csi2.c
+index 4f8fcc91aaae..9020541edb89 100644
+--- a/drivers/staging/media/imx/imx6-mipi-csi2.c
++++ b/drivers/staging/media/imx/imx6-mipi-csi2.c
+@@ -571,7 +571,9 @@ static int csi2_registered(struct v4l2_subdev *sd)
+ 
+ 	/* set a default mbus format  */
+ 	return imx_media_init_mbus_fmt(&csi2->format_mbus,
+-				      640, 480, 0, V4L2_FIELD_NONE, NULL);
++				      IMX_MEDIA_DEF_PIX_WIDTH,
++				      IMX_MEDIA_DEF_PIX_HEIGHT, 0,
++				      V4L2_FIELD_NONE, NULL);
+ }
+ 
+ static const struct media_entity_operations csi2_entity_ops = {
+-- 
+Regards,
+
+Laurent Pinchart
+

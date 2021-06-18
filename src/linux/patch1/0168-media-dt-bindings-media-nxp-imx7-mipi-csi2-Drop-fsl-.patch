@@ -1,0 +1,47 @@
+From b1cb77be1d381fea67cd05fc3da0f99c13dc8ff4 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:23 +0100
+Subject: [PATCH 168/302] media: dt-bindings: media: nxp,imx7-mipi-csi2: Drop
+ fsl,csis-hs-settle property
+
+The fsl,csis-hs-settle property isn't used by the driver anymore. Drop
+it.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Acked-by: Rob Herring <robh@kernel.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit ad26cb984b260a4cdd7e20ed6b63e5f66b55a977)
+---
+ .../devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml       | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+index a673c41f366a..409b06dbdeb9 100644
+--- a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
++++ b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+@@ -49,11 +49,6 @@ properties:
+       The IP main (system bus) clock frequency in Hertz
+     default: 166000000
+ 
+-  fsl,csis-hs-settle:
+-    $ref: /schemas/types.yaml#/definitions/uint32
+-    description:
+-      Differential receiver (HS-RX) settle time
+-
+   ports:
+     $ref: /schemas/graph.yaml#/properties/ports
+ 
+@@ -120,7 +115,6 @@ examples:
+             power-domains = <&pgc_mipi_phy>;
+             phy-supply = <&reg_1p0d>;
+             resets = <&src IMX7_RESET_MIPI_PHY_MRST>;
+-            fsl,csis-hs-settle = <3>;
+ 
+             ports {
+                     #address-cells = <1>;
+-- 
+Regards,
+
+Laurent Pinchart
+

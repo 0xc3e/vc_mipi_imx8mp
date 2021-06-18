@@ -1,0 +1,141 @@
+From 30abbd95ed8cacaa0fc73313722046baca8a5140 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 4 May 2021 01:31:05 +0300
+Subject: [PATCH 233/302] media: v4l: ctrls: Add control handler begin()/end()
+ operations
+
+Add too new operations for control handlers (along with a new
+corresponding control handler operations structure) to notify drivers of
+the start and end of a control group set operation. The main use case is
+to control the group hold feature of camera sensors.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ Documentation/media/kapi/v4l2-controls.rst | 22 ++++++++++++++++++++++
+ drivers/media/v4l2-core/v4l2-ctrls.c       | 20 ++++++++++++++++++--
+ include/media/v4l2-ctrls.h                 | 22 ++++++++++++++++++++++
+ 3 files changed, 62 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/media/kapi/v4l2-controls.rst b/Documentation/media/kapi/v4l2-controls.rst
+index ebe2a55908be..3c502c21b277 100644
+--- a/Documentation/media/kapi/v4l2-controls.rst
++++ b/Documentation/media/kapi/v4l2-controls.rst
+@@ -638,6 +638,28 @@ Using this function will ensure that you don't need to handle all the complex
+ flag and volatile handling.
+ 
+ 
++Atomic Control Group Set
++------------------------
++
++The control cluster mechanism allows atomic setting of multiple controls from
++the same cluster. Some devices may support atomic settings of controls on a
++wider scale, making it impractical to use clusters for this purpose as it would
++require putting all controls in the same cluster. For these use cases, the
++control handler supports two operations in :c:type:`v4l2_ctrl_handler_ops`,
++begin() and end(), to notify the driver of the start and end of a
++VIDIOC_S_EXT_CTRLS call.
++
++The begin() operation is called at the beginning of a VIDIOC_S_EXT_CTRLS call,
++after all control values have been validated, and before the first s_ctrl()
++call. If it returns an error, the whole control set is aborted and no controls
++are set. Otherwise, the control framework proceeds to setting controls
++normally. After doing so, it calls the end() operation.
++
++A driver would typically implement the begin() operation by enabling a group
++hold feature in the device, and the end() operation by releasing it, applying
++all control values in one go.
++
++
+ VIDIOC_LOG_STATUS Support
+ -------------------------
+ 
+diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
+index bc91e865dd17..78daaaa56ddb 100644
+--- a/drivers/media/v4l2-core/v4l2-ctrls.c
++++ b/drivers/media/v4l2-core/v4l2-ctrls.c
+@@ -3850,8 +3850,20 @@ static int try_set_ext_ctrls_common(struct v4l2_fh *fh,
+ 	ret = prepare_ext_ctrls(hdl, cs, helpers, vdev, false);
+ 	if (!ret)
+ 		ret = validate_ctrls(cs, helpers, vdev, set);
+-	if (ret && set)
+-		cs->error_idx = cs->count;
++	if (ret) {
++		if (set)
++			cs->error_idx = cs->count;
++		goto out_free;
++	}
++
++	if (set && hdl->ops && hdl->ops->begin) {
++		ret = hdl->ops->begin(hdl);
++		if (ret < 0) {
++			cs->error_idx = cs->count;
++			goto out_free;
++		}
++	}
++
+ 	for (i = 0; !ret && i < cs->count; i++) {
+ 		struct v4l2_ctrl *master;
+ 		u32 idx = i;
+@@ -3928,6 +3940,10 @@ static int try_set_ext_ctrls_common(struct v4l2_fh *fh,
+ 		v4l2_ctrl_unlock(master);
+ 	}
+ 
++	if (set && hdl->ops && hdl->ops->end)
++		ret = hdl->ops->end(hdl, ret == 0);
++
++out_free:
+ 	if (cs->count > ARRAY_SIZE(helper))
+ 		kvfree(helpers);
+ 	return ret;
+diff --git a/include/media/v4l2-ctrls.h b/include/media/v4l2-ctrls.h
+index c9017ad8b1a0..d7847f906abd 100644
+--- a/include/media/v4l2-ctrls.h
++++ b/include/media/v4l2-ctrls.h
+@@ -94,6 +94,26 @@ struct v4l2_ctrl_ops {
+ 	int (*s_ctrl)(struct v4l2_ctrl *ctrl);
+ };
+ 
++/**
++ * struct v4l2_ctrl_handler_ops - The control handler operations that the driver
++ *				  has to provide.
++ *
++ * @begin: Called by the control framework to signal the beginning of a control
++ *	set operation, before the first control of a group is set. This can be
++ *	used by drivers to control register group hold, in order to apply
++ *	multiple control writes atomically. Optional.
++ * @end: Called by the control framework to signal the end of a control set
++ *	operation, after the last control of a group is set. This operation is
++ *	called if and only if the @begin operation is called and returns
++ *	without an error. The success parameter is set to true if all control
++ *	writes have succeeded, and to false otherwise. Must be provided if and
++ *	only if @begin is also provided.
++ */
++struct v4l2_ctrl_handler_ops {
++	int (*begin)(struct v4l2_ctrl_handler *hdl);
++	int (*end)(struct v4l2_ctrl_handler *hdl, bool success);
++};
++
+ /**
+  * struct v4l2_ctrl_type_ops - The control type operations that the driver
+  *			       has to provide.
+@@ -306,6 +326,7 @@ struct v4l2_ctrl_ref {
+  * @_lock:	Default for "lock".
+  * @lock:	Lock to control access to this handler and its controls.
+  *		May be replaced by the user right after init.
++ * @ops:	The control handler operations. Optional.
+  * @ctrls:	The list of controls owned by this handler.
+  * @ctrl_refs:	The list of control references.
+  * @cached:	The last found control reference. It is common that the same
+@@ -334,6 +355,7 @@ struct v4l2_ctrl_ref {
+ struct v4l2_ctrl_handler {
+ 	struct mutex _lock;
+ 	struct mutex *lock;
++	const struct v4l2_ctrl_handler_ops *ops;
+ 	struct list_head ctrls;
+ 	struct list_head ctrl_refs;
+ 	struct v4l2_ctrl_ref *cached;
+-- 
+Regards,
+
+Laurent Pinchart
+

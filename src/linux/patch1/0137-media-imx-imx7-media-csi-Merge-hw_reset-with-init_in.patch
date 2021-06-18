@@ -1,0 +1,101 @@
+From 532b34ae96b6ee8fc2c3cb325cf9bc4c1324e98d Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:08 +0100
+Subject: [PATCH 137/302] media: imx: imx7-media-csi: Merge hw_reset() with
+ init_interface()
+
+The imx7_csi_hw_reset() and imx7_csi_init_interface() functions are
+always called together. Merge them. This allows simplifying the code by
+avoiding duplicated register writes.
+
+As the imx7_csi_hw_reset() function didn't perform a hardware reset by
+initialized the registers to reset defaults (in addition to resetting
+the frame counter), name the resulting function imx7_csi_init_default()
+as it sets default values.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit df221c963985fb51fed62e9b2fe7a8c83e77316a)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 37 +++++++---------------
+ 1 file changed, 11 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index 53bab0a0a878..0ad18885542b 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -212,17 +212,6 @@ static void imx7_csi_reg_write(struct imx7_csi *csi, unsigned int value,
+ 	writel(value, csi->regbase + offset);
+ }
+ 
+-static void imx7_csi_hw_reset(struct imx7_csi *csi)
+-{
+-	imx7_csi_reg_write(csi,
+-			   imx7_csi_reg_read(csi, CSI_CSICR3) | BIT_FRMCNT_RST,
+-			   CSI_CSICR3);
+-
+-	imx7_csi_reg_write(csi, BIT_EXT_VSYNC | BIT_HSYNC_POL, CSI_CSICR1);
+-	imx7_csi_reg_write(csi, 0, CSI_CSICR2);
+-	imx7_csi_reg_write(csi, 0, CSI_CSICR3);
+-}
+-
+ static u32 imx7_csi_irq_clear(struct imx7_csi *csi)
+ {
+ 	u32 isr;
+@@ -233,20 +222,18 @@ static u32 imx7_csi_irq_clear(struct imx7_csi *csi)
+ 	return isr;
+ }
+ 
+-static void imx7_csi_init_interface(struct imx7_csi *csi)
++static void imx7_csi_init_default(struct imx7_csi *csi)
+ {
+-	unsigned int val = 0;
+-	unsigned int imag_para;
++	imx7_csi_reg_write(csi, BIT_SOF_POL | BIT_REDGE | BIT_GCLK_MODE |
++			   BIT_HSYNC_POL | BIT_FCC | BIT_MCLKDIV(1) |
++			   BIT_MCLKEN, CSI_CSICR1);
++	imx7_csi_reg_write(csi, 0, CSI_CSICR2);
++	imx7_csi_reg_write(csi, BIT_FRMCNT_RST, CSI_CSICR3);
+ 
+-	val = BIT_SOF_POL | BIT_REDGE | BIT_GCLK_MODE | BIT_HSYNC_POL |
+-		BIT_FCC | BIT_MCLKDIV(1) | BIT_MCLKEN;
+-	imx7_csi_reg_write(csi, val, CSI_CSICR1);
++	imx7_csi_reg_write(csi, BIT_IMAGE_WIDTH(800) | BIT_IMAGE_HEIGHT(600),
++			   CSI_CSIIMAG_PARA);
+ 
+-	imag_para = BIT_IMAGE_WIDTH(800) | BIT_IMAGE_HEIGHT(600);
+-	imx7_csi_reg_write(csi, imag_para, CSI_CSIIMAG_PARA);
+-
+-	val = BIT_DMA_REFLASH_RFF;
+-	imx7_csi_reg_write(csi, val, CSI_CSICR3);
++	imx7_csi_reg_write(csi, BIT_DMA_REFLASH_RFF, CSI_CSICR3);
+ }
+ 
+ static void imx7_csi_hw_enable_irq(struct imx7_csi *csi)
+@@ -578,8 +565,7 @@ static int imx7_csi_init(struct imx7_csi *csi)
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	imx7_csi_hw_reset(csi);
+-	imx7_csi_init_interface(csi);
++	imx7_csi_init_default(csi);
+ 	imx7_csi_dmareq_rff_enable(csi);
+ 
+ 	ret = imx7_csi_dma_setup(csi);
+@@ -594,8 +580,7 @@ static int imx7_csi_init(struct imx7_csi *csi)
+ static void imx7_csi_deinit(struct imx7_csi *csi)
+ {
+ 	imx7_csi_dma_cleanup(csi);
+-	imx7_csi_hw_reset(csi);
+-	imx7_csi_init_interface(csi);
++	imx7_csi_init_default(csi);
+ 	imx7_csi_dmareq_rff_disable(csi);
+ 	clk_disable_unprepare(csi->mclk);
+ }
+-- 
+Regards,
+
+Laurent Pinchart
+

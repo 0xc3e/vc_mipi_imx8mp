@@ -1,0 +1,49 @@
+From 0553b400918f7976dfd7c7502b38f7c8cdd943b2 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 19 Apr 2021 00:34:02 +0300
+Subject: [PATCH 284/302] staging: media: imx: isi: Disable M2M driver
+
+The M2M functionality should be implemented with two video nodes, not a
+single V4L2 M2M device. Disable the M2M driver, but keep the sources
+around for reference. They will be removed later.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/Kconfig  | 6 ------
+ drivers/staging/media/imx/Makefile | 1 -
+ 2 files changed, 7 deletions(-)
+
+diff --git a/drivers/staging/media/imx/Kconfig b/drivers/staging/media/imx/Kconfig
+index 9f4c0c7a0ec9..c90b71b09ab7 100644
+--- a/drivers/staging/media/imx/Kconfig
++++ b/drivers/staging/media/imx/Kconfig
+@@ -68,12 +68,6 @@ config IMX8_ISI_CAPTURE
+ 	select VIDEOBUF2_DMA_CONTIG
+ 	default y
+ 
+-config IMX8_ISI_M2M
+-	tristate "IMX8 Image Sensor Interface Memory to Memory Device Driver"
+-	select V4L2_MEM2MEM_DEV
+-	depends on IMX8_ISI_HW
+-	default y
+-
+ config IMX8_MIPI_CSI2
+ 	tristate "IMX8 MIPI CSI2 Controller"
+ 	depends on VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+diff --git a/drivers/staging/media/imx/Makefile b/drivers/staging/media/imx/Makefile
+index 036e302d2ec1..6c9b48a9720c 100644
+--- a/drivers/staging/media/imx/Makefile
++++ b/drivers/staging/media/imx/Makefile
+@@ -21,7 +21,6 @@ obj-$(CONFIG_VIDEO_IMX7_CSI) += imx7-mipi-csis.o
+ obj-$(CONFIG_IMX8_MEDIA_DEVICE)   += imx8-media-dev.o
+ obj-$(CONFIG_IMX8_ISI_CORE) += imx8-capture.o
+ obj-$(CONFIG_IMX8_ISI_CAPTURE) 	  += imx8-isi-cap.o
+-obj-$(CONFIG_IMX8_ISI_M2M)	+= imx8-isi-m2m.o
+ obj-$(CONFIG_IMX8_MIPI_CSI2) 	  += imx8-mipi-csi2.o
+ obj-$(CONFIG_IMX8_MIPI_CSI2_SAM)  += imx8-mipi-csi2-sam.o
+ obj-$(CONFIG_IMX8_PARALLEL_CSI)	  += imx8-parallel-csi.o
+-- 
+Regards,
+
+Laurent Pinchart
+

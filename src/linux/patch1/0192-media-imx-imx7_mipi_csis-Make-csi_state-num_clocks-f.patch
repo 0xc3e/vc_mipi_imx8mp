@@ -1,0 +1,36 @@
+From 86e120ffd672c1beea651b15e40fb3291e87fe2e Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 13 Apr 2021 04:30:09 +0200
+Subject: [PATCH 192/302] media: imx: imx7_mipi_csis: Make csi_state num_clocks
+ field unsigned
+
+The num_clocks field of the csi_state only stores positive values, make
+it unsigned.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit b4eb02656d0944e03eb991f3feda52f653693653)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 5c7f9f28103b..363aa28fae57 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -309,7 +309,7 @@ struct csi_state {
+ 	struct dentry *debugfs_root;
+ 	bool debug;
+ 
+-	int num_clks;
++	unsigned int num_clks;
+ 	struct clk_bulk_data *clks;
+ 
+ 	u32 clk_frequency;
+-- 
+Regards,
+
+Laurent Pinchart
+

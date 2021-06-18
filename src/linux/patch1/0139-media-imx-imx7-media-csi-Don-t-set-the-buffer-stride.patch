@@ -1,0 +1,36 @@
+From f8cf30c8394a7bca10a7130873547e213dde9612 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:10 +0100
+Subject: [PATCH 139/302] media: imx: imx7-media-csi: Don't set the buffer
+ stride when disabling
+
+There's no need to set the buffer stride to 0 when disabling the CSI.
+Remove the extraneous register write.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 5f09f37a7db95f5b625c6ede05ea499e3c051b36)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index b4bd161bec40..ac6763f8810d 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -616,8 +616,6 @@ static void imx7_csi_disable(struct imx7_csi *csi)
+ 
+ 	imx7_csi_hw_disable_irq(csi);
+ 
+-	imx7_csi_buf_stride_set(csi, 0);
+-
+ 	imx7_csi_hw_disable(csi);
+ }
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

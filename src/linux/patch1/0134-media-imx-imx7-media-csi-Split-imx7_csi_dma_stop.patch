@@ -1,0 +1,60 @@
+From 9bc028b348094b31c80512d86067b378f654eea1 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:05 +0100
+Subject: [PATCH 134/302] media: imx: imx7-media-csi: Split imx7_csi_dma_stop()
+
+The imx7_csi_dma_stop() function performs two operations, it waits for
+DMA to be complete, and then cleans up and frees buffers. Split the
+second part out to a new imx7_csi_dma_cleanup() function to match
+imx7_csi_dma_setup(), in preparation for a stream start refactoring.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit b0f4a7f77c1dfed248db12f7ca0e5374c116d39f)
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index af4119dc8fd6..9cb04fa31b5a 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -462,6 +462,12 @@ static int imx7_csi_dma_setup(struct imx7_csi *csi)
+ 	return 0;
+ }
+ 
++static void imx7_csi_dma_cleanup(struct imx7_csi *csi)
++{
++	imx7_csi_dma_unsetup_vb2_buf(csi, VB2_BUF_STATE_ERROR);
++	imx_media_free_dma_buf(csi->dev, &csi->underrun_buf);
++}
++
+ static void imx7_csi_dma_stop(struct imx7_csi *csi)
+ {
+ 	unsigned long timeout_jiffies;
+@@ -483,10 +489,6 @@ static void imx7_csi_dma_stop(struct imx7_csi *csi)
+ 		v4l2_warn(&csi->sd, "wait last EOF timeout\n");
+ 
+ 	imx7_csi_hw_disable_irq(csi);
+-
+-	imx7_csi_dma_unsetup_vb2_buf(csi, VB2_BUF_STATE_ERROR);
+-
+-	imx_media_free_dma_buf(csi->dev, &csi->underrun_buf);
+ }
+ 
+ static void imx7_csi_configure(struct imx7_csi *csi)
+@@ -627,6 +629,7 @@ static int imx7_csi_streaming_start(struct imx7_csi *csi)
+ static int imx7_csi_streaming_stop(struct imx7_csi *csi)
+ {
+ 	imx7_csi_dma_stop(csi);
++	imx7_csi_dma_cleanup(csi);
+ 
+ 	imx7_csi_disable(csi);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,59 @@
+From da248278755b96c8a708d5f5b62fa5fed1d18098 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Wed, 7 Apr 2021 20:12:39 +0300
+Subject: [PATCH 269/302] staging: media: imx: isi: Simplify
+ mxc_isi_get_remote_source_pad()
+
+The implementation is overly complicated, for no visible reason.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 26 ++++++++----------------
+ 1 file changed, 9 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 1ae315285103..a4a61c3d92ed 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -722,27 +722,19 @@ void mxc_isi_ctrls_delete(struct mxc_isi_cap_dev *isi_cap)
+ static struct media_pad
+ *mxc_isi_get_remote_source_pad(struct v4l2_subdev *subdev)
+ {
+-	struct media_pad *sink_pad, *source_pad;
+-	int i;
++	unsigned int i;
+ 
+-	while (1) {
+-		source_pad = NULL;
+-		for (i = 0; i < subdev->entity.num_pads; i++) {
+-			sink_pad = &subdev->entity.pads[i];
++	for (i = 0; i < subdev->entity.num_pads; i++) {
++		struct media_pad *pad = &subdev->entity.pads[i];
+ 
+-			if (sink_pad->flags & MEDIA_PAD_FL_SINK) {
+-				source_pad = media_entity_remote_pad(sink_pad);
+-				if (source_pad)
+-					break;
+-			}
+-		}
+-		/* return first pad point in the loop  */
+-		return source_pad;
++		if (!(pad->flags & MEDIA_PAD_FL_SINK))
++			continue;
++
++		pad = media_entity_remote_pad(pad);
++		if (pad)
++			return pad;
+ 	}
+ 
+-	if (i == subdev->entity.num_pads)
+-		v4l2_err(subdev, "(%d): No remote pad found!\n", __LINE__);
+-
+ 	return NULL;
+ }
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

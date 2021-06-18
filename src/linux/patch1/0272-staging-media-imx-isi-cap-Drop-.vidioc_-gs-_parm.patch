@@ -1,0 +1,68 @@
+From 9a6351878d1e44a2efc58e536aa19f5b3b6884cf Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 20:01:38 +0300
+Subject: [PATCH 272/302] staging: media: imx: isi: cap: Drop
+ .vidioc_[gs]_parm()
+
+In a media controller-centric device, the video node operations must
+not depend on the connected subdevs. As the ISI has no intrinsic need
+for the VIDIOC_[GS]_PARM ioctls, drop them.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 30 ------------------------
+ 1 file changed, 30 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index d8ec38d3abd3..717e7a652f49 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1157,33 +1157,6 @@ static int mxc_isi_config_parm(struct mxc_isi_cap_dev *isi_cap)
+ 	return 0;
+ }
+ 
+-static int mxc_isi_cap_g_parm(struct file *file, void *fh,
+-			      struct v4l2_streamparm *a)
+-{
+-	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+-	struct v4l2_subdev *sd;
+-
+-	sd = mxc_get_source_subdev(&isi_cap->sd, __func__);
+-	if (!sd)
+-		return -ENODEV;
+-
+-	return v4l2_g_parm_cap(video_devdata(file), sd, a);
+-}
+-
+-static int mxc_isi_cap_s_parm(struct file *file, void *fh,
+-			      struct v4l2_streamparm *a)
+-{
+-	struct mxc_isi_cap_dev *isi_cap = video_drvdata(file);
+-	struct v4l2_subdev *sd;
+-
+-	sd = mxc_get_source_subdev(&isi_cap->sd, __func__);
+-	if (!sd)
+-		return -ENODEV;
+-
+-	return v4l2_s_parm_cap(video_devdata(file), sd, a);
+-}
+-
+-
+ static int mxc_isi_cap_streamon(struct file *file, void *priv,
+ 				enum v4l2_buf_type type)
+ {
+@@ -1383,9 +1356,6 @@ static const struct v4l2_ioctl_ops mxc_isi_capture_ioctl_ops = {
+ 	.vidioc_prepare_buf		= vb2_ioctl_prepare_buf,
+ 	.vidioc_create_bufs		= vb2_ioctl_create_bufs,
+ 
+-	.vidioc_g_parm			= mxc_isi_cap_g_parm,
+-	.vidioc_s_parm			= mxc_isi_cap_s_parm,
+-
+ 	.vidioc_streamon		= mxc_isi_cap_streamon,
+ 	.vidioc_streamoff		= mxc_isi_cap_streamoff,
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

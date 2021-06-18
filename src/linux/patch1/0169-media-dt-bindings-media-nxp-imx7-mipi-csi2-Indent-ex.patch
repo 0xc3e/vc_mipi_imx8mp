@@ -1,0 +1,95 @@
+From ab6549d1e73c204e29058808cfc32fea88b5a90f Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:24 +0100
+Subject: [PATCH 169/302] media: dt-bindings: media: nxp,imx7-mipi-csi2: Indent
+ example with 4 spaces
+
+DT bindings examples are customarily indented with 4 spaces.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Acked-by: Rob Herring <robh@kernel.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 2641b3e04e7c6f9d4aafe4f921a8579fbfacb5c1)
+---
+ .../bindings/media/nxp,imx7-mipi-csi2.yaml    | 54 +++++++++----------
+ 1 file changed, 27 insertions(+), 27 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+index 409b06dbdeb9..7d9ce0bc460d 100644
+--- a/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
++++ b/Documentation/devicetree/bindings/media/nxp,imx7-mipi-csi2.yaml
+@@ -102,41 +102,41 @@ examples:
+     #include <dt-bindings/reset/imx7-reset.h>
+ 
+     mipi_csi: mipi-csi@30750000 {
+-            compatible = "fsl,imx7-mipi-csi2";
+-            reg = <0x30750000 0x10000>;
+-            interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
++        compatible = "fsl,imx7-mipi-csi2";
++        reg = <0x30750000 0x10000>;
++        interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+ 
+-            clocks = <&clks IMX7D_IPG_ROOT_CLK>,
+-                     <&clks IMX7D_MIPI_CSI_ROOT_CLK>,
+-                     <&clks IMX7D_MIPI_DPHY_ROOT_CLK>;
+-            clock-names = "pclk", "wrap", "phy";
+-            clock-frequency = <166000000>;
++        clocks = <&clks IMX7D_IPG_ROOT_CLK>,
++                 <&clks IMX7D_MIPI_CSI_ROOT_CLK>,
++                 <&clks IMX7D_MIPI_DPHY_ROOT_CLK>;
++        clock-names = "pclk", "wrap", "phy";
++        clock-frequency = <166000000>;
+ 
+-            power-domains = <&pgc_mipi_phy>;
+-            phy-supply = <&reg_1p0d>;
+-            resets = <&src IMX7_RESET_MIPI_PHY_MRST>;
++        power-domains = <&pgc_mipi_phy>;
++        phy-supply = <&reg_1p0d>;
++        resets = <&src IMX7_RESET_MIPI_PHY_MRST>;
+ 
+-            ports {
+-                    #address-cells = <1>;
+-                    #size-cells = <0>;
++        ports {
++            #address-cells = <1>;
++            #size-cells = <0>;
+ 
+-                    port@0 {
+-                            reg = <0>;
++            port@0 {
++                reg = <0>;
+ 
+-                            mipi_from_sensor: endpoint {
+-                                    remote-endpoint = <&ov2680_to_mipi>;
+-                                    data-lanes = <1>;
+-                            };
+-                    };
++                mipi_from_sensor: endpoint {
++                    remote-endpoint = <&ov2680_to_mipi>;
++                    data-lanes = <1>;
++                };
++            };
+ 
+-                    port@1 {
+-                            reg = <1>;
++            port@1 {
++                reg = <1>;
+ 
+-                            mipi_vc0_to_csi_mux: endpoint {
+-                                    remote-endpoint = <&csi_mux_from_mipi_vc0>;
+-                            };
+-                    };
++                mipi_vc0_to_csi_mux: endpoint {
++                    remote-endpoint = <&csi_mux_from_mipi_vc0>;
++                };
+             };
++        };
+     };
+ 
+ ...
+-- 
+Regards,
+
+Laurent Pinchart
+

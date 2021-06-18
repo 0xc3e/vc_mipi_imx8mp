@@ -1,0 +1,50 @@
+From 6a2a8d66df95e1dcea44d12853e1ad74060ad224 Mon Sep 17 00:00:00 2001
+From: Andrey Konovalov <andrey.konovalov@linaro.org>
+Date: Tue, 23 Jun 2020 18:52:26 +0200
+Subject: [PATCH 222/302] media: i2c: imx290: replace msleep(10) with
+ usleep_range(10000, 11000)
+
+This fixes checkpatch warnings of "msleep < 20ms can sleep for up to 20ms".
+
+Signed-off-by: Andrey Konovalov <andrey.konovalov@linaro.org>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+---
+ drivers/media/i2c/imx290.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/i2c/imx290.c b/drivers/media/i2c/imx290.c
+index 9c97830164e9..adcddf3204f7 100644
+--- a/drivers/media/i2c/imx290.c
++++ b/drivers/media/i2c/imx290.c
+@@ -406,7 +406,7 @@ static int imx290_set_register_array(struct imx290 *imx290,
+ 	}
+ 
+ 	/* Provide 10ms settle time */
+-	msleep(10);
++	usleep_range(10000, 11000);
+ 
+ 	return 0;
+ }
+@@ -484,14 +484,14 @@ static int imx290_set_ctrl(struct v4l2_ctrl *ctrl)
+ 		if (ctrl->val) {
+ 			imx290_write_reg(imx290, IMX290_BLKLEVEL_LOW, 0x00);
+ 			imx290_write_reg(imx290, IMX290_BLKLEVEL_HIGH, 0x00);
+-			msleep(10);
++			usleep_range(10000, 11000);
+ 			imx290_write_reg(imx290, IMX290_PGCTRL,
+ 					 (u8)(IMX290_PGCTRL_REGEN |
+ 					 IMX290_PGCTRL_THRU |
+ 					 IMX290_PGCTRL_MODE(ctrl->val)));
+ 		} else {
+ 			imx290_write_reg(imx290, IMX290_PGCTRL, 0x00);
+-			msleep(10);
++			usleep_range(10000, 11000);
+ 			if (imx290->bpp == 10)
+ 				imx290_write_reg(imx290, IMX290_BLKLEVEL_LOW,
+ 						 0x3c);
+-- 
+Regards,
+
+Laurent Pinchart
+

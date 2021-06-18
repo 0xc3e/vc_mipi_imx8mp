@@ -1,0 +1,48 @@
+From 76b4bbe85f32bc42e34c079e5a799cbaf3d910ef Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:41 +0100
+Subject: [PATCH 166/302] media: imx: imx7_mipi_csis: Print shadow registers in
+ mipi_csis_dump_regs()
+
+Print the value of the ISP shadow registers in mipi_csis_dump_regs() as
+this can help debugging.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 1cb3ff130f4d97dec2d1bee968a87f5d6e24dd60)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index b1cdc2403a45..bd587e550d99 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -188,6 +188,11 @@
+ #define MIPI_CSIS_ISP_SYNC_VSYNC_SINTV_OFFSET	12
+ #define MIPI_CSIS_ISP_SYNC_VSYNC_EINTV_OFFSET	0
+ 
++/* ISP shadow registers */
++#define MIPI_CSIS_SDW_CONFIG_CH(n)		(0x80 + (n) * 0x10)
++#define MIPI_CSIS_SDW_RESOL_CH(n)		(0x84 + (n) * 0x10)
++#define MIPI_CSIS_SDW_SYNC_CH(n)		(0x88 + (n) * 0x10)
++
+ /* Debug control register */
+ #define MIPI_CSIS_DBG_CTRL			0xc0
+ 
+@@ -411,6 +416,8 @@ static int mipi_csis_dump_regs(struct csi_state *state)
+ 		{ MIPI_CSIS_DPHY_SCTRL_H, "DPHY_SCTRL_H" },
+ 		{ MIPI_CSIS_ISP_CONFIG_CH(0), "ISP_CONFIG_CH0" },
+ 		{ MIPI_CSIS_ISP_RESOL_CH(0), "ISP_RESOL_CH0" },
++		{ MIPI_CSIS_SDW_CONFIG_CH(0), "SDW_CONFIG_CH0" },
++		{ MIPI_CSIS_SDW_RESOL_CH(0), "SDW_RESOL_CH0" },
+ 		{ MIPI_CSIS_DBG_CTRL, "DBG_CTRL" },
+ 	};
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

@@ -1,0 +1,92 @@
+From 820e36dad961d2d063cf848b0e3258ce3dc0d07c Mon Sep 17 00:00:00 2001
+From: Sakari Ailus <sakari.ailus@linux.intel.com>
+Date: Tue, 13 Oct 2020 16:54:00 +0200
+Subject: [PATCH 090/302] media: v4l: Add a helper for obtaining the link
+ frequency
+
+Add a helper for obtaining the link frequency from transmitter drivers.
+
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 1b888b3cebef2de3936167e95652830145040b78)
+---
+ drivers/media/v4l2-core/v4l2-common.c | 33 +++++++++++++++++++++++++++
+ include/media/v4l2-common.h           | 21 +++++++++++++++++
+ 2 files changed, 54 insertions(+)
+
+diff --git a/drivers/media/v4l2-core/v4l2-common.c b/drivers/media/v4l2-core/v4l2-common.c
+index 62f7aa92ac29..086a152479b3 100644
+--- a/drivers/media/v4l2-core/v4l2-common.c
++++ b/drivers/media/v4l2-core/v4l2-common.c
+@@ -439,3 +439,36 @@ int v4l2_fill_pixfmt(struct v4l2_pix_format *pixfmt, u32 pixelformat,
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(v4l2_fill_pixfmt);
++
++s64 v4l2_get_link_rate(struct v4l2_ctrl_handler *handler, unsigned int mul,
++		       unsigned int div)
++{
++	struct v4l2_ctrl *ctrl;
++	s64 freq;
++
++	ctrl = v4l2_ctrl_find(handler, V4L2_CID_LINK_FREQ);
++	if (ctrl) {
++		struct v4l2_querymenu qm = { .id = V4L2_CID_LINK_FREQ };
++		int ret;
++
++		qm.index = v4l2_ctrl_g_ctrl(ctrl);
++
++		ret = v4l2_querymenu(handler, &qm);
++		if (ret)
++			return -ENOENT;
++
++		freq = qm.value;
++	} else {
++		if (!mul || !div)
++			return -ENOENT;
++
++		ctrl = v4l2_ctrl_find(handler, V4L2_CID_PIXEL_RATE);
++		if (!ctrl)
++			return -ENOENT;
++
++		freq = div_u64(v4l2_ctrl_g_ctrl_int64(ctrl) * mul, div);
++	}
++
++	return freq > 0 ? freq : -EINVAL;
++}
++EXPORT_SYMBOL_GPL(v4l2_get_link_rate);
+diff --git a/include/media/v4l2-common.h b/include/media/v4l2-common.h
+index c070d8ae11e5..6bb0cf58bc32 100644
+--- a/include/media/v4l2-common.h
++++ b/include/media/v4l2-common.h
+@@ -487,4 +487,25 @@ int v4l2_fill_pixfmt(struct v4l2_pix_format *pixfmt, u32 pixelformat,
+ int v4l2_fill_pixfmt_mp(struct v4l2_pix_format_mplane *pixfmt, u32 pixelformat,
+ 			u32 width, u32 height);
+ 
++/**
++ * v4l2_get_link_rate - Get link rate from transmitter
++ *
++ * @handler: The transmitter's control handler
++ * @mul: The multiplier between pixel rate and link frequency. Bits per pixel on
++ *	 D-PHY, samples per clock on parallel. 0 otherwise.
++ * @div: The divisor between pixel rate and link frequency. Number of data lanes
++ *	 times two on D-PHY, 1 on parallel. 0 otherwise.
++ *
++ * This function is intended for obtaining the link frequency from the
++ * transmitter sub-devices. It returns the link rate, either from the
++ * V4L2_CID_LINK_FREQ control implemented by the transmitter, or value
++ * calculated based on the V4L2_CID_PIXEL_RATE implemented by the transmitter.
++ *
++ * Returns link frequency on success, otherwise a negative error code:
++ *	-ENOENT: Link frequency or pixel rate control not found
++ *	-EINVAL: Invalid link frequency value
++ */
++s64 v4l2_get_link_rate(struct v4l2_ctrl_handler *handler, unsigned int mul,
++		       unsigned int div);
++
+ #endif /* V4L2_COMMON_H_ */
+-- 
+Regards,
+
+Laurent Pinchart
+

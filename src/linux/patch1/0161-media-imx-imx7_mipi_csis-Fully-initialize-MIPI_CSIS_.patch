@@ -1,0 +1,43 @@
+From 64e786293e5d083b159787010b0250179db29897 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:27:36 +0100
+Subject: [PATCH 161/302] media: imx: imx7_mipi_csis: Fully initialize
+ MIPI_CSIS_DPHYCTRL register
+
+When setting the CSIS parameters, write the MIPI_CSIS_DPHYCTRL register
+fully instead of modifying selected fields, as the register doesn't
+contain any reserved fields that need to be preserved. This simplifies
+initialization slightly, and ensures that the register value doesn't
+depend on its previous state (before a warm reboot for instance).
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit d73228a730d877fbbd2f64bc4f6a8e8f9f8f7dcc)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 597d7dbde537..a059beeaf5d2 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -536,10 +536,8 @@ static void mipi_csis_set_params(struct csi_state *state)
+ 
+ 	__mipi_csis_set_format(state);
+ 
+-	val = mipi_csis_read(state, MIPI_CSIS_DPHYCTRL);
+-	val = (val & ~MIPI_CSIS_DPHYCTRL_HSSETTLE_MASK)
+-	    | MIPI_CSIS_DPHYCTRL_HSSETTLE(state->hs_settle);
+-	mipi_csis_write(state, MIPI_CSIS_DPHYCTRL, val);
++	mipi_csis_write(state, MIPI_CSIS_DPHYCTRL,
++			MIPI_CSIS_DPHYCTRL_HSSETTLE(state->hs_settle));
+ 
+ 	val = (0 << MIPI_CSIS_ISPSYNC_HSYNC_LINTV_OFFSET) |
+ 		(0 << MIPI_CSIS_ISPSYNC_VSYNC_SINTV_OFFSET) |
+-- 
+Regards,
+
+Laurent Pinchart
+

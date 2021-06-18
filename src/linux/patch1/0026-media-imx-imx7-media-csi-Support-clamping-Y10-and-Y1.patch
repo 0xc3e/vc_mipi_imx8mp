@@ -1,0 +1,45 @@
+From 1ceae723369f6cb7b8e28d630456b2c30e9dbefa Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 10 Mar 2020 17:06:33 +0100
+Subject: [PATCH 026/302] media: imx: imx7-media-csi: Support clamping Y10 and
+ Y12 to Y8
+
+10-bit and 12-bit greyscale input data to the CSI can be written as
+8-bit data to memory. Support this.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 2a9c226da9aa997d862a22292279e806114a9db8
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-media-csi.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-media-csi.c b/drivers/staging/media/imx/imx7-media-csi.c
+index a7771dd61859..acbdffb77668 100644
+--- a/drivers/staging/media/imx/imx7-media-csi.c
++++ b/drivers/staging/media/imx/imx7-media-csi.c
+@@ -804,6 +804,14 @@ static int imx7_csi_configure(struct imx7_csi *csi)
+ 	case V4L2_PIX_FMT_YUYV:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_YUV422_8B;
+ 		break;
++	case V4L2_PIX_FMT_GREY:
++		if (in_code == MEDIA_BUS_FMT_Y8_1X8)
++			cr18 |= BIT_MIPI_DATA_FORMAT_RAW8;
++		else if (in_code == MEDIA_BUS_FMT_Y10_1X10)
++			cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
++		else
++			cr18 |= BIT_MIPI_DATA_FORMAT_RAW12;
++		break;
+ 	case V4L2_PIX_FMT_Y10:
+ 		cr18 |= BIT_MIPI_DATA_FORMAT_RAW10;
+ 		cr1 |= BIT_PIXEL_BIT;
+-- 
+Regards,
+
+Laurent Pinchart
+

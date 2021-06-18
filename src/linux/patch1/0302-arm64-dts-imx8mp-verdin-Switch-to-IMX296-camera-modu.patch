@@ -1,0 +1,71 @@
+From b567b64df7fbe514beaff1f28de9216161402fac Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sat, 5 Jun 2021 02:18:48 +0300
+Subject: [PATCH 302/302] arm64: dts: imx8mp-verdin: Switch to IMX296 camera
+ module
+
+This should use a DT overlay instead.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ .../dts/freescale/imx8mp-verdin-dahlia.dtsi   | 21 +++++++++----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+index 3b1c311800fc..aff78e1e3465 100755
+--- a/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
+@@ -66,7 +66,7 @@
+ 	x16_clk: clock-x16 {
+ 		compatible = "fixed-clock";
+ 		#clock-cells = <0>;
+-		clock-frequency = <37125000>;
++		clock-frequency = <54000000>;
+ 	};
+ };
+ 
+@@ -136,21 +136,20 @@
+ 	};
+ 
+ 	camera@1a {
+-		compatible = "sony,imx327", "sony,imx290";
++		compatible = "sony,imx296ll";
+ 		reg = <0x1a>;
+ 
+ 		clocks = <&x16_clk>;
+-		clock-names = "xclk";
+-		clock-frequency = <37125000>;
++		clock-names = "inck";
+ 
+-		vdda-supply = <&vc_ctrl>;
+ 		vddd-supply = <&vc_ctrl>;
+-		vdddo-supply = <&vc_ctrl>;
++
++		orientation = <1>;	/* Back */
++		rotation = <0>;
+ 
+ 		port {
+-			imx327_out: endpoint {
+-				data-lanes = <1 2 3 4>;
+-				link-frequencies = /bits/ 64 <148500000 222750000>;
++			imx296_out: endpoint {
++				data-lanes = <1>;
+ 				remote-endpoint = <&mipi_csi0_ep>;
+ 			};
+ 		};
+@@ -195,8 +194,8 @@
+ 	ports {
+ 		port@0 {
+ 			mipi_csi0_ep: endpoint {
+-				remote-endpoint = <&imx327_out>;
+-				data-lanes = <1 2 3 4>;
++				remote-endpoint = <&imx296_out>;
++				data-lanes = <1>;
+ 			};
+ 		};
+ 	};
+-- 
+Regards,
+
+Laurent Pinchart
+

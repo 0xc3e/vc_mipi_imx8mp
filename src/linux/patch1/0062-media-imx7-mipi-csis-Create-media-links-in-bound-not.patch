@@ -1,0 +1,81 @@
+From 92367e396864e92b10947210fad39c198cfd8e8e Mon Sep 17 00:00:00 2001
+From: Steve Longerbeam <slongerbeam@gmail.com>
+Date: Fri, 1 May 2020 19:15:48 +0200
+Subject: [PATCH 062/302] media: imx7: mipi csis: Create media links in bound
+ notifier
+
+Implement a notifier bound op to register media links from the remote
+sub-device's source pad(s) to the mipi csi-2 receiver sink pad.
+
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 6e996653e757407d616d1f1fef760f74db6ef92c
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 23 ++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 2da59d298ccf..7612993cc1d6 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -26,6 +26,7 @@
+ 
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-fwnode.h>
++#include <media/v4l2-mc.h>
+ #include <media/v4l2-subdev.h>
+ 
+ #define CSIS_DRIVER_NAME			"imx7-mipi-csis"
+@@ -385,6 +386,12 @@ static int mipi_csis_dump_regs(struct csi_state *state)
+ 	return 0;
+ }
+ 
++static struct csi_state *
++mipi_notifier_to_csis_state(struct v4l2_async_notifier *n)
++{
++	return container_of(n, struct csi_state, notifier);
++}
++
+ static struct csi_state *mipi_sd_to_csis_state(struct v4l2_subdev *sdev)
+ {
+ 	return container_of(sdev, struct csi_state, mipi_sd);
+@@ -948,6 +955,20 @@ static int mipi_csis_parse_dt(struct platform_device *pdev,
+ 
+ static int mipi_csis_pm_resume(struct device *dev, bool runtime);
+ 
++static int mipi_csis_notify_bound(struct v4l2_async_notifier *notifier,
++				  struct v4l2_subdev *sd,
++				  struct v4l2_async_subdev *asd)
++{
++	struct csi_state *state = mipi_notifier_to_csis_state(notifier);
++	struct media_pad *sink = &state->mipi_sd.entity.pads[CSIS_PAD_SINK];
++
++	return v4l2_create_fwnode_links_to_pad(sd, sink);
++}
++
++static const struct v4l2_async_notifier_operations mipi_csis_notify_ops = {
++	.bound = mipi_csis_notify_bound,
++};
++
+ static int mipi_csis_subdev_init(struct v4l2_subdev *mipi_sd,
+ 				 struct platform_device *pdev,
+ 				 const struct v4l2_subdev_ops *ops)
+@@ -1016,6 +1037,8 @@ static int mipi_csis_async_register(struct csi_state *state)
+ 
+ 	fwnode_handle_put(ep);
+ 
++	state->notifier.ops = &mipi_csis_notify_ops;
++
+ 	ret = v4l2_async_subdev_notifier_register(&state->mipi_sd,
+ 						  &state->notifier);
+ 	if (ret)
+-- 
+Regards,
+
+Laurent Pinchart
+

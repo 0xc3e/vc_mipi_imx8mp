@@ -1,0 +1,37 @@
+From 4b33c59f1234c6cafc6a97cbc74c6eb3c97b764d Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 01:54:07 +0300
+Subject: [PATCH 206/302] staging: media: imx: imx7-mipi-csis: Add version
+ register
+
+Register at offset 0x00 isn't documented, but the NXP BSP
+imx8-mipi-csi2-sam driver defines it as a version register. Tests on
+i.MX7D and i.MX8MP has confirmed this, with values matching the version
+of the IP core specified in the respective reference manuals.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 9cd3c86fee58..55f0c5de8ebb 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -43,6 +43,11 @@
+ 
+ /* Register map definition */
+ 
++/* CSIS version */
++#define MIPI_CSIS_VERSION			0x00
++#define MIPI_CSIS_VERSION_IMX7D			0x03030505
++#define MIPI_CSIS_VERSION_IMX8MP		0x03060301
++
+ /* CSIS common control */
+ #define MIPI_CSIS_CMN_CTRL			0x04
+ #define MIPI_CSIS_CMN_CTRL_UPDATE_SHADOW	BIT(16)
+-- 
+Regards,
+
+Laurent Pinchart
+

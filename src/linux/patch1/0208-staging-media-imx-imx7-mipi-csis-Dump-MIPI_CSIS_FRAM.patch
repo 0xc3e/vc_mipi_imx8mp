@@ -1,0 +1,68 @@
+From 9fb7a4a648ab5d2a0cdd3d3d6262af8bb759fe46 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Thu, 8 Apr 2021 04:39:53 +0300
+Subject: [PATCH 208/302] staging: media: imx: imx7-mipi-csis: Dump
+ MIPI_CSIS_FRAME_COUNTER_CH0 register
+
+The frame counter is useful debugging information, add it to the
+register dump printed by mipi_csis_dump_regs().
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 088f2ec2b89a..f17ade7c5d55 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -15,6 +15,7 @@
+ #include <linux/interrupt.h>
+ #include <linux/io.h>
+ #include <linux/kernel.h>
++#include <linux/mfd/syscon.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/of.h>
+@@ -217,6 +218,8 @@
+ #define MIPI_CSIS_DBG_INTR_SRC_CAM_VSYNC_FALL	BIT(4)
+ #define MIPI_CSIS_DBG_INTR_SRC_CAM_VSYNC_RISE	BIT(0)
+ 
++#define MIPI_CSIS_FRAME_COUNTER_CH(n)		(0x0100 + (n) * 4)
++
+ /* Non-image packet data buffers */
+ #define MIPI_CSIS_PKTDATA_ODD			0x2000
+ #define MIPI_CSIS_PKTDATA_EVEN			0x3000
+@@ -828,6 +831,7 @@ static int mipi_csis_dump_regs(struct csi_state *state)
+ 		{ MIPI_CSIS_SDW_CONFIG_CH(0), "SDW_CONFIG_CH0" },
+ 		{ MIPI_CSIS_SDW_RESOL_CH(0), "SDW_RESOL_CH0" },
+ 		{ MIPI_CSIS_DBG_CTRL, "DBG_CTRL" },
++		{ MIPI_CSIS_FRAME_COUNTER_CH(0), "FRAME_COUNTER_CH0" },
+ 	};
+ 
+ 	unsigned int i;
+@@ -1432,11 +1436,14 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	state->gasket = syscon_regmap_lookup_by_phandle(dev->of_node, "csi-gpr");
+-	if (IS_ERR(state->gasket)) {
+-		ret = PTR_ERR(state->gasket);
+-		dev_err(dev, "failed to get CSI gasket: %d\n", ret);
+-		return ret;
++	if (state->info->has_gasket) {
++		state->gasket = syscon_regmap_lookup_by_phandle(dev->of_node,
++								"csi-gpr");
++		if (IS_ERR(state->gasket)) {
++			ret = PTR_ERR(state->gasket);
++			dev_err(dev, "failed to get CSI gasket: %d\n", ret);
++			return ret;
++		}
+ 	}
+ 
+ 	/* Reset PHY and enable the clocks. */
+-- 
+Regards,
+
+Laurent Pinchart
+

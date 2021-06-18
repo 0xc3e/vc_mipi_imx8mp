@@ -1,0 +1,91 @@
+From eb8eaaba4077dd48d698c70fcc0fc68268310251 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:39 +0100
+Subject: [PATCH 108/302] media: imx: capture: Register the video device after
+ completing init
+
+When the video device is registered, it can get used by userspace
+immediately. Its initialization must thus be fully complete. Ensure this
+by registering the video device after all initialization steps.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 1f4e7241704baa2f9c52627439a32a92625e1f06)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 37 +++++++++----------
+ 1 file changed, 18 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 3fa33860afcb..35713392aaa0 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -723,27 +723,13 @@ int imx_media_capture_device_register(struct imx_media_video_dev *vdev)
+ 
+ 	vfd->v4l2_dev = v4l2_dev;
+ 
+-	ret = video_register_device(vfd, VFL_TYPE_GRABBER, -1);
+-	if (ret) {
+-		dev_err(priv->dev, "Failed to register video device\n");
+-		return ret;
+-	}
+-
+-	/* create the link from the src_sd devnode pad to device node */
+-	ret = media_create_pad_link(&sd->entity, priv->src_sd_pad,
+-				    &vfd->entity, 0, 0);
+-	if (ret) {
+-		dev_err(priv->dev, "failed to create link to device node\n");
+-		goto unreg;
+-	}
+-
+ 	/* setup default format */
+ 	fmt_src.pad = priv->src_sd_pad;
+ 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+ 	ret = v4l2_subdev_call(sd, pad, get_fmt, NULL, &fmt_src);
+ 	if (ret) {
+ 		dev_err(priv->dev, "failed to get src_sd format\n");
+-		goto unreg;
++		return ret;
+ 	}
+ 
+ 	vdev->fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+@@ -754,16 +740,29 @@ int imx_media_capture_device_register(struct imx_media_video_dev *vdev)
+ 	vdev->cc = imx_media_find_pixel_format(vdev->fmt.fmt.pix.pixelformat,
+ 					       PIXFMT_SEL_ANY);
+ 
++	/* Register the video device. */
++	ret = video_register_device(vfd, VFL_TYPE_GRABBER, -1);
++	if (ret) {
++		dev_err(priv->dev, "Failed to register video device\n");
++		return ret;
++	}
++
+ 	dev_info(priv->dev, "Registered %s as /dev/%s\n", vfd->name,
+ 		 video_device_node_name(vfd));
+ 
+-	/* add vdev to the video device list */
++	/* Create the link from the src_sd devnode pad to device node. */
++	ret = media_create_pad_link(&sd->entity, priv->src_sd_pad,
++				    &vfd->entity, 0, 0);
++	if (ret) {
++		dev_err(priv->dev, "failed to create link to device node\n");
++		video_unregister_device(vfd);
++		return ret;
++	}
++
++	/* Add vdev to the video devices list. */
+ 	imx_media_add_video_device(priv->md, vdev);
+ 
+ 	return 0;
+-unreg:
+-	video_unregister_device(vfd);
+-	return ret;
+ }
+ EXPORT_SYMBOL_GPL(imx_media_capture_device_register);
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

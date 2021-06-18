@@ -1,0 +1,67 @@
+From e575ec38bcc8613f7664579b4a53e57b472f1219 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 15 Feb 2021 05:26:45 +0100
+Subject: [PATCH 114/302] media: imx: capture: Remove unneeded variable in
+ __capture_legacy_try_fmt
+
+The __capture_legacy_try_fmt() function doesn't need two
+imx_media_pixfmt pointer variables. Remove one of them.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Reviewed-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 96fe421e8db5202b48c881d29c6379b977730d42)
+---
+ drivers/staging/media/imx/imx-media-capture.c | 20 +++++++++----------
+ 1 file changed, 9 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-capture.c b/drivers/staging/media/imx/imx-media-capture.c
+index 0ea324b408d2..9974a951cd77 100644
+--- a/drivers/staging/media/imx/imx-media-capture.c
++++ b/drivers/staging/media/imx/imx-media-capture.c
+@@ -236,16 +236,16 @@ static int __capture_legacy_try_fmt(struct capture_priv *priv,
+ 				    const struct imx_media_pixfmt **retcc,
+ 				    struct v4l2_rect *compose)
+ {
+-	const struct imx_media_pixfmt *cc, *cc_src;
++	const struct imx_media_pixfmt *cc;
+ 
+-	cc_src = imx_media_find_ipu_format(fmt_src->format.code,
+-					   PIXFMT_SEL_YUV_RGB);
+-	if (cc_src) {
++	cc = imx_media_find_ipu_format(fmt_src->format.code,
++				       PIXFMT_SEL_YUV_RGB);
++	if (cc) {
+ 		enum imx_pixfmt_sel fmt_sel;
+ 		u32 fourcc;
+ 
+-		fmt_sel = (cc_src->cs == IPUV3_COLORSPACE_YUV) ?
+-			PIXFMT_SEL_YUV : PIXFMT_SEL_RGB;
++		fmt_sel = (cc->cs == IPUV3_COLORSPACE_YUV)
++			? PIXFMT_SEL_YUV : PIXFMT_SEL_RGB;
+ 		fourcc = f->fmt.pix.pixelformat;
+ 
+ 		cc = imx_media_find_pixel_format(fourcc, fmt_sel);
+@@ -254,12 +254,10 @@ static int __capture_legacy_try_fmt(struct capture_priv *priv,
+ 			cc = imx_media_find_pixel_format(fourcc, fmt_sel);
+ 		}
+ 	} else {
+-		cc_src = imx_media_find_mbus_format(fmt_src->format.code,
+-						    PIXFMT_SEL_ANY);
+-		if (WARN_ON(!cc_src))
++		cc = imx_media_find_mbus_format(fmt_src->format.code,
++						PIXFMT_SEL_ANY);
++		if (WARN_ON(!cc))
+ 			return -EINVAL;
+-
+-		cc = cc_src;
+ 	}
+ 
+ 	/* allow IDMAC interweave but enforce field order from source */
+-- 
+Regards,
+
+Laurent Pinchart
+

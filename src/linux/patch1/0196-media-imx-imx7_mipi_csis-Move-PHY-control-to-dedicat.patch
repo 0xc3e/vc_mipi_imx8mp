@@ -1,0 +1,127 @@
+From 5c1afbaf3a943b659842bb10fc0bb5491b2fc2e4 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 16 May 2021 00:32:26 +0200
+Subject: [PATCH 196/302] media: imx: imx7_mipi_csis: Move PHY control to
+ dedicated functions
+
+Move the PHY regulator and reset handling to dedicated functions. This
+groups all related code together, and prepares for i.MX8 support that
+doesn't require control of the PHY regulator and reset.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Acked-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Tested-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit acdff8e14ae9e992526d050f8cee2264710de33e)
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 64 +++++++++++++---------
+ 1 file changed, 38 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 14ff785ba5d5..3c43441653c3 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -457,25 +457,6 @@ static void mipi_csis_sw_reset(struct csi_state *state)
+ 	usleep_range(10, 20);
+ }
+ 
+-static int mipi_csis_phy_init(struct csi_state *state)
+-{
+-	state->mipi_phy_regulator = devm_regulator_get(state->dev, "phy");
+-	if (IS_ERR(state->mipi_phy_regulator))
+-		return PTR_ERR(state->mipi_phy_regulator);
+-
+-	return regulator_set_voltage(state->mipi_phy_regulator, 1000000,
+-				     1000000);
+-}
+-
+-static void mipi_csis_phy_reset(struct csi_state *state)
+-{
+-	reset_control_assert(state->mrst);
+-
+-	msleep(20);
+-
+-	reset_control_deassert(state->mrst);
+-}
+-
+ static void mipi_csis_system_enable(struct csi_state *state, int on)
+ {
+ 	u32 val, mask;
+@@ -679,6 +660,42 @@ static irqreturn_t mipi_csis_irq_handler(int irq, void *dev_id)
+ 	return IRQ_HANDLED;
+ }
+ 
++/* -----------------------------------------------------------------------------
++ * PHY regulator and reset
++ */
++
++static int mipi_csis_phy_enable(struct csi_state *state)
++{
++	return regulator_enable(state->mipi_phy_regulator);
++}
++
++static int mipi_csis_phy_disable(struct csi_state *state)
++{
++	return regulator_disable(state->mipi_phy_regulator);
++}
++
++static void mipi_csis_phy_reset(struct csi_state *state)
++{
++	reset_control_assert(state->mrst);
++	msleep(20);
++	reset_control_deassert(state->mrst);
++}
++
++static int mipi_csis_phy_init(struct csi_state *state)
++{
++	/* Get MIPI PHY reset and regulator. */
++	state->mrst = devm_reset_control_get_exclusive(state->dev, NULL);
++	if (IS_ERR(state->mrst))
++		return PTR_ERR(state->mrst);
++
++	state->mipi_phy_regulator = devm_regulator_get(state->dev, "phy");
++	if (IS_ERR(state->mipi_phy_regulator))
++		return PTR_ERR(state->mipi_phy_regulator);
++
++	return regulator_set_voltage(state->mipi_phy_regulator, 1000000,
++				     1000000);
++}
++
+ /* -----------------------------------------------------------------------------
+  * Debug
+  */
+@@ -1177,7 +1194,7 @@ static int mipi_csis_pm_suspend(struct device *dev, bool runtime)
+ 	mutex_lock(&state->lock);
+ 	if (state->state & ST_POWERED) {
+ 		mipi_csis_stop_stream(state);
+-		ret = regulator_disable(state->mipi_phy_regulator);
++		ret = mipi_csis_phy_disable(state);
+ 		if (ret)
+ 			goto unlock;
+ 		mipi_csis_clk_disable(state);
+@@ -1203,7 +1220,7 @@ static int mipi_csis_pm_resume(struct device *dev, bool runtime)
+ 		goto unlock;
+ 
+ 	if (!(state->state & ST_POWERED)) {
+-		ret = regulator_enable(state->mipi_phy_regulator);
++		ret = mipi_csis_phy_enable(state);
+ 		if (ret)
+ 			goto unlock;
+ 
+@@ -1287,11 +1304,6 @@ static int mipi_csis_parse_dt(struct csi_state *state)
+ 				 &state->clk_frequency))
+ 		state->clk_frequency = DEFAULT_SCLK_CSIS_FREQ;
+ 
+-	/* Get MIPI PHY resets */
+-	state->mrst = devm_reset_control_get_exclusive(state->dev, NULL);
+-	if (IS_ERR(state->mrst))
+-		return PTR_ERR(state->mrst);
+-
+ 	return 0;
+ }
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

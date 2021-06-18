@@ -1,0 +1,84 @@
+From 5fb2a77d76a9e56b6a130297279313c24ee88a56 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Mon, 6 Apr 2020 18:39:05 +0200
+Subject: [PATCH 052/302] media: imx: utils: Constify some mbus and ipu_image
+ arguments
+
+The imx_media_mbus_fmt_to_pix_fmt() and imx_media_mbus_fmt_to_ipu_image()
+functions do not need to modify their mbus argument, and
+imx_media_ipu_image_to_mbus_fmt() does not need to modify its ipu_image
+argument. Make them const.
+
+[slongerbeam@gmail.com: Constified mbus arg to
+ imx_media_mbus_fmt_to_ipu_image(), and ipu_image
+ arg to imx_media_ipu_image_to_mbus_fmt(), as well]
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Steve Longerbeam <slongerbeam@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: 4d7463cdf5dea933b6796681bdfac9015a845652
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx-media-utils.c | 6 +++---
+ drivers/staging/media/imx/imx-media.h       | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/imx/imx-media-utils.c b/drivers/staging/media/imx/imx-media-utils.c
+index 85ddea05997a..42e64b618a61 100644
+--- a/drivers/staging/media/imx/imx-media-utils.c
++++ b/drivers/staging/media/imx/imx-media-utils.c
+@@ -497,7 +497,7 @@ void imx_media_try_colorimetry(struct v4l2_mbus_framefmt *tryfmt,
+ EXPORT_SYMBOL_GPL(imx_media_try_colorimetry);
+ 
+ int imx_media_mbus_fmt_to_pix_fmt(struct v4l2_pix_format *pix,
+-				  struct v4l2_mbus_framefmt *mbus,
++				  const struct v4l2_mbus_framefmt *mbus,
+ 				  const struct imx_media_pixfmt *cc)
+ {
+ 	u32 width;
+@@ -550,7 +550,7 @@ int imx_media_mbus_fmt_to_pix_fmt(struct v4l2_pix_format *pix,
+ EXPORT_SYMBOL_GPL(imx_media_mbus_fmt_to_pix_fmt);
+ 
+ int imx_media_mbus_fmt_to_ipu_image(struct ipu_image *image,
+-				    struct v4l2_mbus_framefmt *mbus)
++				    const struct v4l2_mbus_framefmt *mbus)
+ {
+ 	int ret;
+ 
+@@ -568,7 +568,7 @@ int imx_media_mbus_fmt_to_ipu_image(struct ipu_image *image,
+ EXPORT_SYMBOL_GPL(imx_media_mbus_fmt_to_ipu_image);
+ 
+ int imx_media_ipu_image_to_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+-				    struct ipu_image *image)
++				    const struct ipu_image *image)
+ {
+ 	const struct imx_media_pixfmt *fmt;
+ 
+diff --git a/drivers/staging/media/imx/imx-media.h b/drivers/staging/media/imx/imx-media.h
+index 03467f6397c3..ca36beca16de 100644
+--- a/drivers/staging/media/imx/imx-media.h
++++ b/drivers/staging/media/imx/imx-media.h
+@@ -194,12 +194,12 @@ int imx_media_init_cfg(struct v4l2_subdev *sd,
+ void imx_media_try_colorimetry(struct v4l2_mbus_framefmt *tryfmt,
+ 			       bool ic_route);
+ int imx_media_mbus_fmt_to_pix_fmt(struct v4l2_pix_format *pix,
+-				  struct v4l2_mbus_framefmt *mbus,
++				  const struct v4l2_mbus_framefmt *mbus,
+ 				  const struct imx_media_pixfmt *cc);
+ int imx_media_mbus_fmt_to_ipu_image(struct ipu_image *image,
+-				    struct v4l2_mbus_framefmt *mbus);
++				    const struct v4l2_mbus_framefmt *mbus);
+ int imx_media_ipu_image_to_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+-				    struct ipu_image *image);
++				    const struct ipu_image *image);
+ void imx_media_grp_id_to_sd_name(char *sd_name, int sz,
+ 				 u32 grp_id, int ipu_id);
+ struct v4l2_subdev *
+-- 
+Regards,
+
+Laurent Pinchart
+

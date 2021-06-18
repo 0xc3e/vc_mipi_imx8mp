@@ -1,0 +1,64 @@
+From c2e9dd1428fc418ae3e1cb1e90739855c40983a8 Mon Sep 17 00:00:00 2001
+From: Sakari Ailus <sakari.ailus@linux.intel.com>
+Date: Thu, 17 Dec 2020 18:57:05 +0100
+Subject: [PATCH 091/302] media: v4l: common: Fix naming of v4l2_get_link_rate
+
+Rename v4l2_get_link_rate() as v4l2_get_link_freq(). What the function
+returns is the frequency of the link; rename it to reflect the name of the
+control where the information is obtained.
+
+Fixes: 1b888b3cebef ("media: v4l: Add a helper for obtaining the link frequency")
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 2984a99ff1c071c85dc09451c8adc859c22fbb96)
+---
+ drivers/media/v4l2-core/v4l2-common.c | 4 ++--
+ include/media/v4l2-common.h           | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-common.c b/drivers/media/v4l2-core/v4l2-common.c
+index 086a152479b3..9268d1bb8acf 100644
+--- a/drivers/media/v4l2-core/v4l2-common.c
++++ b/drivers/media/v4l2-core/v4l2-common.c
+@@ -440,7 +440,7 @@ int v4l2_fill_pixfmt(struct v4l2_pix_format *pixfmt, u32 pixelformat,
+ }
+ EXPORT_SYMBOL_GPL(v4l2_fill_pixfmt);
+ 
+-s64 v4l2_get_link_rate(struct v4l2_ctrl_handler *handler, unsigned int mul,
++s64 v4l2_get_link_freq(struct v4l2_ctrl_handler *handler, unsigned int mul,
+ 		       unsigned int div)
+ {
+ 	struct v4l2_ctrl *ctrl;
+@@ -471,4 +471,4 @@ s64 v4l2_get_link_rate(struct v4l2_ctrl_handler *handler, unsigned int mul,
+ 
+ 	return freq > 0 ? freq : -EINVAL;
+ }
+-EXPORT_SYMBOL_GPL(v4l2_get_link_rate);
++EXPORT_SYMBOL_GPL(v4l2_get_link_freq);
+diff --git a/include/media/v4l2-common.h b/include/media/v4l2-common.h
+index 6bb0cf58bc32..7120c8447c22 100644
+--- a/include/media/v4l2-common.h
++++ b/include/media/v4l2-common.h
+@@ -488,7 +488,7 @@ int v4l2_fill_pixfmt_mp(struct v4l2_pix_format_mplane *pixfmt, u32 pixelformat,
+ 			u32 width, u32 height);
+ 
+ /**
+- * v4l2_get_link_rate - Get link rate from transmitter
++ * v4l2_get_link_freq - Get link rate from transmitter
+  *
+  * @handler: The transmitter's control handler
+  * @mul: The multiplier between pixel rate and link frequency. Bits per pixel on
+@@ -505,7 +505,7 @@ int v4l2_fill_pixfmt_mp(struct v4l2_pix_format_mplane *pixfmt, u32 pixelformat,
+  *	-ENOENT: Link frequency or pixel rate control not found
+  *	-EINVAL: Invalid link frequency value
+  */
+-s64 v4l2_get_link_rate(struct v4l2_ctrl_handler *handler, unsigned int mul,
++s64 v4l2_get_link_freq(struct v4l2_ctrl_handler *handler, unsigned int mul,
+ 		       unsigned int div);
+ 
+ #endif /* V4L2_COMMON_H_ */
+-- 
+Regards,
+
+Laurent Pinchart
+

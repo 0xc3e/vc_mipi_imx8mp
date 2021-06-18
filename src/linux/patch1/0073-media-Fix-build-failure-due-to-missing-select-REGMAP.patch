@@ -1,0 +1,64 @@
+From 8d2ac22dfeb71bed02507b8cd26f5d3c9fd6e0a3 Mon Sep 17 00:00:00 2001
+From: Ian Kumlien <ian.kumlien@gmail.com>
+Date: Wed, 26 Feb 2020 15:34:05 +0100
+Subject: [PATCH 073/302] media: Fix build failure due to missing select
+ REGMAP_I2C
+
+While upgrading from 5.5.2 -> 5.5.6 I was surprised by:
+ld: drivers/media/i2c/tvp5150.o: in function `tvp5150_probe':
+tvp5150.c:(.text+0x11ac): undefined reference to
+`__devm_regmap_init_i2c'
+make: *** [Makefile:1078: vmlinux] Error 1
+
+The fix was quick enough, make VIDEO_TVP5150 select REGMAP_I2C
+And a quick grep showed that it was needed by more targets.
+
+Signed-off-by: Ian Kumlien <ian.kumlien@gmail.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+(cherry picked from commit 6de18fa3bd1dd5114106abf6217587d6f6cb051d)
+---
+ drivers/media/i2c/Kconfig | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
+index 3ef778819c5f..798673dc9d4b 100644
+--- a/drivers/media/i2c/Kconfig
++++ b/drivers/media/i2c/Kconfig
+@@ -238,6 +238,7 @@ config VIDEO_ADV7604
+ 	tristate "Analog Devices ADV7604 decoder"
+ 	depends on VIDEO_V4L2 && I2C && VIDEO_V4L2_SUBDEV_API
+ 	depends on GPIOLIB || COMPILE_TEST
++	select REGMAP_I2C
+ 	select HDMI
+ 	select V4L2_FWNODE
+ 	help
+@@ -379,6 +380,7 @@ config VIDEO_TVP5150
+ 	tristate "Texas Instruments TVP5150 video decoder"
+ 	depends on VIDEO_V4L2 && I2C
+ 	select V4L2_FWNODE
++	select REGMAP_I2C
+ 	help
+ 	  Support for the Texas Instruments TVP5150 video decoder.
+ 
+@@ -572,6 +574,7 @@ config VIDEO_IMX214
+ 	tristate "Sony IMX214 sensor support"
+ 	depends on GPIOLIB && I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+ 	depends on V4L2_FWNODE
++	select REGMAP_I2C
+ 	help
+ 	  This is a Video4Linux2 sensor driver for the Sony
+ 	  IMX214 camera.
+@@ -780,6 +783,7 @@ config VIDEO_OV7670
+ config VIDEO_OV7740
+ 	tristate "OmniVision OV7740 sensor support"
+ 	depends on I2C && VIDEO_V4L2
++	select REGMAP_I2C
+ 	help
+ 	  This is a Video4Linux2 sensor driver for the OmniVision
+ 	  OV7740 VGA camera sensor.
+-- 
+Regards,
+
+Laurent Pinchart
+

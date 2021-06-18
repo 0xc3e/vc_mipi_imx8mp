@@ -1,0 +1,150 @@
+From ed83c1c212df7d68793832af09826edb7fa576bf Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:33:55 +0100
+Subject: [PATCH 257/302] media: imx: imx8-isi: Support bayer and grey formats
+
+Add support for 8, 10 and 12 bit bayer (SBGGR, SGBRG, SGRBG, SRGGB) and
+grey (Y8, Y10, Y12) formats.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 120 +++++++++++++++++++++++
+ 1 file changed, 120 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index b28b3f759f85..cd95c08ffa0d 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -34,6 +34,126 @@
+ 
+ struct mxc_isi_fmt mxc_isi_out_formats[] = {
+ 	{
++		.name		= "Y8-RAW",
++		.fourcc		= V4L2_PIX_FMT_GREY,
++		.depth		= { 8 },
++		.color		= MXC_ISI_OUT_FMT_RAW8,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_Y8_1X8,
++	}, {
++		.name		= "Y10-RAW",
++		.fourcc		= V4L2_PIX_FMT_Y10,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW10,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_Y10_1X10,
++	}, {
++		.name		= "Y12-RAW",
++		.fourcc		= V4L2_PIX_FMT_Y12,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW12,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_Y12_1X12,
++	}, {
++		.name		= "SBGGR8-RAW",
++		.fourcc		= V4L2_PIX_FMT_SBGGR8,
++		.depth		= { 8 },
++		.color		= MXC_ISI_OUT_FMT_RAW8,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SBGGR8_1X8,
++	}, {
++		.name		= "SGBRG8-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGBRG8,
++		.depth		= { 8 },
++		.color		= MXC_ISI_OUT_FMT_RAW8,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGBRG8_1X8,
++	}, {
++		.name		= "SGRBG8-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGRBG8,
++		.depth		= { 8 },
++		.color		= MXC_ISI_OUT_FMT_RAW8,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGRBG8_1X8,
++	}, {
++		.name		= "SRGGB8-RAW",
++		.fourcc		= V4L2_PIX_FMT_SRGGB8,
++		.depth		= { 8 },
++		.color		= MXC_ISI_OUT_FMT_RAW8,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SRGGB8_1X8,
++	}, {
++		.name		= "SBGGR10-RAW",
++		.fourcc		= V4L2_PIX_FMT_SBGGR10,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW10,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SBGGR10_1X10,
++	}, {
++		.name		= "SGBRG10-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGBRG10,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW10,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGBRG10_1X10,
++	}, {
++		.name		= "SGRBG10-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGRBG10,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW10,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGRBG10_1X10,
++	}, {
++		.name		= "SRGGB10-RAW",
++		.fourcc		= V4L2_PIX_FMT_SRGGB10,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW10,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SRGGB10_1X10,
++	}, {
++		.name		= "SBGGR12-RAW",
++		.fourcc		= V4L2_PIX_FMT_SBGGR12,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW12,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SBGGR12_1X12,
++	}, {
++		.name		= "SGBRG12-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGBRG12,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW12,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGBRG12_1X12,
++	}, {
++		.name		= "SGRBG12-RAW",
++		.fourcc		= V4L2_PIX_FMT_SGRBG12,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW12,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SGRBG12_1X12,
++	}, {
++		.name		= "SRGGB12-RAW",
++		.fourcc		= V4L2_PIX_FMT_SRGGB12,
++		.depth		= { 16 },
++		.color		= MXC_ISI_OUT_FMT_RAW12,
++		.memplanes	= 1,
++		.colplanes	= 1,
++		.mbus_code  = MEDIA_BUS_FMT_SRGGB12_1X12,
++	}, {
+ 		.name		= "RGB565",
+ 		.fourcc		= V4L2_PIX_FMT_RGB565,
+ 		.depth		= { 16 },
+-- 
+Regards,
+
+Laurent Pinchart
+

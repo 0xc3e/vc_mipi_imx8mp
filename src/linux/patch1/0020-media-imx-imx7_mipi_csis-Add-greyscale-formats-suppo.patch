@@ -1,0 +1,49 @@
+From cf944b658f50717ab204be2160d523cfbd37d98d Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Tue, 10 Mar 2020 17:06:26 +0100
+Subject: [PATCH 020/302] media: imx: imx7_mipi_csis: Add greyscale formats
+ support
+
+Add support for the 8-, 10- and 12-bit greyscale media bus formats, and
+map them to the CSI-2 RAW8, RAW10 and RAW12 formats respectively.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Rui Miguel Silva <rmfrfs@gmail.com>
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+
+Upstream-commit: e1a7461b21590ec0f439b7e5cc8dba35d808cb36
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+---
+ drivers/staging/media/imx/imx7-mipi-csis.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index ebf048b8be9a..139ca3e84f99 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -280,6 +280,18 @@ static const struct csis_pix_format mipi_csis_formats[] = {
+ 		.code = MEDIA_BUS_FMT_YUYV8_2X8,
+ 		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_YCBCR422_8BIT,
+ 		.data_alignment = 16,
++	}, {
++		.code = MEDIA_BUS_FMT_Y8_1X8,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW8,
++		.data_alignment = 8,
++	}, {
++		.code = MEDIA_BUS_FMT_Y10_1X10,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW10,
++		.data_alignment = 16,
++	}, {
++		.code = MEDIA_BUS_FMT_Y12_1X12,
++		.fmt_reg = MIPI_CSIS_ISPCFG_FMT_RAW12,
++		.data_alignment = 16,
+ 	}
+ };
+ 
+-- 
+Regards,
+
+Laurent Pinchart
+

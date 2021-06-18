@@ -1,0 +1,32 @@
+From c962328dc0a93783fda58ab2a19d1f8c01639634 Mon Sep 17 00:00:00 2001
+From: Stefan Riedmueller <s.riedmueller@phytec.de>
+Date: Mon, 11 Jan 2021 11:33:57 +0100
+Subject: [PATCH 259/302] media: imx: imx8-isi: Don't use default formats
+
+Don't use a default format but rather set the correct format
+dynamically.
+
+Signed-off-by: Stefan Riedmueller <s.riedmueller@phytec.de>
+Signed-off-by: Christian Hemp <c.hemp@phytec.de>
+---
+ drivers/staging/media/imx/imx8-isi-cap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index 552488b1bd07..b9ec7dcf9e51 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -1049,7 +1049,7 @@ static int mxc_isi_source_fmt_init(struct mxc_isi_cap_dev *isi_cap)
+ 
+ 	src_fmt.pad = source_pad->index;
+ 	src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+-	src_fmt.format.code = MEDIA_BUS_FMT_UYVY8_2X8;
++	src_fmt.format.code = dst_f->fmt->mbus_code;
+ 	src_fmt.format.width = dst_f->width;
+ 	src_fmt.format.height = dst_f->height;
+ 	ret = v4l2_subdev_call(src_sd, pad, set_fmt, NULL, &src_fmt);
+-- 
+Regards,
+
+Laurent Pinchart
+
