@@ -56,18 +56,20 @@ fi
 
 if [[ $CMD == "296" ]]; then
         cd $KERNEL_SOURCE
-        git apply ../linux/linux-5.4-2.3.x-imx/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
+        git apply $SRC_DIR/linux/patch1/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
 fi
 
 if [[ $CMD == "327" ]]; then
         cd $KERNEL_SOURCE
-        git apply -R ../linux/linux-5.4-2.3.x-imx/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
+        git apply -R $SRC_DIR/linux/patch1/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
 fi
 
 if [[ $CMD == "netboot" ]]; then
         echo "Setup netboot ..."
 
         # /etc/dhcp/dhcpd.conf
+        #
+        # log-facility local7;
         #
         # subnet 192.168.10.0 netmask 255.255.255.0 {
         #         default-lease-time              86400;
@@ -85,11 +87,20 @@ if [[ $CMD == "netboot" ]]; then
         # host eval {
         #         filename                        "Image.gz";
         #         fixed-address                   192.168.10.2;
-        #         hardware ethernet               00:14:2d:10:00:00;
+        #         hardware ethernet               00:14:2d:78:06:0e;
         #         next-server                     192.168.10.1;
         #         option host-name                "verdin-imx8mp";
         #         option root-path                "/srv/nfs/imx8mp,v4,tcp,clientaddr=0.0.0.0";
         # }
+
+        # Enable NFS Logging
+        # sudo rpcdebug -m nfsd all
+        #
+        # Disable NFS Logging 
+        # sudo rpcdebug -m nfsd -c  all
+        #
+        # sudo service nfs-kernel-server restart
+        # tail -f /var/log/syslog
 
         # U-Boot
         #
@@ -104,4 +115,12 @@ if [[ $CMD == "netboot" ]]; then
         # setenv boot_devtype mmc
         # setenv root_devtype mmc
         # saveenv
+
+        # Enable NAT to external 
+        # sudo iptables -t nat -A POSTROUTING -o enp4s0 -j MASQUERADE
+        # sudo iptables -t nat -A POSTROUTING -o enx98fc84ee15d7 -j MASQUERADE
+        #
+        # sudo apt-get install iptables-persistent
+        # sudo su 
+        # iptables-save > /etc/iptables/rules.v4
 fi
