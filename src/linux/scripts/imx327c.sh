@@ -3,12 +3,12 @@
 set -e
 
 media_dev=/dev/media0
-sensor="imx296 2-001a"
+sensor="imx290 2-001a"
 
 usage() {
 	echo "Usage: $0 [options]"
 	echo ""
-	echo "Capture frames from the IMX296 sensor on the i.MX8MP."
+	echo "Capture frames from the IMX327 sensor on the i.MX8MP."
 	echo ""
 	echo "Supported options:"
 	echo "-g, --gain value          Set the sensor gain in 0.3dB increments (0 to 240)"
@@ -47,9 +47,9 @@ if [ ! -f /sys/kernel/debug/debug_enabled ] ; then
 	mount -t debugfs none /sys/kernel/debug
 fi
 
-code="Y10_1X10"
-format="Y10"
-size="1456x1088"
+code="SRGGB10_1X10"
+format="SRGGB10"
+size="1920x1080"
 isi_src_pad=6
 
 mediactl="media-ctl -d ${media_dev}"
@@ -64,4 +64,4 @@ ${mediactl} -V "'${sensor}':0 [fmt:${code}/${size}]"
 ${mediactl} -V "'imx7-mipi-csis.0':1 [fmt:${code}/${size}]"
 ${mediactl} -V "'mxc_isi.0':${isi_src_pad} [fmt:${code}/${size}]"
 
-./test/vcmipidemo -afx6 -s ${exposure} -g ${gain}
+./test/vcmipidemo -afx6 -w '120 185 165' -s ${exposure} -g ${gain}
