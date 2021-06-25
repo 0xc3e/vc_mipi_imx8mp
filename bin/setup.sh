@@ -20,6 +20,11 @@ configure() {
 
 install_system_tools() {
         echo "Setup system tools."
+        sudo apt update
+        sudo apt install -y bc build-essential git libncurses5-dev lzop perl libssl-dev
+        sudo apt install -y flex bison
+        sudo apt install -y gcc-aarch64-linux-gnu
+        sudo apt install -y device-tree-compiler
         sudo apt install -y bmap-tools
         sudo apt install -y u-boot-tools
 }
