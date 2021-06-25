@@ -1,5 +1,4 @@
-# /bin/bash
-#
+#!/bin/bash
 
 TTY=/dev/ttyUSB3
 fuser -k $TTY

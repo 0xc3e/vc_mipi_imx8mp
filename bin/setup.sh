@@ -1,35 +1,42 @@
-#/bin/bash
-#
-. config/configure.sh
+#!/bin/bash
 
-CMD=$1
+usage() {
+	echo "Usage: $0 [options]"
+	echo ""
+	echo "Setup host and target for development and testing."
+	echo ""
+	echo "Supported options:"
+	echo "-h, --help                Show this help text"
+        echo "-k, --kernel              Setup/Reset kernel sources"
+        echo "-o, --host                Installs some system tools, the toolchain and kernel sources"
+        echo "-y, --yavta               Setup yavta sources"
+        echo "    --imx296              Patches device tree files to activate the sony imx296/imx296c driver"
+        echo "    --imx327              Patches device tree files to activate the sony imx327c driver"
+}
 
-if [[ $CMD == "host" ]]; then
+configure() {
+        . config/configure.sh
+}
+
+install_system_tools() {
+        echo "Setup system tools."
         sudo apt install -y bmap-tools
         sudo apt install -y u-boot-tools
+}
 
+setup_toolchain() {
+        echo "Setup tool chain."
         mkdir -p $BUILD_DIR
         cd $BUILD_DIR
-
         rm -Rf gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu
         wget -O gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz "https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz?revision=61c3be5d-5175-4db6-9030-b565aae9f766&la=en&hash=0A37024B42028A9616F56A51C2D20755C5EBBCD7"
         tar xvf gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
         rm gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
+}
 
-        # cd $BUILD_DIR
-        # rm -Rf linux
-        # git clone git-iob-com@git.ideasonboard.com:toradex/linux.git
-        # cd linux
-        # git checkout de253e624badb22f32b9e276c4f2b58ce56de24b
-
-        cd $BUILD_DIR
-        rm -Rf yavta
-        git clone git://git.ideasonboard.org/yavta.git
-        cd yavta
-        git checkout 65f740aa1758531fd810339bc1b7d1d33666e28a
-fi
-
-if [[ $CMD == "host" || $CMD == "kernel" ]]; then
+setup_kernel() {
+        echo "Setup kernel sources."
+        mkdir -p $BUILD_DIR
         cd $BUILD_DIR
         rm -Rf $KERNEL_SOURCE
         git clone -b toradex_5.4-2.3.x-imx git://git.toradex.com/linux-toradex.git $KERNEL_SOURCE
@@ -37,90 +44,73 @@ if [[ $CMD == "host" || $CMD == "kernel" ]]; then
         git checkout bb33b94f1466399a995a0d052dca7b9224e3bd45
         git apply $SRC_DIR/linux/patch1/*.patch
         git apply $SRC_DIR/linux/patch2/*.patch
-fi
+}
 
-# /boot/overlays.txt
-# fdt_overlays=verdin-imx8mp_lt8912_overlay.dtbo
+setup_yavta() {
+        echo "Setup yavta sources."
+        mkdir -p $BUILD_DIR
+        cd $BUILD_DIR
+        rm -Rf yavta
+        git clone git://git.ideasonboard.org/yavta.git
+        cd yavta
+        git checkout 65f740aa1758531fd810339bc1b7d1d33666e28a
+}
 
-# setenv vidargs video=HDMI-A-1:1280x720-16@60D video=HDMI-A-2:1280x720-16@60D
-# saveenv
-
-# rm -R /var/log
-# mkdir /var/log
-
-# systemctl disable wayland-app-launch.service
-
-# git diff arch/arm64/boot/dts/freescale/imx8mp-verdin-dahlia.dtsi
-# git diff arch/arm64/boot/dts/freescale/imx8mp.dtsi
-
-
-if [[ $CMD == "296" ]]; then
+patch_kernel_imx296() {
+        echo "Patching device tree for sony imx296/imx296c driver."
         cd $KERNEL_SOURCE
         git apply $SRC_DIR/linux/patch1/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
-fi
+}
 
-if [[ $CMD == "327" ]]; then
+patch_kernel_imx327() {
+        echo "Patching device tree for sony imx327 driver."
         cd $KERNEL_SOURCE
         git apply -R $SRC_DIR/linux/patch1/0302-arm64-dts-imx8mp-verdin-Switch-to-IMX296-camera-modu.patch
-fi
+}
 
-if [[ $CMD == "netboot" ]]; then
-        echo "Setup netboot ..."
+while [ $# != 0 ] ; do
+	option="$1"
+	shift
 
-        # /etc/dhcp/dhcpd.conf
-        #
-        # log-facility local7;
-        #
-        # subnet 192.168.10.0 netmask 255.255.255.0 {
-        #         default-lease-time              86400;
-        #         max-lease-time                  86400;
-        #         option broadcast-address        192.168.10.255;
-        #         option domain-name              "toradex.net";
-        #         option domain-name-servers      ns1.example.org;
-        #         option ip-forwarding            on;
-        #         option routers                  192.168.10.1;
-        #         option subnet-mask              255.255.255.0;
-        #         interface                       enx98fc84ee15d7;
-        #         range                           192.168.10.32 192.168.10.254;
-        # }
-        # #MAC address dependent IP assignment, used for the colibri target device
-        # host eval {
-        #         filename                        "Image.gz";
-        #         fixed-address                   192.168.10.2;
-        #         hardware ethernet               00:14:2d:78:06:0e;
-        #         next-server                     192.168.10.1;
-        #         option host-name                "verdin-imx8mp";
-        #         option root-path                "/srv/nfs/imx8mp,v4,tcp,clientaddr=0.0.0.0";
-        # }
+	case "${option}" in
+	-h|--help)
+		usage
+		exit 0
+		;;
+	-k|--kernel)
+		configure
+		setup_kernel
+                exit 0
+		;;
+	-o|--host)
+		configure
+                install_system_tools
+                setup_toolchain
+		setup_kernel
+                exit 0
+		;;
+        -y|--yavta)
+		configure
+		setup_yavta
+                exit 0
+		;;
+       	--imx296)
+		configure
+		patch_kernel_imx296
+                exit 0
+		;;
+       	--imx327)
+		configure
+		patch_kernel_imx327
+                exit 0
+		;;
 
-        # Enable NFS Logging
-        # sudo rpcdebug -m nfsd all
-        #
-        # Disable NFS Logging 
-        # sudo rpcdebug -m nfsd -c  all
-        #
-        # sudo service nfs-kernel-server restart
-        # tail -f /var/log/syslog
+	*)
+		echo "Unknown option ${option}"
+		exit 1
+		;;
+	esac
+done
 
-        # U-Boot
-        #
-        # setenv devtype dhcp
-        # setenv boot_devtype tftp
-        # setenv root_devtype nfs-dhcp
-        # saveenv
-
-        # U-Boot
-        #
-        # setenv devtype mmc
-        # setenv boot_devtype mmc
-        # setenv root_devtype mmc
-        # saveenv
-
-        # Enable NAT to external 
-        # sudo iptables -t nat -A POSTROUTING -o enp4s0 -j MASQUERADE
-        # sudo iptables -t nat -A POSTROUTING -o enx98fc84ee15d7 -j MASQUERADE
-        #
-        # sudo apt-get install iptables-persistent
-        # sudo su 
-        # iptables-save > /etc/iptables/rules.v4
-fi
+usage
+exit 1
