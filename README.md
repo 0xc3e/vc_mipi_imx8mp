@@ -36,27 +36,27 @@ When we use the **$** sign it is meant that the command is executed on the host 
      $ cd vc_mipi_imx8mp/bin
      $ ./setup.sh --host
    ```
-   As default the driver for the imx296 / imx296C is activated. If you want to use the imx327C sensor you have to patch the device tree.
+   As default the driver for the imx296 / imx296C sensor is activated. If you want to use the imx327C sensor you have to patch the device tree.
    ```
      $ ./setup.sh --imx327
    ```
-   To switch back to the imx296 driver type
+   To switch back to the imx296 driver type:
    ```
      $ ./setup.sh --imx296
    ```
 
-3. Build (all) the kernel image, kernel modules and device tree files.
+3. Build the kernel image, kernel modules and device tree files.
    ```
      $ ./build.sh --all
    ```
 
-4. Create a new Toradex Easy Installer Image. Insert a USB stick (FAT formated) with minimum 1GB capacity. The script will download the reference image from toradex patch it with the build kernel and device tree files from step 3 and copy the image to the usb stick.
+4. Create a new Toradex Easy Installer Image. Insert a USB stick (FAT formated) with minimum 1GB capacity. The script will download the reference image from toradex, patch it with the build kernel and device tree files from step 3 and copy the image to the usb stick.
    ```
      $ ./create_tezi.sh -m /media/<username>/<usb-stick-name>
    ```
 
-5. Enter recovery mode by following the [imx-recovery-mode](https://developer.toradex.com/knowledge-base/imx-recovery-mode) instructions.   
-We provide a script to easily flash an image. It will download the tools from toradex and start to watch for a matching usb device to flash to.
+5. Enter recovery mode by following the [imx-recovery-mode](https://developer.toradex.com/knowledge-base/imx-recovery-mode#Enter_recovery_mode-8) instructions.   
+We provide a script to easily flash an image. It will download the tools from Toradex and start to watch for a matching usb device to flash to.
    ```
      $ ./recover.sh
    ```
@@ -67,6 +67,7 @@ We provide a script to easily flash an image. It will download the tools from to
    ```
      $ ./flash.sh --modules
    ```
+   Reboot again.
 
 # Testing the camera
 The system should start properly and the Qt Cinematic Demo should be seen on the screen.   
@@ -82,16 +83,18 @@ The system should start properly and the Qt Cinematic Demo should be seen on the
 3. Login and check if the driver was loaded properly. You should see something like this in the second box.
    ```
      apalis-imx8 login: root
-     # dmesg | grep imx290
+     # dmesg | grep 2-001a
    ```
    ```
-         5.827769] imx290 2-001a: chip ID 0xffd0
+     [    5.827769] imx290 2-001a: chip ID 0xffd0
    ```
 
 4. Start image aquisition by executing following command. The folder *test* was installed by the script in step 1.   
    **Please note the option -afx4 to suppress ASCII output, output the image to the framebuffer, output image informations and apply the 4 bit shift correction**
    ```
-     # ./test/imx327.sh -x 1000 -g 10
+     # ./test/imx327c.sh -x 1000 -g 10
+   ```
+   ```
      Suppressing ASCII capture at stdout.
      Activating /dev/fb0 framebuffer output.
      Printing image info for every acquired image.
@@ -119,8 +122,8 @@ The system should start properly and the Qt Cinematic Demo should be seen on the
                                                            This are the MSBs (most significant bits)
                                                            A color component is represented as little endian
                                                   
-                                                           ff03 fe03 fe03 ff03 5200 5e00 4f00 6400 0054 0060
-                                   >> 6 bit right shifted     ^    ^    ^    ^    ^    ^    ^    ^    ^    ^
+                                   >> 6 bit right shifted  ff03 fe03 fe03 ff03 5200 5e00 4f00 6400 0054 0060
+                                                              ^    ^    ^    ^    ^    ^    ^    ^    ^    ^
                                                big endian  03ff 03fe 03fe 03ff 0052 005e 004f 0064 5400 6000
                                                   decimal  1023 1022 1022 1023   82   94   79  100   84   96
                                                            ^-----------------^
